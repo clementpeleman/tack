@@ -25,6 +25,12 @@ import {
   getAiBudgetConfig,
 } from '#/lib/ai/cost'
 import { analyzePinsWithOpenAI, createAiInboxPrompt } from '#/lib/ai/openai'
+import {
+  aiEntitlementMessage,
+  getAiEntitlement,
+  type AiEntitlement,
+} from '#/lib/ai/entitlement'
+import { buildAgentPrompt } from '#/lib/agent-prompt'
 import type { AiLabel, AiPinInput, AiPriority } from '#/lib/ai/types'
 import { Layout } from '#/components/Layout'
 import { PinRow } from '#/components/PinRow'
@@ -201,7 +207,7 @@ const getProjectWithPins = createServerFn({ method: 'GET' })
     }
     pins: PinWithComment[]
     aiInbox: AiInboxSummary
-    aiConfigured: boolean
+    aiEntitlement: AiEntitlement
     sidebarProjects: { id: string; name: string }[]
   }> => {
     const request = getRequest()
@@ -322,7 +328,7 @@ const getProjectWithPins = createServerFn({ method: 'GET' })
       },
       pins: pinsWithComments,
       aiInbox,
-      aiConfigured: Boolean(process.env.OPENAI_API_KEY),
+      aiEntitlement: getAiEntitlement(),
       sidebarProjects,
     }
   })
@@ -339,6 +345,11 @@ const analyzeProjectPins = createServerFn({ method: 'POST' })
       .where(and(eq(projects.id, data.projectId), eq(projects.userId, userId)))
 
     if (!project) throw new Response('Not found', { status: 404 })
+
+    const entitlement = getAiEntitlement()
+    if (!entitlement.entitled && entitlement.reason) {
+      throw new Error(aiEntitlementMessage(entitlement.reason))
+    }
 
     const conditions = [eq(pins.projectId, project.id)]
     if (data.pinIds && data.pinIds.length > 0) {
@@ -518,7 +529,7 @@ export const Route = createFileRoute('/projects/$id/inbox')({
 })
 
 function InboxPage() {
-  const { project, pins: projectPins, aiInbox, aiConfigured, sidebarProjects } =
+  const { project, pins: projectPins, aiInbox, aiEntitlement, sidebarProjects } =
     Route.useLoaderData()
   const router = useRouter()
   const [copyStatus, setCopyStatus] = useState('')
@@ -552,6 +563,33 @@ function InboxPage() {
   const copySnippet = () => copyText(snippet, 'Script tag')
   const copyBookmarklet = () => copyText(bookmarklet, 'Bookmarklet')
 
+  const copyAgentPrompt = (group: AiGroupSummary) => {
+    const pinById = new Map(projectPins.map((pin: PinWithComment) => [pin.id, pin]))
+    const groupPins = group.pinIds
+      .map((id) => pinById.get(id))
+      .filter((pin): pin is PinWithComment => Boolean(pin))
+      .map((pin) => ({
+        id: pin.id,
+        url: pin.url,
+        comment: pin.comment,
+        reviewerName: pin.reviewerName,
+        selector: pin.selector,
+        xpath: pin.xpath,
+        tackId: pin.tackId,
+        elementText: pin.elementText,
+        browser: pin.browser,
+        os: pin.os,
+        xPct: pin.xPct,
+        yPct: pin.yPct,
+        viewportW: pin.viewportW,
+        viewportH: pin.viewportH,
+        screenshotUrl: pin.screenshotPath
+          ? `${tackOrigin}/api/screenshots/${project.projectKey}/${pin.id}`
+          : null,
+      }))
+    copyText(buildAgentPrompt(group, groupPins), 'Agent prompt')
+  }
+
   const analyzePins = async () => {
     setAnalyzing(true)
     setAiError(null)
@@ -577,11 +615,6 @@ function InboxPage() {
   const resolvedCount = projectPins.filter(
     (p: PinWithComment) => p.status === 'resolved',
   ).length
-  const analyzeDisabledReason = !hasPins
-    ? 'Add your first pin before running AI analysis.'
-    : !aiConfigured
-      ? 'Add OPENAI_API_KEY on the server before running AI analysis.'
-      : undefined
 
   return (
     <Layout
@@ -619,22 +652,16 @@ function InboxPage() {
                   <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
                   Open preview
                 </a>
-                <button
-                  type="button"
-                  onClick={analyzePins}
-                  disabled={analyzing || !aiConfigured}
-                  aria-describedby={
-                    analyzeDisabledReason ? 'analyze-disabled-reason' : undefined
-                  }
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[color-mix(in_oklab,var(--accent)_18%,var(--accent))] bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] shadow-[0_1px_1px_color-mix(in_oklab,var(--accent)_24%,transparent)] transition-colors hover:bg-[var(--accent-2)] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10"
-                >
-                  <ListChecks size={14} strokeWidth={1.8} aria-hidden="true" />
-                  {analyzing ? 'Analyzing' : 'Analyze pins'}
-                </button>
-                {analyzeDisabledReason && (
-                  <span id="analyze-disabled-reason" className="sr-only">
-                    {analyzeDisabledReason}
-                  </span>
+                {aiEntitlement.entitled && (
+                  <button
+                    type="button"
+                    onClick={analyzePins}
+                    disabled={analyzing}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[color-mix(in_oklab,var(--accent)_18%,var(--accent))] bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] shadow-[0_1px_1px_color-mix(in_oklab,var(--accent)_24%,transparent)] transition-colors hover:bg-[var(--accent-2)] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10"
+                  >
+                    <ListChecks size={14} strokeWidth={1.8} aria-hidden="true" />
+                    {analyzing ? 'Analyzing' : 'Analyze pins'}
+                  </button>
                 )}
               </div>
             )}
@@ -710,9 +737,12 @@ function InboxPage() {
 
             <aside className="space-y-4">
               <AiInboxPanel
-                aiConfigured={aiConfigured}
+                entitled={aiEntitlement.entitled}
+                entitlementReason={aiEntitlement.reason}
                 aiInbox={aiInbox}
                 error={aiError}
+                onCopyForAgent={copyAgentPrompt}
+                agentPromptCopied={copyStatus === 'Agent prompt copied'}
               />
               <ConnectPanel
                 activeTab={activeTab}
@@ -1041,16 +1071,22 @@ function ConnectPanel({
 }
 
 function AiInboxPanel({
-  aiConfigured,
+  entitled,
+  entitlementReason,
   aiInbox,
   error,
+  onCopyForAgent,
+  agentPromptCopied,
 }: {
-  aiConfigured: boolean
+  entitled: boolean
+  entitlementReason: 'disabled' | 'missing_key' | null
   aiInbox: AiInboxSummary
   error: string | null
+  onCopyForAgent: (group: AiGroupSummary) => void
+  agentPromptCopied: boolean
 }) {
   const latestRun = aiInbox.latestRun
-  const runError = aiConfigured
+  const runError = entitled
     ? formatAiError(error ?? latestRun?.error ?? null)
     : null
 
@@ -1066,14 +1102,14 @@ function AiInboxPanel({
             Labels, duplicates, priority and implementation briefs for review.
           </p>
         </div>
-        {aiConfigured && latestRun?.completedAt && (
+        {entitled && latestRun?.completedAt && (
           <span className="shrink-0 text-[10px] text-[var(--ink-soft)] font-mono">
             {formatTimeAgo(latestRun.completedAt)}
           </span>
         )}
       </div>
 
-      {!aiConfigured ? (
+      {!entitled ? (
         <div className="mb-3 flex gap-2 rounded-md border border-[color-mix(in_oklab,var(--accent)_18%,var(--line))] bg-[color-mix(in_oklab,var(--accent)_6%,var(--surface))] p-3">
           <FileCode2
             size={14}
@@ -1082,9 +1118,22 @@ function AiInboxPanel({
             aria-hidden="true"
           />
           <p className="text-xs leading-relaxed text-[var(--ink-mute)]">
-            Add <code className="font-mono text-[var(--ink)]">OPENAI_API_KEY</code>{' '}
-            on the server to enable manual analysis. Pins can still be reviewed
-            without AI.
+            {entitlementReason === 'disabled' ? (
+              <>
+                AI Inbox is off. Set{' '}
+                <code className="font-mono text-[var(--ink)]">TACK_AI_ENABLED=true</code>{' '}
+                and{' '}
+                <code className="font-mono text-[var(--ink)]">OPENAI_API_KEY</code>{' '}
+                on the server to enable manual analysis. Pins can still be
+                reviewed without AI.
+              </>
+            ) : (
+              <>
+                Add <code className="font-mono text-[var(--ink)]">OPENAI_API_KEY</code>{' '}
+                on the server to enable manual analysis. Pins can still be
+                reviewed without AI.
+              </>
+            )}
           </p>
         </div>
       ) : latestRun ? (
@@ -1126,7 +1175,7 @@ function AiInboxPanel({
         </div>
       )}
 
-      {aiInbox.groups.length > 0 && aiConfigured ? (
+      {aiInbox.groups.length > 0 && entitled ? (
         <div className="space-y-3">
           {aiInbox.groups.map((group) => (
             <div
@@ -1147,9 +1196,23 @@ function AiInboxPanel({
                 {group.summary}
               </p>
               <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_8%,transparent)] pt-3">
-                <p className="mb-1 text-[10px] font-mono uppercase text-[var(--ink-soft)]">
-                  Implementation brief
-                </p>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-mono uppercase text-[var(--ink-soft)]">
+                    Implementation brief
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onCopyForAgent(group)}
+                    className="inline-flex items-center gap-1 rounded border border-[var(--line)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+                  >
+                    {agentPromptCopied ? (
+                      <Check size={11} strokeWidth={1.8} aria-hidden="true" />
+                    ) : (
+                      <Copy size={11} strokeWidth={1.8} aria-hidden="true" />
+                    )}
+                    {agentPromptCopied ? 'Copied' : 'Copy for agent'}
+                  </button>
+                </div>
                 <p className="text-xs leading-relaxed text-[var(--ink-soft)]">
                   {group.implementationBrief}
                 </p>
@@ -1157,7 +1220,7 @@ function AiInboxPanel({
             </div>
           ))}
         </div>
-      ) : aiConfigured ? (
+      ) : entitled ? (
         <p className="text-xs leading-relaxed text-[var(--ink-soft)]">
           No duplicate groups yet. Completed runs will show implementation
           briefs here.
