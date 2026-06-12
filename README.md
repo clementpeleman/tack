@@ -11,6 +11,10 @@ docker compose up --build
 
 Open [http://localhost:3000](http://localhost:3000). SQLite and screenshots persist in the `tack-data` volume.
 
+**Enable the AI Inbox** (labels, duplicate groups, implementation briefs): uncomment `TACK_AI_ENABLED` and `OPENAI_API_KEY` in `docker-compose.yml` and restart. Analysis is manual and cost-capped — you only pay OpenAI for runs you trigger.
+
+**No email provider yet?** Sign-in links are printed to the server logs (`docker compose logs -f tack`); uncomment the email lines in `docker-compose.yml` when you're ready.
+
 One-liner without compose:
 
 ```bash

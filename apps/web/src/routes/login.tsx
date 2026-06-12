@@ -1,12 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
 import { useState } from 'react'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { isEmailConfigured } from '#/lib/email'
+
+const getLoginConfig = createServerFn({ method: 'GET' }).handler(async () => ({
+  emailConfigured: isEmailConfigured(),
+}))
 
 export const Route = createFileRoute('/login')({
+  loader: () => getLoginConfig(),
   component: LoginPage,
 })
 
 function LoginPage() {
+  const { emailConfigured } = Route.useLoaderData()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -65,13 +73,24 @@ function LoginPage() {
         {sent ? (
           <div className="rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,var(--surface))] p-5">
             <p className="text-sm text-[var(--ink)] font-medium mb-1">
-              Check your inbox
+              {emailConfigured ? 'Check your inbox' : 'Check the server logs'}
             </p>
-            <p className="text-xs text-[var(--ink-mute)]">
-              We sent a sign-in link to{' '}
-              <span className="font-mono text-[var(--ink-soft)]">{email}</span>.
-              In dev mode, check the server console.
-            </p>
+            {emailConfigured ? (
+              <p className="text-xs text-[var(--ink-mute)]">
+                We sent a sign-in link to{' '}
+                <span className="font-mono text-[var(--ink-soft)]">{email}</span>.
+              </p>
+            ) : (
+              <p className="text-xs text-[var(--ink-mute)]">
+                No email provider is configured, so the sign-in link for{' '}
+                <span className="font-mono text-[var(--ink-soft)]">{email}</span>{' '}
+                was printed to the server logs. Run{' '}
+                <code className="font-mono text-[var(--ink-soft)]">
+                  docker compose logs -f tack
+                </code>{' '}
+                (or check the terminal running the server) and open the link.
+              </p>
+            )}
             <button
               onClick={() => {
                 setSent(false)
@@ -90,6 +109,19 @@ function LoginPage() {
             <p className="text-sm text-[var(--ink-mute)] mb-6">
               Enter your email to receive a magic link.
             </p>
+
+            {!emailConfigured && (
+              <p className="mb-4 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-3 text-xs leading-relaxed text-[var(--ink-mute)]">
+                This server has no email provider configured. Sign-in links are
+                printed to the server logs instead of emailed — set{' '}
+                <code className="font-mono text-[var(--ink-soft)]">RESEND_API_KEY</code>{' '}
+                or{' '}
+                <code className="font-mono text-[var(--ink-soft)]">SMTP_HOST</code>{' '}
+                +{' '}
+                <code className="font-mono text-[var(--ink-soft)]">SMTP_FROM</code>{' '}
+                to enable email.
+              </p>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

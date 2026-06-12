@@ -58,6 +58,13 @@ async function sendViaSmtp(message: EmailMessage): Promise<void> {
   })
 }
 
+export function isEmailConfigured(): boolean {
+  return Boolean(
+    process.env.RESEND_API_KEY ||
+      (process.env.SMTP_HOST && process.env.SMTP_FROM),
+  )
+}
+
 export async function sendEmail(message: EmailMessage): Promise<void> {
   if (process.env.RESEND_API_KEY) {
     await sendViaResend(message)
