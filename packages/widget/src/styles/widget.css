@@ -1,0 +1,451 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:host,
+:host([data-theme="light"]) {
+  all: initial;
+  color-scheme: light;
+  --page: oklch(99.2% 0.004 285);
+  --surface: oklch(99.4% 0.004 92);
+  --surface-2: oklch(96.9% 0.005 285);
+  --line: oklch(90.8% 0.006 285);
+  --ink: oklch(20.5% 0.006 285);
+  --ink-mute: oklch(53.8% 0.009 285);
+  --ink-soft: oklch(65.1% 0.009 285);
+  --accent: oklch(43.6% 0.185 280);
+  --accent-2: oklch(47.4% 0.185 280);
+  --accent-3: oklch(39.8% 0.18 280);
+  --pin: oklch(63.2% 0.155 44);
+  --pin-2: oklch(73.5% 0.13 54);
+  --bone: oklch(99.2% 0.004 285);
+  --on-accent: oklch(99.2% 0.004 285);
+  --signal: oklch(63.5% 0.14 168);
+  --danger: oklch(58.5% 0.18 22);
+  --shadow-float: 0 1px 1px color-mix(in oklab, var(--ink) 8%, transparent), 0 12px 24px -16px color-mix(in oklab, var(--ink) 28%, transparent);
+  --shadow-modal: 0 1px 2px color-mix(in oklab, var(--ink) 12%, transparent), 0 24px 48px -28px color-mix(in oklab, var(--ink) 32%, transparent);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --r-2: 8px;
+  --r-3: 12px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+:host([data-theme="dark"]) {
+  color-scheme: dark;
+  --page: oklch(20.3% 0.016 285);
+  --surface: oklch(24.8% 0.018 285);
+  --surface-2: oklch(30.4% 0.021 285);
+  --line: oklch(39.8% 0.025 285);
+  --ink: oklch(96.9% 0.005 285);
+  --ink-mute: oklch(81.6% 0.015 285);
+  --ink-soft: oklch(66.7% 0.024 285);
+  --accent: oklch(73.5% 0.115 280);
+  --accent-2: oklch(82.4% 0.078 280);
+  --accent-3: oklch(63.3% 0.155 280);
+  --pin: oklch(73.5% 0.13 54);
+  --pin-2: oklch(82.9% 0.095 62);
+  --bone: oklch(99.2% 0.004 285);
+  --on-accent: oklch(20.3% 0.016 285);
+  --signal: oklch(68.8% 0.145 168);
+  --danger: oklch(69.5% 0.17 22);
+  --shadow-float: 0 4px 14px color-mix(in oklab, var(--page) 65%, transparent);
+  --shadow-modal: 0 16px 42px color-mix(in oklab, var(--page) 72%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: oklch(20.3% 0.016 285);
+    --surface: oklch(24.8% 0.018 285);
+    --surface-2: oklch(30.4% 0.021 285);
+    --line: oklch(39.8% 0.025 285);
+    --ink: oklch(96.9% 0.005 285);
+    --ink-mute: oklch(81.6% 0.015 285);
+    --ink-soft: oklch(66.7% 0.024 285);
+    --accent: oklch(73.5% 0.115 280);
+    --accent-2: oklch(82.4% 0.078 280);
+    --accent-3: oklch(63.3% 0.155 280);
+    --pin: oklch(73.5% 0.13 54);
+    --pin-2: oklch(82.9% 0.095 62);
+    --bone: oklch(99.2% 0.004 285);
+    --on-accent: oklch(20.3% 0.016 285);
+    --signal: oklch(68.8% 0.145 168);
+    --danger: oklch(69.5% 0.17 22);
+    --shadow-float: 0 4px 14px color-mix(in oklab, var(--page) 65%, transparent);
+    --shadow-modal: 0 16px 42px color-mix(in oklab, var(--page) 72%, transparent);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
+.tack-pin-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 2147483645;
+  will-change: transform;
+}
+
+.tack-pin-hit {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  margin-top: -22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tack-launcher {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--pin);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-float);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  z-index: 2147483647;
+}
+.tack-launcher:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px color-mix(in oklab, var(--ink) 24%, transparent);
+}
+.tack-launcher.active { background: var(--pin-2); }
+.tack-launcher svg { width: 22px; height: 22px; color: var(--on-accent); }
+
+.tack-crosshair-overlay {
+  position: fixed;
+  inset: 0;
+  cursor: crosshair;
+  z-index: 2147483646;
+}
+
+.tack-pin-hint {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  color: var(--ink-mute);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+.tack-pin {
+  width: 28px;
+  height: 28px;
+  background: var(--pin);
+  border-radius: 50% 50% 50% 4px;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 14px color-mix(in oklab, var(--ink) 18%, transparent), inset 0 -2px 0 color-mix(in oklab, var(--ink) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 180ms ease;
+  pointer-events: none;
+}
+.tack-pin-hit:hover .tack-pin { transform: rotate(-45deg) scale(1.15); }
+.tack-pin span {
+  transform: rotate(45deg);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--on-accent);
+  font-family: var(--font-mono);
+}
+.tack-pin--own .tack-pin {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--pin) 35%, transparent), 0 4px 14px color-mix(in oklab, var(--ink) 18%, transparent);
+}
+.tack-pin--selected .tack-pin { transform: rotate(-45deg) scale(1.12); }
+.tack-pin--resolved .tack-pin { opacity: 0.45; }
+.tack-pin--approx .tack-pin {
+  opacity: 0.75;
+  box-shadow: 0 0 0 2px dashed color-mix(in oklab, var(--pin) 50%, transparent);
+}
+.tack-pin--lost .tack-pin {
+  background: var(--ink-soft);
+  opacity: 0.7;
+  box-shadow: none;
+}
+.tack-error-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  pointer-events: auto;
+  max-width: min(92vw, 420px);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--signal) 92%, var(--ink));
+  color: var(--bone);
+  font: 12px/1.4 system-ui, sans-serif;
+  box-shadow: 0 8px 24px color-mix(in oklab, var(--ink) 25%, transparent);
+}
+.tack-error-dismiss {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.85;
+}
+
+.tack-modal {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  border-radius: var(--r-3);
+  padding: 16px;
+  width: min(280px, calc(100vw - 32px));
+  box-shadow: var(--shadow-modal);
+  z-index: 2147483647;
+}
+.tack-field { margin-bottom: 8px; }
+.tack-field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 4px;
+}
+.tack-modal input,
+.tack-modal textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-2);
+  border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  background: var(--page);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  resize: none;
+}
+.tack-modal input:focus,
+.tack-modal textarea:focus {
+  border-color: var(--accent);
+}
+.tack-modal input::placeholder,
+.tack-modal textarea::placeholder { color: var(--ink-soft); }
+
+.tack-modal-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+.tack-btn-primary {
+  flex: 1;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--r-2);
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.tack-btn-primary:hover { opacity: 0.9; }
+.tack-btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+.tack-btn-cancel {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--r-2);
+  border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.tack-btn-cancel:hover { border-color: color-mix(in oklab, var(--ink) 24%, transparent); }
+
+.tack-btn-danger {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--r-2);
+  border: 1px solid color-mix(in oklab, var(--danger) 35%, transparent);
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.tack-btn-danger:hover { background: color-mix(in oklab, var(--danger) 12%, transparent); }
+.tack-btn-danger:disabled { opacity: 0.5; cursor: default; }
+
+.tack-delete-confirm {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: var(--r-2);
+  border: 1px solid color-mix(in oklab, var(--danger) 30%, transparent);
+  background: color-mix(in oklab, var(--danger) 8%, var(--surface));
+}
+.tack-delete-confirm p {
+  font-size: 12px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.tack-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: transparent;
+}
+
+.tack-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.tack-popover-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.tack-popover-close {
+  min-width: 36px;
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tack-popover-close:hover { color: var(--ink); }
+
+.tack-popover-readonly { font-size: 13px; }
+.tack-popover-author { font-size: 11px; color: var(--ink-mute); margin-bottom: 6px; }
+.tack-popover-comment { color: var(--ink); line-height: 1.45; margin: 0; }
+.tack-popover-hint { margin-top: 10px; font-size: 11px; color: var(--ink-soft); }
+
+.tack-popover-status {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: color-mix(in oklab, var(--signal) 15%, transparent);
+  color: var(--signal);
+}
+
+.tack-thread {
+  max-height: 160px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tack-thread-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--ink) 6%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+}
+
+.tack-thread-meta {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--ink-mute);
+  margin: 0 0 4px;
+}
+
+.tack-thread-role {
+  color: var(--ink-soft);
+}
+
+.tack-thread-body {
+  font-size: 12px;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.tack-reply-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 8%, transparent);
+}
+
+.tack-popover {
+  max-height: min(420px, calc(100vh - 40px));
+  overflow-y: auto;
+}
+
+.tack-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tack-pin-count {
+  position: fixed;
+  bottom: 78px;
+  right: 28px;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--ink) 12%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pin);
+  font-family: var(--font-mono);
+  z-index: 2147483647;
+}

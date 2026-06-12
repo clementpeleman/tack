@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.output/
+.turbo/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+.env
+.env.local
+.DS_Store
+
+# runtime data (screenshots, uploads)
+data/

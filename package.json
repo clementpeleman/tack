@@ -1,0 +1,23 @@
+{
+  "name": "tack",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "db:generate": "pnpm --filter @tack/web db:generate",
+    "db:migrate": "pnpm --filter @tack/web db:migrate",
+    "db:studio": "pnpm --filter @tack/web db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.8"
+  },
+  "packageManager": "pnpm@10.19.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
+  }
+}

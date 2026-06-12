@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1778340748770,
+      "tag": "0000_perpetual_miracleman",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1779303503754,
+      "tag": "0001_boring_ravenous",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779530341188,
+      "tag": "0002_yellow_kinsey_walden",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1779600000000,
+      "tag": "0003_onboarding_widget_seen",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779600000001,
+      "tag": "0004_project_widget_seen",
+      "breakpoints": true
+    }
+  ]
+}

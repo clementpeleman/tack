@@ -1,0 +1,21 @@
+{
+  "name": "@tack/widget",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build && cp dist/tack-widget.js ../../apps/web/public/tack-widget.js"
+  },
+  "dependencies": {
+    "@medv/finder": "^4.0.2",
+    "@tack/shared": "workspace:*",
+    "modern-screenshot": "^4.7.0",
+    "preact": "^10"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2",
+    "typescript": "^5.8",
+    "vite": "^6"
+  }
+}

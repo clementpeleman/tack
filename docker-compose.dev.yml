@@ -1,0 +1,26 @@
+services:
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  tack:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - tack-data:/data
+    environment:
+      DATABASE_URL: /data/tack.db
+      SCREENSHOTS_DIR: /data/screenshots
+      TACK_DEPLOYMENT: selfhost
+      PORT: 3000
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: "Tack <noreply@tack.local>"
+      TACK_AI_ENABLED: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+volumes:
+  tack-data:

@@ -1,0 +1,24 @@
+services:
+  tack:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - tack-data:/data
+    environment:
+      DATABASE_URL: /data/tack.db
+      SCREENSHOTS_DIR: /data/screenshots
+      TACK_DEPLOYMENT: selfhost
+      PORT: 3000
+      # Email (pick one provider):
+      # RESEND_API_KEY: re_...
+      # RESEND_FROM: "Tack <notifications@yourdomain.com>"
+      # SMTP_HOST: mailpit
+      # SMTP_PORT: 1025
+      # SMTP_FROM: "Tack <noreply@tack.local>"
+      # AI Inbox (optional):
+      # TACK_AI_ENABLED: "true"
+      # OPENAI_API_KEY: sk-...
+
+volumes:
+  tack-data:
