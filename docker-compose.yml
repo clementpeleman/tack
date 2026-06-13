@@ -10,6 +10,10 @@ services:
       SCREENSHOTS_DIR: /data/screenshots
       TACK_DEPLOYMENT: selfhost
       PORT: 3000
+      # First launch: open the app and claim the instance with your email —
+      # no email provider needed. Open signup for additional accounts stays
+      # off on self-host unless you set:
+      # TACK_ALLOW_SIGNUP: "true"
       # Email (pick one provider):
       # RESEND_API_KEY: re_...
       # RESEND_FROM: "Tack <notifications@yourdomain.com>"

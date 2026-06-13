@@ -26,14 +26,18 @@ export const Route = createFileRoute('/api/auth/send-magic-link')({
         if (!emailLimited && !ipLimited) {
           const token = await createMagicLinkToken(normalizedEmail)
 
-          const verifyUrl = new URL('/api/auth/verify', request.url)
-          verifyUrl.searchParams.set('token', token)
+          // token is null when the email has no account and signup is closed;
+          // we still return ok below so accounts can't be enumerated.
+          if (token) {
+            const verifyUrl = new URL('/api/auth/verify', request.url)
+            verifyUrl.searchParams.set('token', token)
 
-          await sendEmail({
-            to: normalizedEmail,
-            subject: 'Sign in to Tack',
-            text: `Sign in to Tack:\n\n${verifyUrl.toString()}\n\nThis link expires in 15 minutes.`,
-          })
+            await sendEmail({
+              to: normalizedEmail,
+              subject: 'Sign in to Tack',
+              text: `Sign in to Tack:\n\n${verifyUrl.toString()}\n\nThis link expires in 15 minutes.`,
+            })
+          }
         }
 
         return Response.json({ ok: true })

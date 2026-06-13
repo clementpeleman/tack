@@ -1,12 +1,33 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import { setResponseHeader } from '@tanstack/react-start/server'
 import { useState } from 'react'
 import { ThemeToggle } from '#/components/ThemeToggle'
 import { isEmailConfigured } from '#/lib/email'
+import { claimFirstOwner, getSessionCookie, hasAnyUser } from '#/lib/auth'
 
 const getLoginConfig = createServerFn({ method: 'GET' }).handler(async () => ({
   emailConfigured: isEmailConfigured(),
+  needsClaim: !(await hasAnyUser()),
 }))
+
+const claimInstance = createServerFn({ method: 'POST' })
+  .inputValidator((data: { email: string }) => data)
+  .handler(async ({ data }) => {
+    const email = data.email?.toLowerCase().trim()
+    if (!email || !email.includes('@')) {
+      return { ok: false as const, error: 'Enter a valid email.' }
+    }
+    const result = await claimFirstOwner(email)
+    if (!result) {
+      return {
+        ok: false as const,
+        error: 'This instance is already set up. Sign in instead.',
+      }
+    }
+    setResponseHeader('Set-Cookie', getSessionCookie(result.sessionId))
+    return { ok: true as const }
+  })
 
 export const Route = createFileRoute('/login')({
   loader: () => getLoginConfig(),
@@ -14,11 +35,29 @@ export const Route = createFileRoute('/login')({
 })
 
 function LoginPage() {
-  const { emailConfigured } = Route.useLoaderData()
+  const { emailConfigured, needsClaim } = Route.useLoaderData()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const handleClaim = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const result = await claimInstance({ data: { email } })
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      window.location.href = '/projects'
+    } catch {
+      setError('Could not reach server')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +109,52 @@ function LoginPage() {
           </span>
         </div>
 
-        {sent ? (
+        {needsClaim ? (
+          <>
+            <h1 className="text-lg font-medium text-[var(--ink)] mb-1">
+              Set up Tack
+            </h1>
+            <p className="text-sm text-[var(--ink-mute)] mb-6">
+              This instance has no owner yet. Claim it with your email — no
+              confirmation link needed.
+            </p>
+
+            <form onSubmit={handleClaim} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="claim-email"
+                  className="block text-xs text-[var(--ink-mute)] mb-1.5 font-mono uppercase"
+                >
+                  Owner email
+                </label>
+                <input
+                  id="claim-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  aria-describedby={error ? 'login-error' : undefined}
+                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-soft)] transition-colors"
+                />
+              </div>
+              {error && (
+                <p id="login-error" className="text-xs text-[var(--danger)]" role="alert">
+                  {error}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full px-3 py-2.5 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                {loading ? 'Setting up…' : 'Claim this instance'}
+              </button>
+            </form>
+          </>
+        ) : sent ? (
           <div className="rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,var(--surface))] p-5">
             <p className="text-sm text-[var(--ink)] font-medium mb-1">
               {emailConfigured ? 'Check your inbox' : 'Check the server logs'}

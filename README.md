@@ -9,7 +9,7 @@ cd app
 docker compose up --build
 ```
 
-Open [http://localhost:3000](http://localhost:3000). SQLite and screenshots persist in the `tack-data` volume.
+Open [http://localhost:3000](http://localhost:3000) and **claim the instance** with your email — the first account is created on the spot, no email provider required. SQLite and screenshots persist in the `tack-data` volume.
 
 **Enable the AI Inbox** (labels, duplicate groups, implementation briefs): uncomment `TACK_AI_ENABLED` and `OPENAI_API_KEY` in `docker-compose.yml` and restart. Analysis is manual and cost-capped — you only pay OpenAI for runs you trigger.
 
@@ -45,6 +45,7 @@ Replace `docs/demo.svg` with a recorded GIF (`docs/demo.gif`) before Show HN. On
 | `DATABASE_URL` | `./tack.db` | SQLite file path |
 | `SCREENSHOTS_DIR` | `./data/screenshots` | Pin screenshot storage |
 | `TACK_DEPLOYMENT` | `selfhost` | Deployment mode |
+| `TACK_ALLOW_SIGNUP` | off | Allow accounts beyond the first claimed owner (self-host) |
 | `RESEND_API_KEY` | — | Email via Resend |
 | `SMTP_HOST` / `SMTP_FROM` | — | Email via SMTP |
 | `TACK_AI_ENABLED` | off | Enable AI Inbox (needs `OPENAI_API_KEY`) |
