@@ -43,10 +43,29 @@ function tryServeStatic(pathname, res) {
   return true
 }
 
+// Behind a TLS-terminating proxy (Coolify/Traefik, nginx, Caddy) the container
+// receives plain HTTP, so the scheme and host must come from forwarded headers
+// — otherwise generated URLs (the widget embed snippet, magic links) come out
+// http:// and get blocked as mixed content on https client sites. TACK_PUBLIC_URL
+// is the authoritative override when headers can't be trusted.
+function resolveBaseUrl(req) {
+  if (process.env.TACK_PUBLIC_URL) {
+    try {
+      return new URL(process.env.TACK_PUBLIC_URL).origin
+    } catch {
+      console.warn('[tack] TACK_PUBLIC_URL is not a valid URL; ignoring')
+    }
+  }
+  const proto =
+    (req.headers['x-forwarded-proto'] ?? '').split(',')[0].trim() || 'http'
+  const host =
+    req.headers['x-forwarded-host'] ?? req.headers.host ?? `localhost:${port}`
+  return `${proto}://${host}`
+}
+
 createServer(async (req, res) => {
   try {
-    const host = req.headers.host ?? `localhost:${port}`
-    const requestUrl = new URL(req.url ?? '/', `http://${host}`)
+    const requestUrl = new URL(req.url ?? '/', resolveBaseUrl(req))
 
     if (
       (req.method === 'GET' || req.method === 'HEAD') &&

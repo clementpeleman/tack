@@ -45,6 +45,7 @@ Replace `docs/demo.svg` with a recorded GIF (`docs/demo.gif`) before Show HN. On
 | `DATABASE_URL` | `./tack.db` | SQLite file path |
 | `SCREENSHOTS_DIR` | `./data/screenshots` | Pin screenshot storage |
 | `TACK_DEPLOYMENT` | `selfhost` | Deployment mode |
+| `TACK_PUBLIC_URL` | from request | Public URL behind a reverse proxy (e.g. `https://tack.example.com`) — keeps the embed snippet and magic links on https |
 | `TACK_ALLOW_SIGNUP` | off | Allow accounts beyond the first claimed owner (self-host) |
 | `RESEND_API_KEY` | — | Email via Resend |
 | `SMTP_HOST` / `SMTP_FROM` | — | Email via SMTP |
@@ -63,7 +64,14 @@ Magic links appear in Mailpit at [http://localhost:8025](http://localhost:8025).
 
 ## Coolify
 
-Import `app/docker-compose.yml` as a Docker Compose service. Mount a persistent volume at `/data`.
+1. **New Resource → Git Repository**, point at this repo, branch `main`.
+2. **Build Pack: Dockerfile** (the root `Dockerfile` is detected automatically).
+3. **Ports Exposes: `3000`**, then set your **Domain** — Coolify provisions HTTPS via Let's Encrypt.
+4. **Persistent Storage:** add a volume mounted at **`/data`** (SQLite + screenshots live here; without it, every redeploy wipes your data).
+5. **Environment variables:** set **`TACK_PUBLIC_URL`** to your domain (e.g. `https://tack.example.com`) so the embed snippet and magic links use https. Everything else is optional — add `RESEND_API_KEY`/SMTP for email and `TACK_AI_ENABLED` + `OPENAI_API_KEY` for the AI Inbox when you want them.
+6. **Deploy.** Open the domain and claim the instance with your email — the first owner account is created on the spot, no email provider required.
+
+`DATABASE_URL`, `SCREENSHOTS_DIR`, and `PORT` already default to the right values in the image; you only need the volume and `TACK_PUBLIC_URL`.
 
 ## Widget embed
 
