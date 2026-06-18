@@ -5,8 +5,10 @@ export type Plan = 'free' | 'pro' | 'team'
 export { normalizePinUrl } from './url.ts'
 export {
   inferPlacementFromMetadata,
+  resolvePlacementForDisplay,
   type PinPlacement,
   type PinAnchorMetadata,
+  type PlacementDisplay,
 } from './placement.ts'
 
 export interface Pin {

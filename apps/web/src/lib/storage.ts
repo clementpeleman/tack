@@ -44,12 +44,22 @@ export async function deleteScreenshot(
   }
 }
 
+// Cap stored screenshots so a hostile or buggy client can't fill the disk.
+export const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024 // 5 MB decoded
+
 export function parseScreenshotBase64(input: string): Buffer | null {
-  const match = input.match(/^data:image\/\w+;base64,(.+)$/)
-  const base64 = match?.[1] ?? input
+  // Only accept image data URLs (the widget always sends data:image/jpeg).
+  const match =
+    typeof input === 'string'
+      ? input.match(/^data:image\/(?:png|jpe?g|webp);base64,(.+)$/)
+      : null
+  if (!match) return null
+  // Reject oversized payloads before allocating (base64 ≈ 4/3 of raw bytes).
+  if (match[1].length > Math.ceil((MAX_SCREENSHOT_BYTES * 4) / 3) + 4) return null
   try {
-    const buffer = Buffer.from(base64, 'base64')
-    return buffer.length > 0 ? buffer : null
+    const buffer = Buffer.from(match[1], 'base64')
+    if (buffer.length === 0 || buffer.length > MAX_SCREENSHOT_BYTES) return null
+    return buffer
   } catch {
     return null
   }

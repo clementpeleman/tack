@@ -59,6 +59,13 @@ export const pins = sqliteTable('pins', {
     .default('open'),
   browser: text('browser'),
   os: text('os'),
+  // Placement the widget actually resolved on the live preview page (KTD5).
+  // Null until a widget reports; placementCheckedAt drives the dashboard's
+  // "verified vs inferred" distinction.
+  placementState: text('placement_state', {
+    enum: ['anchored', 'approximate', 'lost'],
+  }),
+  placementCheckedAt: text('placement_checked_at'),
   createdAt: createdAt(),
   resolvedAt: text('resolved_at'),
 })

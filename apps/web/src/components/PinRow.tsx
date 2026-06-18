@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { type PinPlacement } from '@tack/shared'
+import { type PlacementDisplay } from '@tack/shared'
 import { ChevronRight } from 'lucide-react'
 import { getTimeAgo } from '#/lib/pin-display'
 import { placementLabel } from '#/lib/placement-display'
@@ -18,7 +18,7 @@ interface PinRowProps {
     aiPriority: string | null
     aiSummary: string | null
     aiGroupTitle: string | null
-    placement: PinPlacement
+    placement: PlacementDisplay
   }
   index: number
   projectKey: string
@@ -102,8 +102,8 @@ export function PinRow({ projectId, pin, index, projectKey }: PinRowProps) {
         <StatusBadge status={pin.status} />
         {pin.aiLabel && <AiBadge value={pin.aiLabel} />}
         {pin.aiPriority && <PriorityBadge value={pin.aiPriority} />}
-        {placementLabel(pin.placement) && (
-          <PlacementBadge value={placementLabel(pin.placement)!} />
+        {pin.placement.verified && placementLabel(pin.placement.state) && (
+          <PlacementBadge value={placementLabel(pin.placement.state)!} />
         )}
         <ChevronRight
           size={15}

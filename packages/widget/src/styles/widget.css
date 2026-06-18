@@ -98,7 +98,10 @@
   left: 0;
   width: 100%;
   pointer-events: none;
-  z-index: 2147483645;
+  /* Level with the crosshair overlay; rendered after it so pin dots stay
+     clickable, while empty layer areas (pointer-events: none) pass clicks
+     through to the crosshair for placing new pins. */
+  z-index: 2147483646;
   will-change: transform;
 }
 

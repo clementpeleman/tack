@@ -34,7 +34,7 @@ import { buildAgentPrompt } from '#/lib/agent-prompt'
 import type { AiLabel, AiPinInput, AiPriority } from '#/lib/ai/types'
 import { Layout } from '#/components/Layout'
 import { PinRow } from '#/components/PinRow'
-import { inferPlacementFromMetadata } from '@tack/shared'
+import { resolvePlacementForDisplay, type PlacementDisplay } from '@tack/shared'
 import { useState, useEffect } from 'react'
 import {
   AlertCircle,
@@ -74,7 +74,7 @@ interface PinWithComment {
   aiGroupTitle: string | null
   tackId: string | null
   xpath: string | null
-  placement: ReturnType<typeof inferPlacementFromMetadata>
+  placement: PlacementDisplay
 }
 
 interface AiRunSummary {
@@ -286,10 +286,12 @@ const getProjectWithPins = createServerFn({ method: 'GET' })
           elementText: pin.elementText,
           tackId: pin.tackId,
           xpath: pin.xpath,
-          placement: inferPlacementFromMetadata({
+          placement: resolvePlacementForDisplay({
             tackId: pin.tackId,
             selector: pin.selector,
             xpath: pin.xpath,
+            placementState: pin.placementState,
+            placementCheckedAt: pin.placementCheckedAt,
           }),
           browser: pin.browser,
           os: pin.os,

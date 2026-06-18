@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Tack — Visual Website Feedback",
+  "version": "0.1.0",
+  "description": "Add the Tack feedback widget to any preview site — no code change, no CSP issues.",
+  "permissions": ["storage", "activeTab"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Tack"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

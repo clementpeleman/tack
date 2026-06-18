@@ -6,7 +6,6 @@ import {
   deleteProjectPin,
   getPinDetail,
   updatePinStatus,
-  updateProjectPin,
 } from '#/lib/project-pin-actions'
 
 export const Route = createFileRoute('/projects/$id/pins/$pinId')({
@@ -32,12 +31,6 @@ function PinDetailPage() {
         previewUrl={project.previewUrl}
         projectKey={project.projectKey}
         pin={pin}
-        onUpdate={async (comment) => {
-          await updateProjectPin({
-            data: { projectId: project.id, pinId: pin.id, comment },
-          })
-          await router.invalidate()
-        }}
         onDelete={async () => {
           await deleteProjectPin({
             data: { projectId: project.id, pinId: pin.id },

@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useState, useId } from 'react'
+import { resolvePlacementForDisplay } from '@tack/shared'
 import {
   buildPreviewLink,
   getTimeAgo,
@@ -12,7 +13,6 @@ interface PinDetailProps {
   previewUrl: string
   projectKey: string
   pin: PinDetailData
-  onUpdate: (comment: string) => Promise<void>
   onDelete: () => Promise<void>
   onUpdateStatus: (status: 'open' | 'resolved') => Promise<void>
   onAddReply: (body: string) => Promise<void>
@@ -23,42 +23,35 @@ export function PinDetail({
   previewUrl,
   projectKey,
   pin,
-  onUpdate,
   onDelete,
   onUpdateStatus,
   onAddReply,
 }: PinDetailProps) {
-  const [comment, setComment] = useState(pin.comment ?? '')
   const [replyBody, setReplyBody] = useState('')
-  const [saving, setSaving] = useState(false)
   const [replying, setReplying] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [togglingStatus, setTogglingStatus] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [statusMsg, setStatusMsg] = useState('')
-  const commentId = useId()
   const replyId = useId()
+
+  const placement = resolvePlacementForDisplay({
+    selector: pin.selector,
+    xpath: pin.xpath,
+    tackId: pin.tackId,
+    placementState: pin.placementState,
+    placementCheckedAt: pin.placementCheckedAt,
+  })
+  const placementValue =
+    placement.verified && pin.placementCheckedAt
+      ? `${placement.state} · checked ${getTimeAgo(pin.placementCheckedAt)}`
+      : 'unverified'
 
   const previewLink = buildPreviewLink(previewUrl, pin.url, pin.id)
   const screenshotUrl = pin.screenshotPath
     ? `/api/screenshots/${projectKey}/${pin.id}?projectKey=${encodeURIComponent(projectKey)}`
     : null
-
-  const handleSave = async () => {
-    if (!comment.trim()) return
-    setSaving(true)
-    setError(null)
-    setStatusMsg('')
-    try {
-      await onUpdate(comment.trim())
-      setStatusMsg('Pin saved')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handleAddReply = async () => {
     if (!replyBody.trim()) return
@@ -153,12 +146,25 @@ export function PinDetail({
         </div>
 
         <div className="space-y-4">
-          {pin.replies.length > 0 && (
+          <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
+            <p className="text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5">
+              First comment
+            </p>
+            <p className="text-[11px] text-[var(--ink-soft)] font-mono mb-1">
+              {pin.reviewerName ?? 'Anonymous'}
+              <span className="text-[var(--ink-mute)]"> · reviewer</span>
+            </p>
+            <p className="text-sm text-[var(--ink)] whitespace-pre-wrap">
+              {pin.comment ?? 'No comment'}
+            </p>
+          </div>
+
+          {pin.replies.length > 1 && (
             <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4 space-y-2">
               <p className="text-[11px] text-[var(--ink-mute)] uppercase font-mono">
                 Thread
               </p>
-              {pin.replies.map((reply) => (
+              {pin.replies.slice(1).map((reply) => (
                 <div
                   key={reply.id}
                   className="rounded-lg border border-[color-mix(in_oklab,var(--ink)_8%,transparent)] bg-[var(--surface-2)] p-3"
@@ -177,22 +183,6 @@ export function PinDetail({
               ))}
             </div>
           )}
-
-          <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-            <label
-              htmlFor={commentId}
-              className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-            >
-              Edit first comment
-            </label>
-            <textarea
-              id={commentId}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm resize-y"
-            />
-          </div>
 
           <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
             <label
@@ -240,6 +230,7 @@ export function PinDetail({
 
           <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <Detail label="Page" value={pin.url} mono />
+            <Detail label="Placement" value={placementValue} />
             {pin.selector && <Detail label="Element" value={pin.selector} mono />}
             {pin.elementText && <Detail label="Text" value={pin.elementText} />}
             <Detail
@@ -295,16 +286,8 @@ export function PinDetail({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={handleSave}
-                disabled={!comment.trim() || saving || deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save comment'}
-              </button>
-              <button
-                type="button"
                 onClick={handleAddReply}
-                disabled={!replyBody.trim() || saving || deleting || togglingStatus || replying}
+                disabled={!replyBody.trim() || deleting || togglingStatus || replying}
                 className="min-h-11 px-3 py-2 rounded-lg border border-[var(--line)] text-xs disabled:opacity-50"
               >
                 {replying ? 'Sending...' : 'Send reply'}
@@ -312,7 +295,7 @@ export function PinDetail({
               <button
                 type="button"
                 onClick={handleToggleStatus}
-                disabled={saving || deleting || togglingStatus || replying}
+                disabled={deleting || togglingStatus || replying}
                 className="min-h-11 px-3 py-2 rounded-lg border border-[var(--line)] text-xs disabled:opacity-50"
               >
                 {togglingStatus
@@ -332,7 +315,7 @@ export function PinDetail({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                disabled={saving || deleting || togglingStatus || replying}
+                disabled={deleting || togglingStatus || replying}
                 className="min-h-11 px-3 py-2 rounded-lg text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
               >
                 Delete

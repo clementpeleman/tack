@@ -10,7 +10,7 @@ import {
   pins,
   replies,
 } from '#/db/schema'
-import { eq, and, desc, inArray, isNull, asc } from 'drizzle-orm'
+import { eq, and, desc, isNull, asc } from 'drizzle-orm'
 import { requireAuth } from '#/lib/auth'
 import {
   deletePinAndRelated,
@@ -29,6 +29,8 @@ export interface PinDetailData {
   reviewerName: string | null
   status: string
   selector: string | null
+  xpath: string | null
+  tackId: string | null
   elementText: string | null
   browser: string | null
   os: string | null
@@ -37,6 +39,8 @@ export interface PinDetailData {
   yPct: number
   viewportW: number
   viewportH: number
+  placementState: 'anchored' | 'approximate' | 'lost' | null
+  placementCheckedAt: string | null
   createdAt: string
   resolvedAt: string | null
   comment: string | null
@@ -190,6 +194,8 @@ export const getPinDetail = createServerFn({ method: 'GET' })
           reviewerName: pin.reviewerName,
           status: pin.status,
           selector: pin.selector,
+          xpath: pin.xpath,
+          tackId: pin.tackId,
           elementText: pin.elementText,
           browser: pin.browser,
           os: pin.os,
@@ -198,6 +204,8 @@ export const getPinDetail = createServerFn({ method: 'GET' })
           yPct: pin.yPct,
           viewportW: pin.viewportW,
           viewportH: pin.viewportH,
+          placementState: pin.placementState,
+          placementCheckedAt: pin.placementCheckedAt,
           createdAt: pin.createdAt,
           resolvedAt: pin.resolvedAt,
           comment: enrichedReplies[0]?.body ?? null,
