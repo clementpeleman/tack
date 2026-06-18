@@ -1,19 +1,32 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+
+// Read demo config server-side so the public key is never a hardcoded
+// placeholder and the env read never leaks to / runs on the client.
+const getDemoConfig = createServerFn({ method: 'GET' }).handler(async () => ({
+  projectKey: process.env.TACK_DEMO_PROJECT_KEY ?? null,
+  apiOrigin: process.env.TACK_PUBLIC_URL ?? '',
+}))
 
 export const Route = createFileRoute('/demo')({
   component: DemoPage,
-  head: () => ({
-    scripts: [
-      {
-        src: '/tack-widget.js',
-        'data-project': 'REPLACE_WITH_PROJECT_KEY',
-        'data-api': '',
-      },
-    ],
+  loader: () => getDemoConfig(),
+  head: ({ loaderData }) => ({
+    scripts: loaderData?.projectKey
+      ? [
+          {
+            src: '/tack-widget.js',
+            'data-project': loaderData.projectKey,
+            'data-api': loaderData.apiOrigin,
+          },
+        ]
+      : [],
   }),
 })
 
 function DemoPage() {
+  const { projectKey } = Route.useLoaderData()
+
   return (
     <main className="min-h-screen bg-[var(--page)] text-[var(--ink)] p-8">
       <div className="max-w-3xl mx-auto">
@@ -32,8 +45,9 @@ function DemoPage() {
             <span className="text-[var(--accent)]">visual feedback.</span>
           </h1>
           <p className="text-lg text-[var(--ink-soft)] max-w-lg mb-8">
-            Click the coral pin button in the bottom-right corner to try Tack.
-            Enter pin mode, click any element, and leave a comment.
+            {projectKey
+              ? 'Click the coral pin button in the bottom-right corner to try Tack. Enter pin mode, click any element, and leave a comment.'
+              : 'This demo is not configured. Set TACK_DEMO_PROJECT_KEY on the server to load a live Tack widget here.'}
           </p>
           <div className="flex gap-3">
             <button className="px-5 py-2.5 bg-[var(--accent)] text-[var(--on-accent)] rounded-full text-sm font-medium">
@@ -60,11 +74,11 @@ function DemoPage() {
         </section>
 
         <footer className="pt-8 border-t border-[var(--line)] text-sm text-[var(--ink-soft)]">
-          This is a demo page. The Tack widget is loaded on this page.
+          {projectKey
+            ? 'This is a demo page. The Tack widget is loaded on this page.'
+            : 'This is a demo page. The Tack widget is disabled until TACK_DEMO_PROJECT_KEY is set.'}
         </footer>
       </div>
-
-      <script src="/tack-widget.js" data-project="REPLACE_WITH_PROJECT_KEY" />
     </main>
   )
 }

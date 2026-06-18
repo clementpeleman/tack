@@ -5,11 +5,15 @@ export function normalizePinUrl(
   search = '',
   pinQueryParams?: string[],
 ): string {
-  let path = pathname || '/'
+  // Drop any hash fragment, normalize to a leading slash, collapse duplicate
+  // slashes, and strip a trailing slash (except root).
+  let path = (pathname || '/').split('#')[0]
   if (!path.startsWith('/')) path = `/${path}`
+  path = path.replace(/\/{2,}/g, '/')
   if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)
 
-  const raw = search.startsWith('?') ? search.slice(1) : search
+  const rawWithHash = search.startsWith('?') ? search.slice(1) : search
+  const raw = rawWithHash.split('#')[0]
   if (!raw) return path
 
   const params = new URLSearchParams(raw)

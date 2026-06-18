@@ -44,9 +44,22 @@ export function PinPopover({
   const [replying, setReplying] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
   useEscapeKey(onClose)
+
+  const startEdit = () => {
+    setComment(pin.comment ?? '')
+    setName(pin.reviewerName ?? '')
+    setEditing(true)
+  }
+
+  const cancelEdit = () => {
+    setComment(pin.comment ?? '')
+    setName(pin.reviewerName ?? '')
+    setEditing(false)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -80,10 +93,10 @@ export function PinPopover({
     setStatusMsg('')
     try {
       await onSave(comment.trim(), name.trim())
-      setStatusMsg('Pin saved')
-      onClose()
+      setStatusMsg('Comment saved')
+      setEditing(false)
     } catch {
-      setStatusMsg('Could not save pin')
+      setStatusMsg('Could not save comment')
     } finally {
       setSaving(false)
     }
@@ -142,21 +155,7 @@ export function PinPopover({
           {statusMsg}
         </div>
 
-        {!loadingReplies && replies.length > 0 && (
-          <div class="tack-thread">
-            {replies.map((reply) => (
-              <div key={reply.id} class="tack-thread-item">
-                <p class="tack-thread-meta">
-                  {reply.authorName}
-                  <span class="tack-thread-role"> · {reply.authorType}</span>
-                </p>
-                <p class="tack-thread-body">{reply.body}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {isOwn ? (
+        {isOwn && editing ? (
           <form onSubmit={handleSave}>
             <div class="tack-field">
               <label class="tack-field-label" for="tack-popover-name">Your name</label>
@@ -179,54 +178,86 @@ export function PinPopover({
                 autoFocus
               />
             </div>
-
-            {confirmDelete ? (
-              <div class="tack-delete-confirm">
-                <p>Delete this pin permanently?</p>
-                <div class="tack-modal-actions">
-                  <button
-                    type="button"
-                    class="tack-btn-cancel"
-                    onClick={() => setConfirmDelete(false)}
-                    disabled={deleting}
-                  >
-                    Keep
-                  </button>
-                  <button
-                    type="button"
-                    class="tack-btn-danger"
-                    onClick={handleDelete}
-                    disabled={deleting || saving}
-                  >
-                    {deleting ? 'Deleting...' : 'Delete pin'}
-                  </button>
-                </div>
+            <div class="tack-modal-actions">
+              <button
+                type="button"
+                class="tack-btn-cancel"
+                onClick={cancelEdit}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="tack-btn-primary"
+                disabled={!comment.trim() || saving}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </form>
+        ) : isOwn && confirmDelete ? (
+          <div class="tack-popover-readonly">
+            {pin.reviewerName && <p class="tack-popover-author">{pin.reviewerName}</p>}
+            <p class="tack-popover-comment">{pin.comment ?? 'No comment'}</p>
+            <div class="tack-delete-confirm">
+              <p>Delete this pin permanently?</p>
+              <div class="tack-modal-actions">
+                <button
+                  type="button"
+                  class="tack-btn-cancel"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  class="tack-btn-danger"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete pin'}
+                </button>
               </div>
-            ) : (
+            </div>
+          </div>
+        ) : (
+          <div class="tack-popover-readonly">
+            {pin.reviewerName && <p class="tack-popover-author">{pin.reviewerName}</p>}
+            <p class="tack-popover-comment">{pin.comment ?? 'No comment'}</p>
+            {isOwn && (
               <div class="tack-modal-actions">
                 <button
                   type="button"
                   class="tack-btn-danger"
                   onClick={() => setConfirmDelete(true)}
-                  disabled={deleting || saving}
                 >
                   Delete
                 </button>
                 <button
-                  type="submit"
+                  type="button"
                   class="tack-btn-primary"
-                  disabled={!comment.trim() || saving || deleting}
+                  onClick={startEdit}
                 >
-                  {saving ? 'Saving...' : 'Save'}
+                  Edit
                 </button>
               </div>
             )}
-          </form>
-        ) : (
-          <div class="tack-popover-readonly">
-            {pin.reviewerName && <p class="tack-popover-author">{pin.reviewerName}</p>}
-            <p class="tack-popover-comment">{pin.comment ?? 'No comment'}</p>
-            <p class="tack-popover-hint">Only the author can edit this pin.</p>
+          </div>
+        )}
+
+        {!loadingReplies && replies.length > 1 && (
+          <div class="tack-thread">
+            {replies.slice(1).map((reply) => (
+              <div key={reply.id} class="tack-thread-item">
+                <p class="tack-thread-meta">
+                  {reply.authorName}
+                  <span class="tack-thread-role"> · {reply.authorType}</span>
+                </p>
+                <p class="tack-thread-body">{reply.body}</p>
+              </div>
+            ))}
           </div>
         )}
 

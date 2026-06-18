@@ -7,6 +7,9 @@ import { addPinReply, enrichRepliesForPin } from '#/lib/pins'
 import { enqueueNotification } from '#/lib/notifications'
 import { emitProjectEvent } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
+import { enforceWidgetOrigin } from '#/lib/widget-connection'
+
+const MAX_COMMENT = 5000
 
 async function authorizePinAccess(pinId: string, projectKey: string) {
   const [project] = await db
@@ -56,6 +59,9 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
+        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        if (originError) return originError
+
         const repliesList = await enrichRepliesForPin(auth.pin)
         return Response.json({ replies: repliesList }, { headers })
       },
@@ -67,12 +73,27 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
         if (cors) return cors
 
         const text = await request.text()
-        const body = JSON.parse(text)
-        const { projectKey, reviewerId, comment, reviewerName } = body
+        let body: Record<string, unknown>
+        try {
+          body = JSON.parse(text)
+        } catch {
+          return Response.json(
+            { error: 'Invalid JSON body' },
+            { status: 400, headers },
+          )
+        }
+        const { projectKey, reviewerId, comment, reviewerName } = body as Record<string, any>
 
         if (!projectKey || !reviewerId || !comment?.trim()) {
           return Response.json(
             { error: 'projectKey, reviewerId, and comment required' },
+            { status: 400, headers },
+          )
+        }
+
+        if (typeof comment !== 'string' || comment.length > MAX_COMMENT) {
+          return Response.json(
+            { error: 'Comment is too long' },
             { status: 400, headers },
           )
         }
@@ -84,6 +105,9 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
+
+        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        if (originError) return originError
 
         if (typeof reviewerName === 'string' && reviewerName.trim()) {
           await db

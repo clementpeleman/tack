@@ -14,8 +14,10 @@ import {
   deletePin,
   createReply,
   connectWidgetEvents,
+  reportPlacements,
   WidgetApiError,
 } from './lib/api'
+import { resolvePinPlacement } from './lib/placement'
 import { getReviewerId } from './lib/reviewer'
 import { watchWidgetTheme } from './lib/theme'
 import { captureViewportScreenshot } from './lib/screenshot'
@@ -93,6 +95,20 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
         setInitError(null)
         const loaded = normalizePins(data.pins ?? [])
         setPins(loaded)
+        // Report the placement we actually resolve on this live page so the
+        // dashboard shows verified state, not a metadata guess. Deferred a frame
+        // so layout is settled before measuring anchors.
+        if (loaded.length > 0) {
+          requestAnimationFrame(() => {
+            void reportPlacements(
+              projectKey,
+              loaded.map((p) => ({
+                pinId: p.id,
+                placement: resolvePinPlacement(p).placement,
+              })),
+            )
+          })
+        }
         return loaded
       })
       .catch((err) => {
@@ -193,6 +209,11 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
   const selectedPin = pins.find((p) => p.id === selectedPinId) ?? null
   const selectedIndex = selectedPin ? pins.indexOf(selectedPin) : -1
 
+  // Pins are only shown in placement mode (the launcher is active) or when a
+  // specific pin is selected (e.g. a `?pin=` deeplink). Otherwise the host
+  // site stays clean.
+  const showPins = active || selectedPinId !== null
+
   const handleSavePin = useCallback(async (comment: string, name: string) => {
     if (!selectedPinId) return
     await updatePin({
@@ -240,13 +261,15 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
           }}
         />
       )}
-      <PinOverlay
-        pins={pins}
-        reviewerId={reviewerId}
-        selectedPinId={selectedPinId}
-        onSelectPin={setSelectedPinId}
-      />
       {active && <PinMode onPlace={handlePlace} onCancel={() => setActive(false)} />}
+      {showPins && (
+        <PinOverlay
+          pins={pins}
+          reviewerId={reviewerId}
+          selectedPinId={selectedPinId}
+          onSelectPin={setSelectedPinId}
+        />
+      )}
       {pending && (
         <CommentModal
           x={pending.xPct}
@@ -294,23 +317,46 @@ function normalizePins(raw: Record<string, unknown>[]): PinData[] {
   return raw.map((pin) => normalizePin(pin))
 }
 
-function init() {
-  if (window.innerWidth < 768) return
+export interface MountTackWidgetOptions {
+  /** Public project key (`pk_…`). */
+  projectKey: string
+  /** Origin of the Tack host, e.g. `https://tack.example.com`. */
+  apiHost: string
+  /**
+   * Optional script element to read theme config (`data-theme`) from.
+   * The script-tag loader passes its own element; other loaders (e.g. the
+   * browser extension) pass nothing and fall back to localStorage/system.
+   */
+  themeScript?: HTMLScriptElement | null
+}
 
-  const script = document.currentScript as HTMLScriptElement | null
-  const projectKey = script?.getAttribute('data-project') ?? ''
-  const apiHost = script?.getAttribute('data-api') ?? window.location.origin
+/**
+ * Mount the Tack widget into the current document. Loader-agnostic: the
+ * script-tag IIFE and the browser extension's content script both call this
+ * with explicit config instead of relying on `document.currentScript`.
+ *
+ * Returns `false` (and does nothing) when the viewport is too small, the
+ * project key is missing, or the widget is already mounted.
+ */
+export function mountTackWidget({
+  projectKey,
+  apiHost,
+  themeScript = null,
+}: MountTackWidgetOptions): boolean {
+  if (window.innerWidth < 768) return false
 
   if (!projectKey) {
-    console.error('[tack] data-project attribute required on the script tag')
-    return
+    console.error('[tack] mountTackWidget requires a projectKey')
+    return false
   }
+
+  if (document.getElementById('tack-widget-host')) return false
 
   const host = document.createElement('div')
   host.id = 'tack-widget-host'
   document.body.appendChild(host)
 
-  watchWidgetTheme(host, script)
+  watchWidgetTheme(host, themeScript)
 
   const shadow = host.attachShadow({ mode: 'open' })
 
@@ -335,10 +381,10 @@ function init() {
   observer.observe(mountPoint, { childList: true, subtree: true })
 
   render(<Widget projectKey={projectKey} apiHost={apiHost} />, mountPoint)
+  return true
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init)
-} else {
-  init()
+/** Remove a mounted widget, if present. */
+export function unmountTackWidget(): void {
+  document.getElementById('tack-widget-host')?.remove()
 }

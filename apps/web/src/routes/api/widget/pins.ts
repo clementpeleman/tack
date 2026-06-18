@@ -4,16 +4,27 @@ import { projects, pins, replies } from '#/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { normalizePinUrl } from '@tack/shared'
 import type { ProjectNotifySettings } from '#/lib/notifications'
-import { corsHeaders } from '#/lib/cors'
+import { corsHeaders, handleCors } from '#/lib/cors'
 import { enrichPinsWithComments } from '#/lib/pins'
 import { parseScreenshotBase64, saveScreenshot } from '#/lib/storage'
 import { enqueueNotification } from '#/lib/notifications'
 import { emitProjectEvent } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
+import { enforceWidgetOrigin } from '#/lib/widget-connection'
+
+const MAX_COMMENT = 5000
+const MAX_NAME = 120
+const MAX_META = 1000
+
+const clamp = (v: unknown, max: number): string | null =>
+  typeof v === 'string' && v.length > 0 ? v.slice(0, max) : null
 
 export const Route = createFileRoute('/api/widget/pins')({
   server: {
     handlers: {
+      OPTIONS: async ({ request }) =>
+        handleCors(request) ?? new Response(null, { status: 204 }),
+
       GET: async ({ request }) => {
         const origin = request.headers.get('origin')
         const headers = corsHeaders(origin)
@@ -43,6 +54,9 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
+        const originError = enforceWidgetOrigin(project.previewUrl, origin)
+        if (originError) return originError
+
         const conditions = [eq(pins.projectId, project.id)]
         if (pageUrl) conditions.push(eq(pins.url, normalizePinUrl(pageUrl, '', (project.settings as ProjectNotifySettings | null)?.pinQueryParams)))
 
@@ -61,13 +75,29 @@ export const Route = createFileRoute('/api/widget/pins')({
         const origin = request.headers.get('origin')
         const headers = corsHeaders(origin)
         const text = await request.text()
-        const body = JSON.parse(text)
 
-        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, body: commentBody, browser, os, screenshot } = body
+        let body: Record<string, unknown>
+        try {
+          body = JSON.parse(text)
+        } catch {
+          return Response.json(
+            { error: 'Invalid JSON body' },
+            { status: 400, headers },
+          )
+        }
+
+        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, body: commentBody, browser, os, screenshot } = body as Record<string, any>
 
         if (!projectKey || !url || !reviewerId || xPct == null || yPct == null || !commentBody) {
           return Response.json(
             { error: 'Missing required fields' },
+            { status: 400, headers },
+          )
+        }
+
+        if (typeof commentBody !== 'string' || commentBody.length > MAX_COMMENT) {
+          return Response.json(
+            { error: 'Comment is missing or too long' },
             { status: 400, headers },
           )
         }
@@ -87,34 +117,37 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
+        const originError = enforceWidgetOrigin(project.previewUrl, origin)
+        if (originError) return originError
+
         const settings = (project.settings ?? {}) as ProjectNotifySettings
-        const normalizedUrl = normalizePinUrl(url, '', settings.pinQueryParams)
+        const normalizedUrl = normalizePinUrl(String(url), '', settings.pinQueryParams)
 
         const [pin] = await db
           .insert(pins)
           .values({
             projectId: project.id,
             url: normalizedUrl,
-            reviewerId,
-            reviewerName: reviewerName ?? null,
+            reviewerId: String(reviewerId).slice(0, MAX_NAME),
+            reviewerName: clamp(reviewerName, MAX_NAME),
             xPct,
             yPct,
             scrollY: scrollY ?? 0,
             viewportW: viewportW ?? 0,
             viewportH: viewportH ?? 0,
-            selector: selector ?? null,
-            xpath: xpath ?? null,
-            tackId: tackId ?? null,
-            elementText: elementText ?? null,
-            browser: browser ?? null,
-            os: os ?? null,
+            selector: clamp(selector, MAX_META),
+            xpath: clamp(xpath, MAX_META),
+            tackId: clamp(tackId, MAX_META),
+            elementText: clamp(elementText, MAX_META),
+            browser: clamp(browser, MAX_META),
+            os: clamp(os, MAX_META),
           })
           .returning()
 
         await db.insert(replies).values({
           pinId: pin.id,
           authorType: 'reviewer',
-          authorId: reviewerId,
+          authorId: String(reviewerId).slice(0, MAX_NAME),
           body: commentBody,
         })
 

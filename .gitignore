@@ -12,3 +12,6 @@ dist/
 
 # runtime data (screenshots, uploads)
 data/
+
+# local test scaffolding
+.playwright-cli/

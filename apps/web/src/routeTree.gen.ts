@@ -17,6 +17,7 @@ import { Route as ProjectsNewRouteImport } from './routes/projects/new'
 import { Route as ProjectsIdSettingsRouteImport } from './routes/projects/$id/settings'
 import { Route as ProjectsIdInstallRouteImport } from './routes/projects/$id/install'
 import { Route as ProjectsIdInboxRouteImport } from './routes/projects/$id/inbox'
+import { Route as ApiWidgetPlacementRouteImport } from './routes/api/widget/placement'
 import { Route as ApiWidgetPinsRouteImport } from './routes/api/widget/pins'
 import { Route as ApiWidgetInitRouteImport } from './routes/api/widget/init'
 import { Route as ApiWidgetEventsRouteImport } from './routes/api/widget/events'
@@ -67,6 +68,11 @@ const ProjectsIdInstallRoute = ProjectsIdInstallRouteImport.update({
 const ProjectsIdInboxRoute = ProjectsIdInboxRouteImport.update({
   id: '/projects/$id/inbox',
   path: '/projects/$id/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWidgetPlacementRoute = ApiWidgetPlacementRouteImport.update({
+  id: '/api/widget/placement',
+  path: '/api/widget/placement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWidgetPinsRoute = ApiWidgetPinsRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
+  '/api/widget/placement': typeof ApiWidgetPlacementRoute
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
+  '/api/widget/placement': typeof ApiWidgetPlacementRoute
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
+  '/api/widget/placement': typeof ApiWidgetPlacementRoute
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
+    | '/api/widget/placement'
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
+    | '/api/widget/placement'
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
+    | '/api/widget/placement'
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   ApiWidgetEventsRoute: typeof ApiWidgetEventsRoute
   ApiWidgetInitRoute: typeof ApiWidgetInitRoute
   ApiWidgetPinsRoute: typeof ApiWidgetPinsRouteWithChildren
+  ApiWidgetPlacementRoute: typeof ApiWidgetPlacementRoute
   ProjectsIdInboxRoute: typeof ProjectsIdInboxRoute
   ProjectsIdInstallRoute: typeof ProjectsIdInstallRoute
   ProjectsIdSettingsRoute: typeof ProjectsIdSettingsRoute
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/projects/$id/inbox'
       fullPath: '/projects/$id/inbox'
       preLoaderRoute: typeof ProjectsIdInboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/widget/placement': {
+      id: '/api/widget/placement'
+      path: '/api/widget/placement'
+      fullPath: '/api/widget/placement'
+      preLoaderRoute: typeof ApiWidgetPlacementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/widget/pins': {
@@ -450,6 +470,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiWidgetEventsRoute: ApiWidgetEventsRoute,
   ApiWidgetInitRoute: ApiWidgetInitRoute,
   ApiWidgetPinsRoute: ApiWidgetPinsRouteWithChildren,
+  ApiWidgetPlacementRoute: ApiWidgetPlacementRoute,
   ProjectsIdInboxRoute: ProjectsIdInboxRoute,
   ProjectsIdInstallRoute: ProjectsIdInstallRoute,
   ProjectsIdSettingsRoute: ProjectsIdSettingsRoute,

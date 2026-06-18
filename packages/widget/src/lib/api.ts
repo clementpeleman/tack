@@ -142,6 +142,23 @@ export async function createReply(data: {
   return parseJsonResponse(res) as Promise<{ reply: WidgetReply }>
 }
 
+export async function reportPlacements(
+  projectKey: string,
+  placements: { pinId: string; placement: string }[],
+): Promise<void> {
+  if (placements.length === 0) return
+  // Best-effort: never let placement reporting surface errors to the reviewer.
+  try {
+    await fetch(`${apiHost}/api/widget/placement`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ projectKey, placements }),
+    })
+  } catch {
+    /* ignore */
+  }
+}
+
 export function connectWidgetEvents(
   projectKey: string,
   onEvent: () => void,

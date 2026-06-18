@@ -9,6 +9,7 @@ import {
 } from '#/lib/pins'
 import { emitProjectEvent } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
+import { enforceWidgetOrigin } from '#/lib/widget-connection'
 
 async function authorizePin(
   pinId: string,
@@ -48,8 +49,16 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         if (cors) return cors
 
         const text = await request.text()
-        const body = JSON.parse(text)
-        const { projectKey, reviewerId, comment, reviewerName } = body
+        let body: Record<string, unknown>
+        try {
+          body = JSON.parse(text)
+        } catch {
+          return Response.json(
+            { error: 'Invalid JSON body' },
+            { status: 400, headers },
+          )
+        }
+        const { projectKey, reviewerId, comment, reviewerName } = body as Record<string, any>
 
         if (!projectKey || !reviewerId) {
           return Response.json(
@@ -65,6 +74,9 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
+
+        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        if (originError) return originError
 
         if (typeof comment === 'string' && comment.trim()) {
           await updatePinFirstComment(
@@ -105,8 +117,16 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         if (cors) return cors
 
         const text = await request.text()
-        const body = text ? JSON.parse(text) : {}
-        const { projectKey, reviewerId } = body
+        let body: Record<string, unknown>
+        try {
+          body = text ? JSON.parse(text) : {}
+        } catch {
+          return Response.json(
+            { error: 'Invalid JSON body' },
+            { status: 400, headers },
+          )
+        }
+        const { projectKey, reviewerId } = body as Record<string, any>
 
         if (!projectKey || !reviewerId) {
           return Response.json(
@@ -122,6 +142,9 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
+
+        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        if (originError) return originError
 
         await deletePinAndRelated(params.pinId)
         emitProjectEvent({
