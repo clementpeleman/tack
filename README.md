@@ -4,8 +4,9 @@ Visual feedback on preview sites — pin comments on the page, triage them in an
 
 ## Quick start (Docker)
 
+From the repository root:
+
 ```bash
-cd app
 docker compose up --build
 ```
 
@@ -18,14 +19,13 @@ Open [http://localhost:3000](http://localhost:3000) and **claim the instance** w
 One-liner without compose:
 
 ```bash
-docker build -t tack ./app
+docker build -t tack .
 docker run --rm -p 3000:3000 -v tack-data:/data tack
 ```
 
 ## Development
 
 ```bash
-cd app
 pnpm install
 pnpm dev
 ```
@@ -36,7 +36,7 @@ Dashboard: [http://localhost:3000](http://localhost:3000)
 
 ![Tack demo](docs/demo.svg)
 
-Replace `docs/demo.svg` with a recorded GIF (`docs/demo.gif`) before Show HN. On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` route.
+On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` route. For a Show HN-style launch, replace `docs/demo.svg` with a recorded GIF (`docs/demo.gif`) that shows the owner/reviewer loop.
 
 ## Self-host configuration
 
@@ -85,16 +85,16 @@ Magic links appear in Mailpit at [http://localhost:8025](http://localhost:8025).
 
 The widget is hidden below 768px viewport width.
 
-## Specs
+## Product docs
 
-- [`core-v1.md`](../core-v1.md) — Core launch bar
-- [`ai-inbox-v1.md`](../ai-inbox-v1.md) — AI Inbox
-- [`ship-v1.md`](../ship-v1.md) — Ship (private beta)
+- [`CONTEXT.md`](CONTEXT.md) — domain language and product layer boundaries
+- [`docs/plans/2026-06-01-001-feat-core-v1-launch-hardening-plan.md`](docs/plans/2026-06-01-001-feat-core-v1-launch-hardening-plan.md) — Core launch hardening plan
+- [`docs/adr/0003-ship-edits-git-not-production.md`](docs/adr/0003-ship-edits-git-not-production.md) — Ship edits Git, never production
 
 ## Project structure
 
 ```
-app/
+tack/
 ├── apps/web/          # Dashboard + API (TanStack Start)
 ├── packages/widget/   # Embeddable widget
 ├── packages/shared/   # Shared types + URL normalization

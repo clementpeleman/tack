@@ -11,6 +11,29 @@ export interface ProjectNotifySettings {
   pinQueryParams?: string[]
 }
 
+type WebhookChannel = 'discord' | 'slack'
+
+interface WebhookMessage {
+  title: string
+  body: string
+  url: string
+}
+
+export function buildWebhookPayload(
+  channel: WebhookChannel,
+  message: WebhookMessage,
+): Record<string, string> {
+  if (channel === 'discord') {
+    return {
+      content: `**${message.title}**\n${message.body}\n${message.url}`,
+    }
+  }
+
+  return {
+    text: `*${message.title}*\n${message.body}\n${message.url}`,
+  }
+}
+
 const pendingEvents = new Map<
   string,
   { pinId: string; event: NotificationEvent }
@@ -149,12 +172,11 @@ async function sendNotification(
   }
 
   if (channel === 'discord' || channel === 'slack') {
+    const url = `${payload.previewUrl}${payload.url}`
     const res = await fetch(target, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: `**${title}**\n${body}\n${payload.previewUrl}${payload.url}`,
-      }),
+      body: JSON.stringify(buildWebhookPayload(channel, { title, body, url })),
     })
     if (!res.ok) throw new Error(`${channel} webhook failed: ${res.status}`)
   }
