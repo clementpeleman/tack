@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { corsHeaders } from '#/lib/cors'
 import { createProjectEventStream } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
+import { enforceWidgetOrigin } from '#/lib/widget-connection'
 
 export const Route = createFileRoute('/api/widget/events')({
   server: {
@@ -42,6 +43,9 @@ export const Route = createFileRoute('/api/widget/events')({
             { status: 404, headers },
           )
         }
+
+        const originError = enforceWidgetOrigin(project.previewUrl, origin)
+        if (originError) return originError
 
         const stream = createProjectEventStream(project.id, request.signal)
         return new Response(stream, { headers })
