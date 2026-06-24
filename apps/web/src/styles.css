@@ -162,13 +162,25 @@ select:focus {
 .tk-landing {
   font-family: "Geist", var(--font-sans);
   --tk-code: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
-  /* Collaborator pointers: clay is the brand/primary; a small, deliberate set
-     of harmonising hues marks the other people pinning a preview. Moderate
-     saturation, never neon. */
-  --pt-clay: var(--pin);
+  /* Techy electric-blue accent, scoped to the landing — replaces the clay pin
+     here (the dashboard keeps clay until a global pivot). Overriding --pin lets
+     the logo, pins, $ prompt and highlights pick it up with no markup changes. */
+  --tk-accent: oklch(60% 0.15 225);
+  --pin: var(--tk-accent);
+  /* Collaborator pointers: the primary accent + a small, deliberate set of
+     harmonising hues marking the other people pinning a preview. Never neon. */
+  --pt-clay: var(--tk-accent);
   --pt-blue: oklch(60% 0.135 250);
   --pt-violet: oklch(56% 0.16 296);
   --pt-green: oklch(62% 0.125 158);
+}
+:root[data-theme="dark"] .tk-landing {
+  --tk-accent: oklch(73% 0.13 225);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tk-landing {
+    --tk-accent: oklch(73% 0.13 225);
+  }
 }
 .tk-landing ::selection {
   background: color-mix(in oklab, var(--pin) 28%, transparent);
@@ -188,10 +200,16 @@ select:focus {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+@keyframes tk-pop {
+  0%   { opacity: 0; transform: translate(-50%, -100%) scale(0.4); }
+  60%  { opacity: 1; transform: translate(-50%, -100%) scale(1.12); }
+  100% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
 .tk-rise  { animation: tk-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 .tk-fade  { animation: tk-fade 0.9s ease-out backwards; }
 .tk-pin-drop { animation: tk-pin-drop 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.45s backwards; }
+.tk-pop { animation: tk-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tk-rise, .tk-fade, .tk-pin-drop { animation: none; }
+  .tk-rise, .tk-fade, .tk-pin-drop, .tk-pop { animation: none; }
 }

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowRight, Check, Copy } from 'lucide-react'
+import { useState, useRef, type MouseEvent } from 'react'
+import { ArrowRight, Check, Copy, MousePointerClick } from 'lucide-react'
 import { ThemeToggle } from '#/components/ThemeToggle'
 
 const GITHUB_URL = 'https://github.com/clementpeleman/tack'
@@ -172,9 +172,21 @@ function ContextRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-/** The signature hero artifact: a pinned comment on a preview page, with the
- *  context that pin captures. Decorative — meaning is carried by the copy. */
+/** The signature hero artifact: a live preview you can pin. Decorative — the
+ *  meaning is carried by the copy, so the container stays aria-hidden. */
 function HeroArtifact() {
+  const [pins, setPins] = useState<{ id: number; x: number; y: number }[]>([])
+  const [interacted, setInteracted] = useState(false)
+  const idRef = useRef(0)
+
+  const dropPin = (e: MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - r.left) / r.width) * 100
+    const y = ((e.clientY - r.top) / r.height) * 100
+    setInteracted(true)
+    setPins((prev) => [...prev.slice(-5), { id: idRef.current++, x, y }])
+  }
+
   return (
     <div className="relative" aria-hidden="true">
       {/* preview window */}
@@ -185,7 +197,26 @@ function HeroArtifact() {
             preview.acme.com/pricing
           </span>
         </div>
-        <div className="relative space-y-4 p-6 sm:p-8">
+        <div
+          className="relative cursor-crosshair space-y-4 p-6 select-none sm:p-8"
+          onClick={dropPin}
+        >
+          {/* invitation to interact — fades after the first pin */}
+          <div
+            className={`pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 transition-opacity duration-300 ${interacted ? 'opacity-0' : 'opacity-100'}`}
+          >
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+              style={{
+                background: 'color-mix(in oklab, var(--tk-accent) 14%, var(--surface))',
+                color: 'color-mix(in oklab, var(--tk-accent) 70%, var(--ink))',
+              }}
+            >
+              <MousePointerClick size={13} strokeWidth={2} aria-hidden="true" />
+              Click to drop a pin
+            </span>
+          </div>
+
           <div className="space-y-2.5">
             <Bar w="42%" />
             <Bar w="70%" />
@@ -206,12 +237,28 @@ function HeroArtifact() {
             <Bar w="80%" />
             <Bar w="60%" />
           </div>
+
+          {/* pins you drop */}
+          {pins.map((p) => (
+            <span
+              key={p.id}
+              className="tk-pop pointer-events-none absolute z-10 block h-4 w-4 rounded-[52%_52%_52%_3px]"
+              style={{
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                transform: 'translate(-50%, -100%)',
+                background: 'var(--tk-accent)',
+                boxShadow:
+                  '0 0 0 2px var(--surface), 0 5px 14px -4px color-mix(in oklab, var(--tk-accent) 55%, transparent)',
+              }}
+            />
+          ))}
         </div>
       </div>
 
       {/* floating collaborators — decorative; the meaning is in the copy */}
       <div className="tk-rise absolute -top-3.5 left-2 z-10 hidden sm:block lg:-left-10" style={{ animationDelay: '0.5s' }}>
-        <Pointer label="Sam · client" tone="var(--pt-blue)" />
+        <Pointer label="Sam · client" tone="var(--pt-green)" />
       </div>
       <div className="tk-rise absolute bottom-28 left-2 z-10 hidden sm:block lg:-left-12" style={{ animationDelay: '0.68s' }}>
         <Pointer label="Maya · agency" tone="var(--pt-violet)" />
@@ -285,18 +332,16 @@ export function Landing() {
           <div>
             <h1
               className="tk-rise font-semibold text-[var(--ink)]"
-              style={{ fontSize: 'clamp(2.5rem, 5.6vw, 5rem)', lineHeight: 1.02, letterSpacing: '-0.02em', textWrap: 'balance' }}
+              style={{ fontSize: 'clamp(2.75rem, 5.8vw, 5rem)', lineHeight: 1.02, letterSpacing: '-0.02em', textWrap: 'balance' }}
             >
-              Client feedback, pinned to the exact element.
+              Quantify client feedback.
             </h1>
             <p
-              className="tk-rise mt-6 max-w-xl text-lg leading-relaxed text-[var(--ink-mute)]"
+              className="tk-rise mt-6 max-w-md text-lg leading-relaxed text-[var(--ink-mute)]"
               style={{ animationDelay: '0.08s', textWrap: 'pretty' }}
             >
-              Tack is an open-source feedback widget for your preview sites. A
-              reviewer clicks an element, types a note, and Tack attaches the page
-              URL, the CSS selector, a screenshot, and the viewport — so the
-              comment reaches your inbox tied to the exact thing it's about.
+              Reviewers pin comments on your preview site. Each one arrives with
+              the exact element, a screenshot, the viewport, and the browser.
             </p>
             <div className="tk-rise mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '0.16s' }}>
               <PrimaryLink href={DEMO_URL}>Try the demo</PrimaryLink>
