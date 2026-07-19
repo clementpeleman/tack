@@ -231,6 +231,7 @@ function SettingsPage() {
               <Link
                 to="/projects/$id/install"
                 params={{ id: project.id }}
+                search={{ onboarding: false }}
                 className="text-[var(--accent)]"
               >
                 install page
@@ -270,7 +271,7 @@ function SettingsPage() {
                 type="button"
                 onClick={saveGeneral}
                 disabled={savingGeneral}
-                className="min-h-11 px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
               >
                 {savingGeneral ? 'Saving...' : 'Save'}
               </button>
@@ -338,7 +339,7 @@ function SettingsPage() {
                 type="button"
                 onClick={saveNotifications}
                 disabled={savingNotify}
-                className="min-h-11 px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
               >
                 {savingNotify ? 'Saving...' : 'Save'}
               </button>

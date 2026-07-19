@@ -145,57 +145,57 @@ function InstallPage() {
               ? 'Widget loaded from your preview site.'
               : 'Open your preview site in another tab after adding the snippet.'}
           </p>
+
+          <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-[var(--ink-mute)] font-mono uppercase">
+                Script tag
+              </p>
+              <button
+                type="button"
+                onClick={copySnippet}
+                className="text-xs text-[var(--accent)] font-mono bg-transparent border-none cursor-pointer"
+              >
+                {snippetCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <code className="block text-xs text-[var(--ink-soft)] bg-[var(--surface-2)] px-3 py-2 rounded font-mono overflow-x-auto whitespace-nowrap">
+              {snippet}
+            </code>
+          </div>
+
+          {!connected && waitingSeconds >= 30 && (
+            <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3 text-xs text-[var(--ink-mute)]">
+              <p className="font-medium text-[var(--ink)] mb-1.5">Troubleshooting</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Is the preview URL correct and reachable?</li>
+                <li>Did you paste the snippet before <code>&lt;/body&gt;</code>?</li>
+                <li>Check the browser console for CSP or network errors.</li>
+                <li>Widget requests must come from the same host as the preview URL.</li>
+              </ul>
+            </div>
+          )}
+
+          {showTestStep && connected && (
+            <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3">
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">
+                Optional: send a test pin
+              </p>
+              <p className="text-xs text-[var(--ink-mute)] mb-3">
+                Open your preview, click the feedback button, and place one pin
+                to verify the full loop.
+              </p>
+              <a
+                href={previewTestUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center px-3 py-2 rounded-lg border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
+              >
+                Open preview
+              </a>
+            </div>
+          )}
         </div>
-
-        <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[var(--ink-mute)] font-mono uppercase">
-              Script tag
-            </p>
-            <button
-              type="button"
-              onClick={copySnippet}
-              className="text-xs text-[var(--accent)] font-mono bg-transparent border-none cursor-pointer"
-            >
-              {snippetCopied ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-          <code className="block text-xs text-[var(--ink-soft)] bg-[var(--surface-2)] px-3 py-2 rounded font-mono overflow-x-auto whitespace-nowrap">
-            {snippet}
-          </code>
-        </div>
-
-        {!connected && waitingSeconds >= 30 && (
-          <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-4 text-xs text-[var(--ink-mute)] space-y-2">
-            <p className="font-medium text-[var(--ink)]">Troubleshooting</p>
-            <ul className="list-disc pl-4 space-y-1">
-              <li>Is the preview URL correct and reachable?</li>
-              <li>Did you paste the snippet before <code>&lt;/body&gt;</code>?</li>
-              <li>Check the browser console for CSP or network errors.</li>
-              <li>Widget requests must come from the same host as the preview URL.</li>
-            </ul>
-          </div>
-        )}
-
-        {showTestStep && connected && (
-          <div className="mb-6 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-            <p className="text-sm font-medium text-[var(--ink)] mb-1">
-              Optional: send a test pin
-            </p>
-            <p className="text-xs text-[var(--ink-mute)] mb-3">
-              Open your preview, click the feedback button, and place one pin to
-              verify the full loop.
-            </p>
-            <a
-              href={previewTestUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center px-3 py-2 rounded-lg border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
-            >
-              Open preview
-            </a>
-          </div>
-        )}
 
         <div className="flex flex-wrap items-center gap-3">
           {connected ? (
@@ -203,7 +203,7 @@ function InstallPage() {
               type="button"
               onClick={finishOnboarding}
               disabled={finishing}
-              className="min-h-11 px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium disabled:opacity-50"
+              className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium disabled:opacity-50"
             >
               {finishing ? 'Opening inbox…' : 'Go to inbox'}
             </button>

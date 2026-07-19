@@ -51,7 +51,7 @@ function ProjectsPage() {
             </div>
             <Link
               to="/projects/new"
-              className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
+              className="px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
             >
               New project
             </Link>
@@ -99,7 +99,7 @@ function ProjectsPage() {
             </p>
             <Link
               to="/projects/new"
-              className="inline-block px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
+              className="inline-block px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
             >
               Create your first project
             </Link>

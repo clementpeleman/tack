@@ -43,7 +43,6 @@ import {
   Code2,
   Copy,
   ExternalLink,
-  FileCode2,
   Inbox,
   ListChecks,
 } from 'lucide-react'
@@ -55,6 +54,7 @@ interface PinWithComment {
   status: string
   selector: string | null
   elementText: string | null
+  elementStyles: string | null
   browser: string | null
   os: string | null
   screenshotPath: string | null
@@ -129,6 +129,7 @@ function toAiPinInput(pin: DbPin, repliesByPin: Map<string, DbReply[]>): AiPinIn
     reviewerName: pin.reviewerName,
     selector: pin.selector,
     elementText: pin.elementText,
+    elementStyles: pin.elementStyles,
     browser: pin.browser,
     viewport: `${pin.viewportW}x${pin.viewportH} at ${pin.xPct.toFixed(1)}%, ${pin.yPct.toFixed(1)}%`,
   }
@@ -284,6 +285,7 @@ const getProjectWithPins = createServerFn({ method: 'GET' })
           status: pin.status,
           selector: pin.selector,
           elementText: pin.elementText,
+          elementStyles: pin.elementStyles,
           tackId: pin.tackId,
           xpath: pin.xpath,
           placement: resolvePlacementForDisplay({
@@ -579,6 +581,7 @@ function InboxPage() {
         xpath: pin.xpath,
         tackId: pin.tackId,
         elementText: pin.elementText,
+        elementStyles: pin.elementStyles,
         browser: pin.browser,
         os: pin.os,
         xPct: pin.xPct,
@@ -631,10 +634,6 @@ function InboxPage() {
         <header className="mb-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <p className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-[11px] font-mono uppercase text-[var(--ink-soft)]">
-                <Inbox size={12} strokeWidth={1.8} aria-hidden="true" />
-                Feedback inbox
-              </p>
               <h1 className="text-2xl font-semibold text-[var(--ink)]">
                 {project.name}
               </h1>
@@ -659,7 +658,7 @@ function InboxPage() {
                     type="button"
                     onClick={analyzePins}
                     disabled={analyzing}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[color-mix(in_oklab,var(--accent)_18%,var(--accent))] bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] shadow-[0_1px_1px_color-mix(in_oklab,var(--accent)_24%,transparent)] transition-colors hover:bg-[var(--accent-2)] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10"
                   >
                     <ListChecks size={14} strokeWidth={1.8} aria-hidden="true" />
                     {analyzing ? 'Analyzing' : 'Analyze pins'}
@@ -830,7 +829,7 @@ function ZeroPinOnboarding({
           <button
             type="button"
             onClick={copySnippet}
-            className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:bg-[var(--accent-2)]"
+            className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:opacity-90"
           >
             {scriptCopied ? (
               <Check size={14} strokeWidth={1.8} aria-hidden="true" />
@@ -848,7 +847,7 @@ function ZeroPinOnboarding({
           <button
             type="button"
             onClick={copyBookmarklet}
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:bg-[var(--accent-2)]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:opacity-90"
           >
             {bookmarkletCopied ? (
               <Check size={14} strokeWidth={1.8} aria-hidden="true" />
@@ -1111,14 +1110,8 @@ function AiInboxPanel({
         )}
       </div>
 
-      {!entitled ? (
-        <div className="mb-3 flex gap-2 rounded-md border border-[color-mix(in_oklab,var(--accent)_18%,var(--line))] bg-[color-mix(in_oklab,var(--accent)_6%,var(--surface))] p-3">
-          <FileCode2
-            size={14}
-            strokeWidth={1.8}
-            className="mt-0.5 shrink-0 text-[var(--accent)]"
-            aria-hidden="true"
-          />
+      <div className="mt-3 border-t border-[var(--line)] pt-3">
+        {!entitled ? (
           <p className="text-xs leading-relaxed text-[var(--ink-mute)]">
             {entitlementReason === 'disabled' ? (
               <>
@@ -1137,57 +1130,50 @@ function AiInboxPanel({
               </>
             )}
           </p>
-        </div>
-      ) : latestRun ? (
-        <div className="mb-3 rounded-md border border-[var(--line)] bg-[var(--surface-2)] p-3">
-          <div className="mb-2 flex items-center justify-between gap-3">
+        ) : latestRun ? (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <RunStatusBadge status={latestRun.status} />
             {latestRun.status !== 'failed' && (
-              <span className="text-[10px] text-[var(--ink-soft)] font-mono">
+              <span className="font-mono text-[var(--ink-mute)]">
+                {latestRun.model} · {latestRun.pinCount} pins ·{' '}
                 {latestRun.actualCostCents.toFixed(3)} cents
               </span>
             )}
           </div>
-          {latestRun.status !== 'failed' && (
-            <p className="truncate text-xs text-[var(--ink-mute)] font-mono">
-              {latestRun.model} · {latestRun.pinCount} pins
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="mb-3 rounded-md border border-dashed border-[var(--line)] bg-[var(--surface-2)] p-3">
-          <p className="text-xs text-[var(--ink-mute)]">
+        ) : (
+          <p className="text-xs leading-relaxed text-[var(--ink-mute)]">
             Run Analyze pins after feedback arrives. Analysis is manual and
             cost-capped.
           </p>
-        </div>
-      )}
+        )}
 
-      {runError && (
-        <div className="mb-3 flex gap-2 rounded-md border border-[color-mix(in_oklab,var(--danger)_24%,var(--line))] bg-[color-mix(in_oklab,var(--danger)_7%,var(--surface))] p-3">
-          <AlertCircle
-            size={14}
-            strokeWidth={1.8}
-            className="mt-0.5 shrink-0 text-[var(--danger)]"
-            aria-hidden="true"
-          />
-          <p className="text-xs leading-relaxed text-[var(--danger)]">
+        {runError && (
+          <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-[var(--danger)]">
+            <AlertCircle
+              size={13}
+              strokeWidth={1.8}
+              className="mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
             {runError}
           </p>
-        </div>
-      )}
+        )}
+      </div>
 
       {aiInbox.groups.length > 0 && entitled ? (
-        <div className="space-y-3">
+        <div className="mt-3 divide-y divide-[var(--line)] border-t border-[var(--line)]">
           {aiInbox.groups.map((group) => (
-            <div
-              key={group.id}
-              className="rounded-md border border-[color-mix(in_oklab,var(--ink)_8%,transparent)] bg-[var(--surface-2)] p-3"
-            >
-              <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                <AiBadge value={group.type} />
-                <PriorityBadge value={group.priority} />
-                <span className="text-[10px] text-[var(--ink-soft)] font-mono">
+            <div key={group.id} className="py-3">
+              <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-mono uppercase text-[var(--ink-soft)]">
+                <span className="text-[var(--accent-2)]">
+                  {formatBadgeText(group.type)}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span className="text-[var(--warn)]">
+                  {formatBadgeText(group.priority)}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>
                   {group.pinIds.length} pin{group.pinIds.length === 1 ? '' : 's'}
                 </span>
               </div>
@@ -1197,54 +1183,36 @@ function AiInboxPanel({
               <p className="mt-1 text-xs leading-relaxed text-[var(--ink-mute)]">
                 {group.summary}
               </p>
-              <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_8%,transparent)] pt-3">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <p className="text-[10px] font-mono uppercase text-[var(--ink-soft)]">
-                    Implementation brief
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => onCopyForAgent(group)}
-                    className="inline-flex items-center gap-1 rounded border border-[var(--line)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
-                  >
-                    {agentPromptCopied ? (
-                      <Check size={11} strokeWidth={1.8} aria-hidden="true" />
-                    ) : (
-                      <Copy size={11} strokeWidth={1.8} aria-hidden="true" />
-                    )}
-                    {agentPromptCopied ? 'Copied' : 'Copy for agent'}
-                  </button>
-                </div>
-                <p className="text-xs leading-relaxed text-[var(--ink-soft)]">
-                  {group.implementationBrief}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <p className="text-[10px] font-mono uppercase text-[var(--ink-soft)]">
+                  Implementation brief
                 </p>
+                <button
+                  type="button"
+                  onClick={() => onCopyForAgent(group)}
+                  className="inline-flex items-center gap-1 rounded border border-[var(--line)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--ink-mute)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--ink)]"
+                >
+                  {agentPromptCopied ? (
+                    <Check size={11} strokeWidth={1.8} aria-hidden="true" />
+                  ) : (
+                    <Copy size={11} strokeWidth={1.8} aria-hidden="true" />
+                  )}
+                  {agentPromptCopied ? 'Copied' : 'Copy for agent'}
+                </button>
               </div>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--ink-soft)]">
+                {group.implementationBrief}
+              </p>
             </div>
           ))}
         </div>
       ) : entitled ? (
-        <p className="text-xs leading-relaxed text-[var(--ink-soft)]">
+        <p className="mt-3 border-t border-[var(--line)] pt-3 text-xs leading-relaxed text-[var(--ink-soft)]">
           No duplicate groups yet. Completed runs will show implementation
           briefs here.
         </p>
       ) : null}
     </section>
-  )
-}
-
-function AiBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase bg-[color-mix(in_oklab,var(--accent)_14%,transparent)] text-[var(--accent-2)]">
-      {value}
-    </span>
-  )
-}
-
-function PriorityBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase bg-[color-mix(in_oklab,var(--warn)_14%,transparent)] text-[var(--warn)]">
-      {formatBadgeText(value)}
-    </span>
   )
 }
 
@@ -1299,7 +1267,7 @@ function BookmarkletLink({ href, label }: { href: string; label: string }) {
         href={href}
         draggable="true"
         onClick={(event) => event.preventDefault()}
-        className="inline-flex min-h-11 cursor-grab items-center gap-2 rounded-md bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] no-underline transition-colors hover:bg-[var(--accent-2)] active:cursor-grabbing sm:min-h-10"
+        className="inline-flex min-h-11 cursor-grab items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] no-underline transition-colors hover:opacity-90 active:cursor-grabbing sm:min-h-10"
       >
         {label}
       </a>

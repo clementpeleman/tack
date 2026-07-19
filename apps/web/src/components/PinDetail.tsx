@@ -8,6 +8,18 @@ import {
 } from '#/lib/pin-display'
 import type { PinDetailData } from '#/lib/project-pin-actions'
 
+function parseElementStyles(value: string | null): Record<string, string> | null {
+  if (!value) return null
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : null
+  } catch {
+    return null
+  }
+}
+
 interface PinDetailProps {
   projectId: string
   previewUrl: string
@@ -47,6 +59,8 @@ export function PinDetail({
     placement.verified && pin.placementCheckedAt
       ? `${placement.state} · checked ${getTimeAgo(pin.placementCheckedAt)}`
       : 'unverified'
+
+  const elementStyles = parseElementStyles(pin.elementStyles)
 
   const previewLink = buildPreviewLink(previewUrl, pin.url, pin.id)
   const screenshotUrl = pin.screenshotPath
@@ -115,10 +129,18 @@ export function PinDetail({
               {pin.reviewerName ?? 'Anonymous'} · {getTimeAgo(pin.createdAt)}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={pin.status} />
-            {pin.aiLabel && <AiBadge value={pin.aiLabel} />}
-            {pin.aiPriority && <PriorityBadge value={pin.aiPriority} />}
+            {(pin.aiLabel || pin.aiPriority) && (
+              <span className="text-xs font-mono text-[var(--ink-soft)]">
+                {[
+                  pin.aiLabel,
+                  pin.aiPriority?.replaceAll('_', ' '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -157,48 +179,42 @@ export function PinDetail({
             <p className="text-sm text-[var(--ink)] whitespace-pre-wrap">
               {pin.comment ?? 'No comment'}
             </p>
-          </div>
 
-          {pin.replies.length > 1 && (
-            <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4 space-y-2">
-              <p className="text-[11px] text-[var(--ink-mute)] uppercase font-mono">
-                Thread
-              </p>
-              {pin.replies.slice(1).map((reply) => (
-                <div
-                  key={reply.id}
-                  className="rounded-lg border border-[color-mix(in_oklab,var(--ink)_8%,transparent)] bg-[var(--surface-2)] p-3"
-                >
-                  <p className="text-[11px] text-[var(--ink-soft)] font-mono mb-1">
-                    {reply.authorName}
-                    <span className="text-[var(--ink-mute)]">
-                      {' '}
-                      · {reply.authorType} · {getTimeAgo(reply.createdAt)}
-                    </span>
-                  </p>
-                  <p className="text-sm text-[var(--ink)] whitespace-pre-wrap">
-                    {reply.body}
-                  </p>
-                </div>
-              ))}
+            {pin.replies.length > 1 && (
+              <div className="mt-3 divide-y divide-[var(--line)] border-t border-[var(--line)]">
+                {pin.replies.slice(1).map((reply) => (
+                  <div key={reply.id} className="py-2.5 first:pt-3">
+                    <p className="text-[11px] text-[var(--ink-soft)] font-mono mb-1">
+                      {reply.authorName}
+                      <span className="text-[var(--ink-mute)]">
+                        {' '}
+                        · {reply.authorType} · {getTimeAgo(reply.createdAt)}
+                      </span>
+                    </p>
+                    <p className="text-sm text-[var(--ink)] whitespace-pre-wrap">
+                      {reply.body}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-3 border-t border-[var(--line)] pt-3">
+              <label
+                htmlFor={replyId}
+                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
+              >
+                Add reply
+              </label>
+              <textarea
+                id={replyId}
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm resize-y"
+                placeholder="Reply to reviewer..."
+              />
             </div>
-          )}
-
-          <div className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-            <label
-              htmlFor={replyId}
-              className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-            >
-              Add reply
-            </label>
-            <textarea
-              id={replyId}
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm resize-y"
-              placeholder="Reply to reviewer..."
-            />
           </div>
 
           {pin.aiSummary && (
@@ -249,6 +265,22 @@ export function PinDetail({
             {pin.os && <Detail label="OS" value={pin.os} />}
           </div>
 
+          {elementStyles && (
+            <details className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4 text-xs">
+              <summary className="text-[var(--ink-mute)] text-[11px] uppercase font-mono cursor-pointer select-none">
+                Computed style
+              </summary>
+              <dl className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono">
+                {Object.entries(elementStyles).map(([key, value]) => (
+                  <div key={key} className="min-w-0 flex gap-1.5">
+                    <dt className="text-[var(--ink-soft)] shrink-0">{key}:</dt>
+                    <dd className="text-[var(--ink-mute)] truncate">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          )}
+
           <div className="sr-only" role="status" aria-live="polite">
             {statusMsg}
           </div>
@@ -268,7 +300,7 @@ export function PinDetail({
                   type="button"
                   onClick={() => setConfirmDelete(false)}
                   disabled={deleting}
-                  className="min-h-11 px-3 py-2 rounded-lg text-xs border border-[var(--line)]"
+                  className="min-h-11 px-3 py-2 rounded-full text-xs border border-[var(--line)]"
                 >
                   Keep pin
                 </button>
@@ -276,7 +308,7 @@ export function PinDetail({
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="min-h-11 px-3 py-2 rounded-lg text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
+                  className="min-h-11 px-3 py-2 rounded-full text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
                 >
                   {deleting ? 'Deleting...' : 'Delete pin'}
                 </button>
@@ -288,7 +320,7 @@ export function PinDetail({
                 type="button"
                 onClick={handleAddReply}
                 disabled={!replyBody.trim() || deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-lg border border-[var(--line)] text-xs disabled:opacity-50"
+                className="min-h-11 px-3 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs disabled:opacity-50"
               >
                 {replying ? 'Sending...' : 'Send reply'}
               </button>
@@ -296,7 +328,7 @@ export function PinDetail({
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-lg border border-[var(--line)] text-xs disabled:opacity-50"
+                className="min-h-11 px-3 py-2 rounded-full border border-[var(--line)] text-xs disabled:opacity-50"
               >
                 {togglingStatus
                   ? 'Updating...'
@@ -308,7 +340,7 @@ export function PinDetail({
                 href={previewLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-h-11 inline-flex items-center px-3 py-2 rounded-lg border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
+                className="min-h-11 inline-flex items-center px-3 py-2 rounded-full border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
               >
                 Open in preview
               </a>
@@ -316,7 +348,7 @@ export function PinDetail({
                 type="button"
                 onClick={() => setConfirmDelete(true)}
                 disabled={deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-lg text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
+                className="min-h-11 px-3 py-2 rounded-full text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
               >
                 Delete
               </button>
@@ -348,14 +380,6 @@ function Detail({
         {value}
       </span>
     </div>
-  )
-}
-
-function AiBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase bg-[color-mix(in_oklab,var(--accent)_14%,transparent)] text-[var(--accent-2)]">
-      {value}
-    </span>
   )
 }
 

@@ -1,9 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=PT+Serif:wght@700&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Code+Pro:wght@500&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-display: "PT Serif", Georgia, "Times New Roman", serif;
+  --font-mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Light (default) */
@@ -11,27 +12,28 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --page: oklch(99.2% 0.004 285);
-  --surface: oklch(99.4% 0.004 92);
-  --surface-2: oklch(96.9% 0.005 285);
-  --surface-3: oklch(93.3% 0.006 285);
-  --line: oklch(90.8% 0.006 285);
-  --ink: oklch(20.5% 0.006 285);
-  --ink-mute: oklch(53.8% 0.009 285);
-  --ink-soft: oklch(65.1% 0.009 285);
+  --page: oklch(99% 0.002 260);
+  --surface: oklch(96.4% 0.006 260);
+  --surface-2: oklch(92.8% 0.008 260);
+  --surface-3: oklch(89% 0.009 260);
+  --line: oklch(87% 0.010 260);
+  --ink: oklch(24.4% 0.024 260);
+  --ink-mute: oklch(50% 0.020 260);
+  --ink-soft: oklch(66% 0.014 260);
 
-  --accent: oklch(43.6% 0.185 280);
-  --accent-2: oklch(47.4% 0.185 280);
-  --accent-3: oklch(39.8% 0.18 280);
+  --accent: oklch(55% 0.25 262);
+  --accent-2: oklch(61% 0.22 262);
+  --accent-3: oklch(48% 0.24 262);
+  --accent-secondary: oklch(70% 0.20 45);
 
-  --pin: oklch(63.2% 0.155 44);
-  --pin-2: oklch(73.5% 0.13 54);
+  --pin: oklch(55% 0.25 262);
+  --pin-2: oklch(61% 0.22 262);
 
-  --bone: oklch(99.2% 0.004 285);
-  --on-accent: oklch(99.2% 0.004 285);
-  --signal: oklch(63.5% 0.14 168);
-  --warn: oklch(64.2% 0.16 70);
-  --danger: oklch(58.5% 0.18 22);
+  --bone: oklch(99% 0.002 260);
+  --on-accent: oklch(99% 0 0);
+  --signal: oklch(60% 0.13 165);
+  --warn: oklch(80% 0.16 95);
+  --danger: oklch(58% 0.19 25);
 
   --shadow-float: 0 1px 1px color-mix(in oklab, var(--ink) 8%, transparent), 0 12px 24px -16px color-mix(in oklab, var(--ink) 28%, transparent);
   --shadow-modal: 0 1px 2px color-mix(in oklab, var(--ink) 12%, transparent), 0 24px 48px -28px color-mix(in oklab, var(--ink) 32%, transparent);
@@ -41,27 +43,28 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --page: oklch(20.3% 0.016 285);
-  --surface: oklch(24.8% 0.018 285);
-  --surface-2: oklch(30.4% 0.021 285);
-  --surface-3: oklch(36.3% 0.024 285);
-  --line: oklch(39.8% 0.025 285);
-  --ink: oklch(96.9% 0.005 285);
-  --ink-mute: oklch(81.6% 0.015 285);
-  --ink-soft: oklch(66.7% 0.024 285);
+  --page: oklch(17.5% 0.020 260);
+  --surface: oklch(22.5% 0.022 260);
+  --surface-2: oklch(28% 0.024 260);
+  --surface-3: oklch(33.5% 0.026 260);
+  --line: oklch(33% 0.024 260);
+  --ink: oklch(94% 0.010 260);
+  --ink-mute: oklch(74% 0.018 260);
+  --ink-soft: oklch(56% 0.018 260);
 
-  --accent: oklch(73.5% 0.115 280);
-  --accent-2: oklch(82.4% 0.078 280);
-  --accent-3: oklch(63.3% 0.155 280);
+  --accent: oklch(74% 0.19 262);
+  --accent-2: oklch(80% 0.15 262);
+  --accent-3: oklch(68% 0.20 262);
+  --accent-secondary: oklch(76% 0.16 45);
 
-  --pin: oklch(73.5% 0.13 54);
-  --pin-2: oklch(82.9% 0.095 62);
+  --pin: oklch(74% 0.19 262);
+  --pin-2: oklch(80% 0.15 262);
 
-  --bone: oklch(99.2% 0.004 285);
-  --on-accent: oklch(20.3% 0.016 285);
-  --signal: oklch(68.8% 0.145 168);
-  --warn: oklch(75% 0.15 75);
-  --danger: oklch(69.5% 0.17 22);
+  --bone: oklch(99% 0.002 260);
+  --on-accent: oklch(14% 0.02 260);
+  --signal: oklch(72% 0.13 165);
+  --warn: oklch(84% 0.14 95);
+  --danger: oklch(70% 0.17 25);
 
   --shadow-float: 0 4px 14px color-mix(in oklab, var(--page) 65%, transparent);
   --shadow-modal: 0 16px 42px color-mix(in oklab, var(--page) 72%, transparent);
@@ -71,27 +74,28 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --page: oklch(20.3% 0.016 285);
-    --surface: oklch(24.8% 0.018 285);
-    --surface-2: oklch(30.4% 0.021 285);
-    --surface-3: oklch(36.3% 0.024 285);
-    --line: oklch(39.8% 0.025 285);
-    --ink: oklch(96.9% 0.005 285);
-    --ink-mute: oklch(81.6% 0.015 285);
-    --ink-soft: oklch(66.7% 0.024 285);
+    --page: oklch(17.5% 0.020 260);
+    --surface: oklch(22.5% 0.022 260);
+    --surface-2: oklch(28% 0.024 260);
+    --surface-3: oklch(33.5% 0.026 260);
+    --line: oklch(33% 0.024 260);
+    --ink: oklch(94% 0.010 260);
+    --ink-mute: oklch(74% 0.018 260);
+    --ink-soft: oklch(56% 0.018 260);
 
-    --accent: oklch(73.5% 0.115 280);
-    --accent-2: oklch(82.4% 0.078 280);
-    --accent-3: oklch(63.3% 0.155 280);
+    --accent: oklch(74% 0.19 262);
+    --accent-2: oklch(80% 0.15 262);
+    --accent-3: oklch(68% 0.20 262);
+    --accent-secondary: oklch(76% 0.16 45);
 
-    --pin: oklch(73.5% 0.13 54);
-    --pin-2: oklch(82.9% 0.095 62);
+    --pin: oklch(74% 0.19 262);
+    --pin-2: oklch(80% 0.15 262);
 
-    --bone: oklch(99.2% 0.004 285);
-    --on-accent: oklch(20.3% 0.016 285);
-    --signal: oklch(68.8% 0.145 168);
-    --warn: oklch(75% 0.15 75);
-    --danger: oklch(69.5% 0.17 22);
+    --bone: oklch(99% 0.002 260);
+    --on-accent: oklch(14% 0.02 260);
+    --signal: oklch(72% 0.13 165);
+    --warn: oklch(84% 0.14 95);
+    --danger: oklch(70% 0.17 25);
 
     --shadow-float: 0 4px 14px color-mix(in oklab, var(--page) 65%, transparent);
     --shadow-modal: 0 16px 42px color-mix(in oklab, var(--page) 72%, transparent);
@@ -111,6 +115,12 @@ body {
   background: var(--page);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -155,32 +165,18 @@ select:focus {
 }
 
 /* ── Landing (brand surface) ──────────────────────────────────
-   Monochrome: reuse the theme-aware neutrals, drop the product's
-   violet --accent. Primary actions use --ink; the clay --pin is the
-   only colour on the page. Geist is scoped here so the dashboard
-   keeps Inter until the full pivot. */
+   The azure accent and Geist are global now. The landing just keeps its
+   near-black buttons (--ink) and the collaborator-pointer hue set; the
+   accent aliases the global --pin so it tracks the theme automatically. */
 .tk-landing {
-  font-family: "Geist", var(--font-sans);
   --tk-code: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
-  /* Techy electric-blue accent, scoped to the landing — replaces the clay pin
-     here (the dashboard keeps clay until a global pivot). Overriding --pin lets
-     the logo, pins, $ prompt and highlights pick it up with no markup changes. */
-  --tk-accent: oklch(60% 0.15 225);
-  --pin: var(--tk-accent);
+  --tk-accent: var(--pin);
   /* Collaborator pointers: the primary accent + a small, deliberate set of
      harmonising hues marking the other people pinning a preview. Never neon. */
   --pt-clay: var(--tk-accent);
   --pt-blue: oklch(60% 0.135 250);
   --pt-violet: oklch(56% 0.16 296);
   --pt-green: oklch(62% 0.125 158);
-}
-:root[data-theme="dark"] .tk-landing {
-  --tk-accent: oklch(73% 0.13 225);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tk-landing {
-    --tk-accent: oklch(73% 0.13 225);
-  }
 }
 .tk-landing ::selection {
   background: color-mix(in oklab, var(--pin) 28%, transparent);
@@ -212,4 +208,38 @@ select:focus {
 
 @media (prefers-reduced-motion: reduce) {
   .tk-rise, .tk-fade, .tk-pin-drop, .tk-pop { animation: none; }
+}
+
+/* The 3-step "loop" section: a soft blurred glow instead of a flat tinted
+   background band, plus a gentle hover-lift on the step cards. Chosen via
+   /impeccable live over the flat-tint alternative. */
+.tk-loop-section {
+  position: relative;
+  background-color: var(--page);
+  overflow: hidden;
+}
+.tk-loop-section::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10%;
+  background: radial-gradient(
+    60% 50% at 50% 0%,
+    color-mix(in oklab, var(--pin) 28%, transparent) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+}
+.tk-loop-content {
+  position: relative;
+}
+.tk-loop-card {
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tk-loop-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-float);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tk-loop-card { transition: none; }
 }

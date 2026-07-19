@@ -101,7 +101,7 @@ function PrimaryLink({
     <a
       href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="group inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--ink)] px-5 text-sm font-medium text-[var(--page)] no-underline transition-[transform,opacity] duration-200 hover:opacity-90 active:translate-y-px"
+      className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-medium text-[var(--on-accent)] no-underline transition-[transform,opacity] duration-200 hover:opacity-90 active:translate-y-px"
     >
       {children}
       <ArrowRight
@@ -127,7 +127,7 @@ function GhostLink({
     <a
       href={href}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[var(--line)] px-5 text-sm font-medium text-[var(--ink)] no-underline transition-colors duration-200 hover:bg-[var(--surface-2)]"
+      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] px-5 text-sm font-medium text-[var(--ink)] no-underline transition-colors duration-200 hover:bg-[var(--surface-2)]"
     >
       {children}
     </a>
@@ -360,8 +360,8 @@ export function Landing() {
         </section>
 
         {/* ── The loop (genuine 3-step sequence) ──────────── */}
-        <section className="border-t border-[var(--line)] bg-[var(--surface)]">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
+        <section className="tk-loop-section">
+          <div className="tk-loop-content mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
             <h2
               className="max-w-2xl font-semibold text-[var(--ink)]"
               style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.75rem)', lineHeight: 1.08, letterSpacing: '-0.02em', textWrap: 'balance' }}
@@ -380,7 +380,7 @@ export function Landing() {
                   title: 'A reviewer leaves a comment',
                   body: 'They click the element, type what is wrong, and submit. The widget is already on your preview site, so there is nothing to install and no account to create.',
                   visual: (
-                    <div className="relative rounded-lg border border-[var(--line)] bg-[var(--page)] p-4">
+                    <div className="tk-loop-card relative rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="space-y-2">
                         <Bar w="60%" />
                         <Bar w="40%" />
@@ -394,7 +394,7 @@ export function Landing() {
                   title: 'It arrives with context',
                   body: 'The comment lands in your inbox with the page URL, the CSS selector, a screenshot, the viewport, and the browser — enough to reproduce it without asking.',
                   visual: (
-                    <div className="rounded-lg border border-[var(--line)] bg-[var(--page)] p-4">
+                    <div className="tk-loop-card rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-[50%_50%_50%_2px] -rotate-45 bg-[var(--pin)]" aria-hidden="true" />
                         <span className="text-xs font-medium text-[var(--ink)]">Headline too soft</span>
@@ -412,7 +412,7 @@ export function Landing() {
                   title: 'You triage it',
                   body: 'Reply, set a status, group duplicates, and resolve. “Open in preview” jumps straight back to the element on the live page.',
                   visual: (
-                    <div className="rounded-lg border border-[var(--line)] bg-[var(--page)] p-4">
+                    <div className="tk-loop-card rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
                           <Check size={13} strokeWidth={2.5} className="text-[var(--ink-soft)]" aria-hidden="true" />

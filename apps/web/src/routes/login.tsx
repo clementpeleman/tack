@@ -148,7 +148,7 @@ function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-3 py-2.5 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="w-full px-3 py-2.5 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 {loading ? 'Setting up…' : 'Claim this instance'}
               </button>
@@ -231,7 +231,7 @@ function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full px-3 py-2.5 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="w-full px-3 py-2.5 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 {loading ? 'Sending...' : 'Continue with email'}
               </button>
