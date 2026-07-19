@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Tack demo placeholder">
-  <rect width="960" height="540" fill="#0f1115"/>
-  <rect x="40" y="40" width="880" height="460" rx="16" fill="#171a21" stroke="#2a3140" stroke-width="2"/>
-  <circle cx="120" cy="120" r="18" fill="#ff6b4a"/>
-  <text x="160" y="128" fill="#eef1f6" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="600">Tack demo</text>
-  <text x="160" y="170" fill="#9aa3b2" font-family="ui-monospace, monospace" font-size="16">Replace with docs/demo.gif before Show HN</text>
-  <rect x="120" y="220" width="720" height="220" rx="12" fill="#10141c" stroke="#303848" stroke-dasharray="8 8"/>
-  <text x="480" y="335" fill="#667085" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20">pin ’ inbox ’ reply ’ preview deeplink</text>
+  <rect width="960" height="540" fill="#FCFCFE"/>
+  <rect x="40" y="40" width="880" height="460" rx="16" fill="#FFFFFF" stroke="#D7D9DE" stroke-width="2"/>
+  <path d="M120 96a18 18 0 1 1-16.94 24Q102 118 102 116.6L102 99.2Q102 96 105.2 96Z" fill="#005DFF"/>
+  <text x="160" y="128" fill="#23262E" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="600">Tack demo</text>
+  <text x="160" y="170" fill="#6B6F7A" font-family="ui-monospace, monospace" font-size="16">Replace with docs/demo.gif before launch</text>
+  <rect x="120" y="220" width="720" height="220" rx="12" fill="#F2F3F5" stroke="#D7D9DE" stroke-dasharray="8 8"/>
+  <text x="480" y="335" fill="#6B6F7A" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20">pin &#183; inbox &#183; reply &#183; preview deeplink</text>
 </svg>

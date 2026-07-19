@@ -36,7 +36,7 @@ Dashboard: [http://localhost:3000](http://localhost:3000)
 
 ![Tack demo](docs/demo.svg)
 
-On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` route. For a Show HN-style launch, replace `docs/demo.svg` with a recorded GIF (`docs/demo.gif`) that shows the owner/reviewer loop.
+On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` route.
 
 ## Self-host configuration
 
@@ -85,8 +85,14 @@ Magic links appear in Mailpit at [http://localhost:8025](http://localhost:8025).
 
 The widget is hidden below 768px viewport width.
 
+## Browser extension
+
+A no-code alternative to the script tag for sites you can't edit, or whose Content-Security-Policy would block a `<script>` snippet: `apps/extension/` injects the same widget from a content script. See [`apps/extension/README.md`](apps/extension/README.md) for build and install instructions.
+
 ## Product docs
 
+- [`PRODUCT.md`](PRODUCT.md) — audience, brand personality, design principles
+- [`DESIGN.md`](DESIGN.md) — locked design system: tokens, typography, component voice
 - [`CONTEXT.md`](CONTEXT.md) — domain language and product layer boundaries
 - [`docs/plans/2026-06-01-001-feat-core-v1-launch-hardening-plan.md`](docs/plans/2026-06-01-001-feat-core-v1-launch-hardening-plan.md) — Core launch hardening plan
 - [`docs/adr/0003-ship-edits-git-not-production.md`](docs/adr/0003-ship-edits-git-not-production.md) — Ship edits Git, never production
@@ -96,8 +102,13 @@ The widget is hidden below 768px viewport width.
 ```
 tack/
 ├── apps/web/          # Dashboard + API (TanStack Start)
+├── apps/extension/    # Browser extension (no-code widget install)
 ├── packages/widget/   # Embeddable widget
 ├── packages/shared/   # Shared types + URL normalization
 ├── Dockerfile
 └── docker-compose.yml
 ```
+
+## License
+
+[AGPL-3.0](LICENSE)
