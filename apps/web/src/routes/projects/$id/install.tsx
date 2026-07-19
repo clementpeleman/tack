@@ -4,6 +4,7 @@ import { getProject, getProjects } from '#/lib/projects'
 import { getProjectConnectionStatus } from '#/lib/project-pin-actions'
 import { completeOnboarding } from '#/lib/user'
 import { Layout } from '#/components/Layout'
+import { Button } from '#/components/ui/Button'
 
 export const Route = createFileRoute('/projects/$id/install')({
   component: InstallPage,
@@ -189,7 +190,7 @@ function InstallPage() {
                 href={previewTestUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center px-3 py-2 rounded-lg border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
+                className="inline-flex min-h-11 items-center px-3 py-2 rounded-full border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
               >
                 Open preview
               </a>
@@ -199,33 +200,20 @@ function InstallPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           {connected ? (
-            <button
-              type="button"
-              onClick={finishOnboarding}
-              disabled={finishing}
-              className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium disabled:opacity-50"
-            >
+            <Button onClick={finishOnboarding} disabled={finishing}>
               {finishing ? 'Opening inbox…' : 'Go to inbox'}
-            </button>
+            </Button>
           ) : (
             <>
               {onboarding && waitingSeconds >= 30 && (
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  className="min-h-11 px-4 py-2 rounded-lg border border-[var(--line)] text-sm text-[var(--ink)]"
-                >
+                <Button variant="secondary" onClick={handleContinue}>
                   Continue anyway
-                </button>
+                </Button>
               )}
               {!onboarding && (
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  className="min-h-11 px-4 py-2 rounded-lg border border-[var(--line)] text-sm text-[var(--ink-soft)]"
-                >
+                <Button variant="secondary" onClick={handleContinue}>
                   Skip to inbox
-                </button>
+                </Button>
               )}
             </>
           )}

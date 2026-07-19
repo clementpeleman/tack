@@ -3,6 +3,8 @@ import { type PlacementDisplay } from '@tack/shared'
 import { ChevronRight } from 'lucide-react'
 import { getTimeAgo } from '#/lib/pin-display'
 import { placementLabel } from '#/lib/placement-display'
+import { Pin } from '#/components/brand/Pin'
+import { StatusPill } from '#/components/ui/StatusPill'
 
 interface PinRowProps {
   projectId: string
@@ -37,14 +39,7 @@ export function PinRow({ projectId, pin, index, projectKey }: PinRowProps) {
       className="group grid grid-cols-[auto_minmax(0,1fr)_auto] gap-3 px-4 py-4 min-h-16 border-b border-[color-mix(in_oklab,var(--ink)_8%,transparent)] last:border-b-0 hover:bg-[var(--surface-2)] no-underline transition-colors sm:grid-cols-[auto_44px_minmax(0,1fr)_auto]"
     >
       <div className="pt-0.5">
-        <div
-          className="w-5 h-5 bg-[var(--pin)] rounded-[50%_50%_50%_4px] -rotate-45 flex items-center justify-center shrink-0 shadow-[0_1px_2px_color-mix(in_oklab,var(--pin)_34%,transparent)]"
-          aria-hidden="true"
-        >
-          <span className="rotate-45 text-[9px] font-bold text-[var(--on-accent)] font-mono">
-            {index + 1}
-          </span>
-        </div>
+        <Pin n={index + 1} />
       </div>
 
       {screenshotUrl && (
@@ -82,6 +77,34 @@ export function PinRow({ projectId, pin, index, projectKey }: PinRowProps) {
               </span>
             </>
           )}
+          {pin.aiLabel && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="text-[var(--accent-2)]">{pin.aiLabel}</span>
+            </>
+          )}
+          {pin.aiPriority && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span className="text-[var(--warn)]">
+                {pin.aiPriority.replaceAll('_', ' ')}
+              </span>
+            </>
+          )}
+          {pin.placement.verified && placementLabel(pin.placement.state) && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span
+                className={
+                  placementLabel(pin.placement.state) === 'lost'
+                    ? 'text-[var(--danger)]'
+                    : undefined
+                }
+              >
+                {placementLabel(pin.placement.state)}
+              </span>
+            </>
+          )}
           {pin.aiGroupTitle && (
             <>
               <span aria-hidden="true">·</span>
@@ -99,12 +122,9 @@ export function PinRow({ projectId, pin, index, projectKey }: PinRowProps) {
       </div>
 
       <div className="hidden md:flex items-center justify-end gap-1.5 shrink-0">
-        <StatusBadge status={pin.status} />
-        {pin.aiLabel && <AiBadge value={pin.aiLabel} />}
-        {pin.aiPriority && <PriorityBadge value={pin.aiPriority} />}
-        {pin.placement.verified && placementLabel(pin.placement.state) && (
-          <PlacementBadge value={placementLabel(pin.placement.state)!} />
-        )}
+        <StatusPill tone={pin.status === 'resolved' ? 'resolved' : 'open'}>
+          {pin.status}
+        </StatusPill>
         <ChevronRight
           size={15}
           strokeWidth={1.7}
@@ -116,41 +136,3 @@ export function PinRow({ projectId, pin, index, projectKey }: PinRowProps) {
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    open: 'bg-[color-mix(in_oklab,var(--accent)_18%,transparent)] text-[var(--accent)]',
-    resolved:
-      'bg-[color-mix(in_oklab,var(--signal)_18%,transparent)] text-[var(--signal)]',
-  }
-  return (
-    <span
-      className={`px-2 py-0.5 rounded-full text-[11px] font-mono uppercase shrink-0 ${styles[status] ?? styles.open}`}
-    >
-      {status}
-    </span>
-  )
-}
-
-function AiBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase shrink-0 bg-[color-mix(in_oklab,var(--accent)_14%,transparent)] text-[var(--accent-2)]">
-      {value}
-    </span>
-  )
-}
-
-function PlacementBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase shrink-0 bg-[color-mix(in_oklab,var(--ink)_10%,transparent)] text-[var(--ink-soft)]">
-      {value}
-    </span>
-  )
-}
-
-function PriorityBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase shrink-0 bg-[color-mix(in_oklab,var(--warn)_14%,transparent)] text-[var(--warn)]">
-      {value.replaceAll('_', ' ')}
-    </span>
-  )
-}

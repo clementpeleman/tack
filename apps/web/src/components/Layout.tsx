@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { Logo } from '#/components/brand/Logo'
 
 interface LayoutProps {
   projectId: string
@@ -57,11 +58,7 @@ export function Layout({
             className="flex items-center gap-2 px-2 no-underline"
             onClick={() => setSidebarOpen(false)}
           >
-            <svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true">
-              <circle cx="11" cy="11" r="10" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-              <circle cx="11" cy="11" r="4" fill="var(--pin)" />
-            </svg>
-            <span className="font-semibold text-sm text-[var(--ink)]">tack</span>
+            <Logo size={18} fontSize={14} />
           </Link>
           <button
             type="button"

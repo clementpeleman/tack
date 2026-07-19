@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { createProject } from '#/lib/projects'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { Field } from '#/components/ui/Field'
+import { Button } from '#/components/ui/Button'
 
 export const Route = createFileRoute('/projects/new')({
   component: NewProjectPage,
@@ -74,32 +76,24 @@ function NewProjectPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs text-[var(--ink-mute)] mb-1.5 font-mono uppercase">
-              Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="acme.com redesign"
-              required
-              autoFocus
-              className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-soft)] transition-colors"
-            />
-          </div>
+          <Field
+            label="Name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="acme.com redesign"
+            required
+            autoFocus
+          />
 
           <div>
-            <label className="block text-xs text-[var(--ink-mute)] mb-1.5 font-mono uppercase">
-              Preview URL
-            </label>
-            <input
+            <Field
+              label="Preview URL"
               type="url"
               value={previewUrl}
               onChange={(e) => setPreviewUrl(e.target.value)}
               placeholder="https://preview.acme.com"
               required
-              className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-soft)] transition-colors"
             />
             <p className="text-[11px] text-[var(--ink-soft)] mt-1.5">
               Where the widget will be embedded. You can change this later.
@@ -110,13 +104,9 @@ function NewProjectPage() {
             <p className="text-xs text-[var(--danger)]">{error}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-3 py-2.5 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
+          <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Creating...' : 'Create project'}
-          </button>
+          </Button>
         </form>
       </div>
     </main>

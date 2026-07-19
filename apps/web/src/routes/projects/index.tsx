@@ -2,6 +2,8 @@ import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { getProjects } from '#/lib/projects'
 import { getCurrentUser } from '#/lib/user'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { Logo } from '#/components/brand/Logo'
+import { buttonClasses } from '#/components/ui/Button'
 
 export const Route = createFileRoute('/projects/')({
   beforeLoad: async () => {
@@ -29,18 +31,7 @@ function ProjectsPage() {
       <div className="max-w-3xl mx-auto p-8">
         <div className="flex items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 22 22" aria-hidden="true">
-              <circle
-                cx="11"
-                cy="11"
-                r="10"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                opacity="0.4"
-              />
-              <circle cx="11" cy="11" r="4" fill="var(--pin)" />
-            </svg>
+            <Logo size={18} wordmark={false} />
             <h1 className="text-xl font-semibold text-[var(--ink)]">
               Projects
             </h1>
@@ -49,10 +40,7 @@ function ProjectsPage() {
             <div className="w-40 hidden sm:block">
               <ThemeToggle compact />
             </div>
-            <Link
-              to="/projects/new"
-              className="px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
-            >
+            <Link to="/projects/new" className={buttonClasses('primary', 'md')}>
               New project
             </Link>
           </div>
@@ -97,10 +85,7 @@ function ProjectsPage() {
               Create a project and embed the Tack widget on your preview site to
               start collecting feedback.
             </p>
-            <Link
-              to="/projects/new"
-              className="inline-block px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 no-underline transition-opacity"
-            >
+            <Link to="/projects/new" className={buttonClasses('primary', 'md')}>
               Create your first project
             </Link>
           </div>

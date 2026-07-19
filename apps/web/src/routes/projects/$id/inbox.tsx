@@ -34,6 +34,7 @@ import { buildAgentPrompt } from '#/lib/agent-prompt'
 import type { AiLabel, AiPinInput, AiPriority } from '#/lib/ai/types'
 import { Layout } from '#/components/Layout'
 import { PinRow } from '#/components/PinRow'
+import { Button } from '#/components/ui/Button'
 import { resolvePlacementForDisplay, type PlacementDisplay } from '@tack/shared'
 import { useState, useEffect } from 'react'
 import {
@@ -644,25 +645,21 @@ function InboxPage() {
             </div>
             {hasPins && (
               <div className="flex flex-wrap items-center gap-2">
-                <a
+                <Button
                   href={project.previewUrl}
+                  variant="secondary"
+                  size="sm"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-medium text-[var(--ink)] no-underline transition-colors hover:bg-[var(--surface-2)] sm:min-h-10"
                 >
                   <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
                   Open preview
-                </a>
+                </Button>
                 {aiEntitlement.entitled && (
-                  <button
-                    type="button"
-                    onClick={analyzePins}
-                    disabled={analyzing}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10"
-                  >
+                  <Button size="sm" onClick={analyzePins} disabled={analyzing}>
                     <ListChecks size={14} strokeWidth={1.8} aria-hidden="true" />
                     {analyzing ? 'Analyzing' : 'Analyze pins'}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -826,50 +823,37 @@ function ZeroPinOnboarding({
 
       {activeTab === 'snippet' ? (
         <div className="mt-3">
-          <button
-            type="button"
-            onClick={copySnippet}
-            className="mb-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:opacity-90"
-          >
+          <Button size="sm" onClick={copySnippet} className="mb-3">
             {scriptCopied ? (
               <Check size={14} strokeWidth={1.8} aria-hidden="true" />
             ) : (
               <Copy size={14} strokeWidth={1.8} aria-hidden="true" />
             )}
             {scriptCopied ? 'Script copied' : 'Copy script tag'}
-          </button>
+          </Button>
           <code className="block overflow-x-auto whitespace-nowrap rounded-md bg-[var(--surface-2)] px-3 py-2 text-xs text-[var(--ink-soft)] font-mono">
             {snippet}
           </code>
         </div>
       ) : (
         <div className="mt-3 space-y-3">
-          <button
-            type="button"
-            onClick={copyBookmarklet}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] transition-colors hover:opacity-90"
-          >
+          <Button size="sm" onClick={copyBookmarklet}>
             {bookmarkletCopied ? (
               <Check size={14} strokeWidth={1.8} aria-hidden="true" />
             ) : (
               <Copy size={14} strokeWidth={1.8} aria-hidden="true" />
             )}
             {bookmarkletCopied ? 'Bookmarklet copied' : 'Copy bookmarklet URL'}
-          </button>
+          </Button>
           <BookmarkletLink href={bookmarklet} label={`Tack: ${projectName}`} />
         </div>
       )}
 
       <div className="mt-5 border-t border-[var(--line)] pt-4">
-        <a
-          href={previewUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-medium text-[var(--ink)] no-underline transition-colors hover:bg-[var(--surface-2)]"
-        >
+        <Button href={previewUrl} variant="secondary" size="sm" target="_blank" rel="noopener noreferrer">
           <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
           Open preview after installing
-        </a>
+        </Button>
       </div>
     </section>
   )
@@ -1052,18 +1036,14 @@ function ConnectPanel({
             Copy the bookmarklet URL or drag the button to the bookmarks bar.
             Click it on any page to activate Tack without code changes.
           </p>
-          <button
-            type="button"
-            onClick={copyBookmarklet}
-            className="mb-3 inline-flex min-h-11 items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 text-xs font-medium text-[var(--ink)] transition-colors hover:bg-[var(--surface-2)]"
-          >
+          <Button variant="secondary" size="sm" onClick={copyBookmarklet} className="mb-3">
             {bookmarkletCopied ? (
               <Check size={13} strokeWidth={1.8} aria-hidden="true" />
             ) : (
               <Copy size={13} strokeWidth={1.8} aria-hidden="true" />
             )}
             {bookmarkletCopied ? 'Bookmarklet copied' : 'Copy bookmarklet URL'}
-          </button>
+          </Button>
           <BookmarkletLink href={bookmarklet} label={label} />
         </div>
       )}
@@ -1263,14 +1243,15 @@ function formatTimeAgo(dateStr: string): string {
 function BookmarkletLink({ href, label }: { href: string; label: string }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <a
+      <Button
         href={href}
+        size="sm"
         draggable="true"
         onClick={(event) => event.preventDefault()}
-        className="inline-flex min-h-11 cursor-grab items-center gap-2 rounded-full bg-[var(--accent)] px-3 text-xs font-medium text-[var(--on-accent)] no-underline transition-colors hover:opacity-90 active:cursor-grabbing sm:min-h-10"
+        className="cursor-grab active:cursor-grabbing"
       >
         {label}
-      </a>
+      </Button>
       <span className="text-[10px] text-[var(--ink-soft)] font-mono">
         Drag to bookmarks bar
       </span>

@@ -1,138 +1,16 @@
 import { useState, useRef, type MouseEvent } from 'react'
-import { ArrowRight, Check, Copy, MousePointerClick } from 'lucide-react'
+import { Check, Copy, MousePointerClick } from 'lucide-react'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { Logo } from '#/components/brand/Logo'
+import { PinDrop } from '#/components/brand/PinDrop'
+import { Pointer } from '#/components/brand/Pointer'
+import { Button } from '#/components/ui/Button'
+import { Bar } from '#/components/ui/Bar'
+import { ContextRow } from '#/components/ui/ContextRow'
 
 const GITHUB_URL = 'https://github.com/clementpeleman/tack'
 const DEMO_URL = '/demo'
 const SIGNIN_URL = '/login'
-
-/** Clay pointer wordmark — Tack's pin as a cursor head. */
-function PinMark({ size = 20 }: { size?: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="block shrink-0 rounded-[52%_52%_52%_3px]"
-      style={{
-        width: size,
-        height: size,
-        background: 'var(--pin)',
-        boxShadow:
-          '0 0 0 2px var(--page), 0 4px 10px -3px color-mix(in oklab, var(--pin) 55%, transparent)',
-      }}
-    />
-  )
-}
-
-/** A bare collaborator pin head (cursor blob), pointing down-left. */
-function PinDrop({ tone = 'var(--pin)', className = '' }: { tone?: string; className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`block h-5 w-5 rounded-[52%_52%_52%_3px] ${className}`}
-      style={{
-        background: tone,
-        boxShadow: `0 0 0 2px var(--page), 0 6px 16px -4px color-mix(in oklab, ${tone} 55%, transparent)`,
-      }}
-    />
-  )
-}
-
-/** A named collaborator pointer: a tinted name pill + a cursor blob, mirroring
- *  the multiplayer pointers from the reference. `flip` puts the blob first. */
-function Pointer({
-  label,
-  tone,
-  flip = false,
-  className = '',
-}: {
-  label: string
-  tone: string
-  flip?: boolean
-  className?: string
-}) {
-  const pill = (
-    <span
-      className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium leading-none"
-      style={{
-        background: `color-mix(in oklab, ${tone} 15%, var(--surface))`,
-        color: `color-mix(in oklab, ${tone} 68%, var(--ink))`,
-      }}
-    >
-      {label}
-    </span>
-  )
-  const blob = (
-    <span
-      aria-hidden="true"
-      className="block h-4 w-4 shrink-0 rounded-[52%_52%_52%_3px]"
-      style={{
-        background: tone,
-        boxShadow: `0 0 0 2px var(--page), 0 5px 14px -4px color-mix(in oklab, ${tone} 55%, transparent)`,
-      }}
-    />
-  )
-  return (
-    <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      {flip ? (
-        <>
-          {blob}
-          {pill}
-        </>
-      ) : (
-        <>
-          {pill}
-          {blob}
-        </>
-      )}
-    </div>
-  )
-}
-
-function PrimaryLink({
-  href,
-  children,
-  external = false,
-}: {
-  href: string
-  children: React.ReactNode
-  external?: boolean
-}) {
-  return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-medium text-[var(--on-accent)] no-underline transition-[transform,opacity] duration-200 hover:opacity-90 active:translate-y-px"
-    >
-      {children}
-      <ArrowRight
-        size={16}
-        strokeWidth={2}
-        className="transition-transform duration-200 group-hover:translate-x-0.5"
-        aria-hidden="true"
-      />
-    </a>
-  )
-}
-
-function GhostLink({
-  href,
-  children,
-  external = false,
-}: {
-  href: string
-  children: React.ReactNode
-  external?: boolean
-}) {
-  return (
-    <a
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[var(--line)] px-5 text-sm font-medium text-[var(--ink)] no-underline transition-colors duration-200 hover:bg-[var(--surface-2)]"
-    >
-      {children}
-    </a>
-  )
-}
 
 function GitHubGlyph({ size = 16 }: { size?: number }) {
   return (
@@ -149,26 +27,6 @@ function FauxBar() {
       <span className="h-2.5 w-2.5 rounded-full bg-[var(--line)]" />
       <span className="h-2.5 w-2.5 rounded-full bg-[var(--line)]" />
     </span>
-  )
-}
-
-/** A muted skeleton line used inside the faux preview / inbox mocks. */
-function Bar({ w }: { w: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="block h-2 rounded-full bg-[var(--surface-3)]"
-      style={{ width: w }}
-    />
-  )
-}
-
-function ContextRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] py-2.5 last:border-b-0">
-      <dt className="text-xs text-[var(--ink-mute)]">{label}</dt>
-      <dd className="text-right text-sm text-[var(--ink)]">{value}</dd>
-    </div>
   )
 }
 
@@ -218,14 +76,14 @@ function HeroArtifact() {
           </div>
 
           <div className="space-y-2.5">
-            <Bar w="42%" />
-            <Bar w="70%" />
+            <Bar width="42%" />
+            <Bar width="70%" />
           </div>
           {/* the pinned element */}
           <div className="relative mt-6 rounded-lg border border-dashed border-[color-mix(in_oklab,var(--pin)_45%,var(--line))] bg-[color-mix(in_oklab,var(--pin)_5%,transparent)] p-5">
             <div className="space-y-2">
-              <Bar w="55%" />
-              <Bar w="38%" />
+              <Bar width="55%" />
+              <Bar width="38%" />
             </div>
             <span className="absolute -right-2.5 -top-2.5">
               <span className="tk-pin-drop block">
@@ -234,8 +92,8 @@ function HeroArtifact() {
             </span>
           </div>
           <div className="space-y-2.5 pt-2">
-            <Bar w="80%" />
-            <Bar w="60%" />
+            <Bar width="80%" />
+            <Bar width="60%" />
           </div>
 
           {/* pins you drop */}
@@ -311,8 +169,7 @@ export function Landing() {
       <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[color-mix(in_oklab,var(--page)_85%,transparent)] backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
           <a href="/" className="flex items-center gap-2 no-underline" aria-label="Tack home">
-            <PinMark />
-            <span className="text-lg font-semibold tracking-tight text-[var(--ink)]">tack</span>
+            <Logo size={20} fontSize={18} />
           </a>
           <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">
             <a href={DEMO_URL} className="text-sm text-[var(--ink-mute)] no-underline transition-colors hover:text-[var(--ink)]">Live demo</a>
@@ -321,7 +178,7 @@ export function Landing() {
           </nav>
           <div className="flex items-center gap-3">
             <a href={SIGNIN_URL} className="hidden text-sm text-[var(--ink-mute)] no-underline transition-colors hover:text-[var(--ink)] sm:inline">Sign in</a>
-            <PrimaryLink href={DEMO_URL}>Try the demo</PrimaryLink>
+            <Button href={DEMO_URL} arrow>Try the demo</Button>
           </div>
         </div>
       </header>
@@ -344,11 +201,16 @@ export function Landing() {
               the exact element, a screenshot, the viewport, and the browser.
             </p>
             <div className="tk-rise mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '0.16s' }}>
-              <PrimaryLink href={DEMO_URL}>Try the demo</PrimaryLink>
-              <GhostLink href={GITHUB_URL} external>
+              <Button href={DEMO_URL} arrow>Try the demo</Button>
+              <Button
+                href={GITHUB_URL}
+                variant="secondary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <GitHubGlyph />
                 View on GitHub
-              </GhostLink>
+              </Button>
             </div>
             <p className="tk-rise mt-6 text-sm text-[var(--ink-mute)]" style={{ animationDelay: '0.24s' }}>
               Open source (AGPL) · Self-hosted with Docker
@@ -382,8 +244,8 @@ export function Landing() {
                   visual: (
                     <div className="tk-loop-card relative rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="space-y-2">
-                        <Bar w="60%" />
-                        <Bar w="40%" />
+                        <Bar width="60%" />
+                        <Bar width="40%" />
                       </div>
                       <span className="absolute right-3 top-3"><PinDrop /></span>
                     </div>
@@ -416,11 +278,11 @@ export function Landing() {
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
                           <Check size={13} strokeWidth={2.5} className="text-[var(--ink-soft)]" aria-hidden="true" />
-                          <Bar w="62%" />
+                          <Bar width="62%" />
                         </div>
                         <div className="flex items-center gap-2">
                           <Check size={13} strokeWidth={2.5} className="text-[var(--ink-soft)]" aria-hidden="true" />
-                          <Bar w="48%" />
+                          <Bar width="48%" />
                         </div>
                       </div>
                     </div>
@@ -470,7 +332,7 @@ export function Landing() {
                 <ContextRow label="Viewport" value="1440 × 900" />
                 <ContextRow label="Browser" value="Chrome 124 · macOS" />
                 <ContextRow label="Screenshot" value="Captured" />
-                <ContextRow label="Reviewer" value="Mia (no account)" />
+                <ContextRow label="Reviewer" value="Mia (no account)" last />
               </dl>
             </div>
           </div>
@@ -493,7 +355,7 @@ export function Landing() {
               control.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <PrimaryLink href={DEMO_URL}>Try the demo</PrimaryLink>
+              <Button href={DEMO_URL} arrow>Try the demo</Button>
             </div>
           </div>
         </section>
@@ -514,7 +376,14 @@ export function Landing() {
                 you. The AI Inbox is optional and uses your own API key.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <GhostLink href={`${GITHUB_URL}#self-host`} external>Read the self-host guide</GhostLink>
+                <Button
+                  href={`${GITHUB_URL}#self-host`}
+                  variant="secondary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Read the self-host guide
+                </Button>
                 <a
                   href={GITHUB_URL}
                   target="_blank"
@@ -565,11 +434,16 @@ export function Landing() {
               Open the demo and drop a pin.
             </h2>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <PrimaryLink href={DEMO_URL}>Try the demo</PrimaryLink>
-              <GhostLink href={GITHUB_URL} external>
+              <Button href={DEMO_URL} arrow>Try the demo</Button>
+              <Button
+                href={GITHUB_URL}
+                variant="secondary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <GitHubGlyph />
                 View on GitHub
-              </GhostLink>
+              </Button>
             </div>
           </div>
         </section>
@@ -579,8 +453,7 @@ export function Landing() {
       <footer className="border-t border-[var(--line)] bg-[var(--surface)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-2">
-            <PinMark size={18} />
-            <span className="font-semibold text-[var(--ink)]">tack</span>
+            <Logo size={18} fontSize={14} />
             <span className="ml-2 text-sm text-[var(--ink-mute)]">Open-source visual feedback for preview sites.</span>
           </div>
           <div className="flex items-center gap-6">

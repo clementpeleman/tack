@@ -7,6 +7,9 @@ import {
   parseBrowser,
 } from '#/lib/pin-display'
 import type { PinDetailData } from '#/lib/project-pin-actions'
+import { Detail } from '#/components/ui/Detail'
+import { StatusPill } from '#/components/ui/StatusPill'
+import { Button } from '#/components/ui/Button'
 
 function parseElementStyles(value: string | null): Record<string, string> | null {
   if (!value) return null
@@ -130,7 +133,9 @@ export function PinDetail({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status={pin.status} />
+            <StatusPill tone={pin.status === 'resolved' ? 'resolved' : 'open'}>
+              {pin.status}
+            </StatusPill>
             {(pin.aiLabel || pin.aiPriority) && (
               <span className="text-xs font-mono text-[var(--ink-soft)]">
                 {[
@@ -224,7 +229,7 @@ export function PinDetail({
                   AI summary
                 </span>
                 {pin.aiAmbiguous && (
-                  <PriorityBadge value="needs decision" />
+                  <StatusPill tone="priority">needs decision</StatusPill>
                 )}
               </div>
               <p className="text-xs text-[var(--ink-mute)] leading-relaxed">
@@ -296,112 +301,66 @@ export function PinDetail({
                 Delete this pin permanently?
               </p>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => setConfirmDelete(false)}
                   disabled={deleting}
-                  className="min-h-11 px-3 py-2 rounded-full text-xs border border-[var(--line)]"
                 >
                   Keep pin
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="min-h-11 px-3 py-2 rounded-full text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
                 >
                   {deleting ? 'Deleting...' : 'Delete pin'}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
+              <Button
+                size="sm"
+                variant="primary"
                 onClick={handleAddReply}
                 disabled={!replyBody.trim() || deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs disabled:opacity-50"
               >
                 {replying ? 'Sending...' : 'Send reply'}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={handleToggleStatus}
                 disabled={deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-full border border-[var(--line)] text-xs disabled:opacity-50"
               >
                 {togglingStatus
                   ? 'Updating...'
                   : pin.status === 'resolved'
                     ? 'Reopen'
                     : 'Mark resolved'}
-              </button>
+              </Button>
               <a
                 href={previewLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-h-11 inline-flex items-center px-3 py-2 rounded-full border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
+                className="min-h-9 inline-flex items-center px-3.5 py-2 rounded-full border border-[var(--line)] text-xs text-[var(--accent)] no-underline"
               >
                 Open in preview
               </a>
-              <button
-                type="button"
+              <Button
+                size="sm"
+                variant="danger"
                 onClick={() => setConfirmDelete(true)}
                 disabled={deleting || togglingStatus || replying}
-                className="min-h-11 px-3 py-2 rounded-full text-xs text-[var(--danger)] border border-[color-mix(in_oklab,var(--danger)_35%,transparent)]"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           )}
         </div>
       </div>
     </div>
-  )
-}
-
-function Detail({
-  label,
-  value,
-  mono,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-}) {
-  return (
-    <div className="min-w-0">
-      <span className="block text-[var(--ink-mute)] text-[11px] uppercase font-mono mb-0.5">
-        {label}
-      </span>
-      <span
-        className={`block text-[var(--ink-soft)] truncate ${mono ? 'font-mono' : ''}`}
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-function PriorityBadge({ value }: { value: string }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase bg-[color-mix(in_oklab,var(--warn)_14%,transparent)] text-[var(--warn)]">
-      {value.replaceAll('_', ' ')}
-    </span>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    open: 'bg-[color-mix(in_oklab,var(--accent)_18%,transparent)] text-[var(--accent)]',
-    resolved:
-      'bg-[color-mix(in_oklab,var(--signal)_18%,transparent)] text-[var(--signal)]',
-  }
-  return (
-    <span
-      className={`px-2 py-0.5 rounded-full text-[11px] font-mono uppercase ${styles[status] ?? styles.open}`}
-    >
-      {status}
-    </span>
   )
 }

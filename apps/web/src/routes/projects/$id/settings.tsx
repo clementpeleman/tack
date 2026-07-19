@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Layout } from '#/components/Layout'
+import { Field } from '#/components/ui/Field'
+import { Button } from '#/components/ui/Button'
 import type { ProjectNotifySettings } from '#/lib/notifications'
 import {
   archiveProject,
@@ -180,35 +182,20 @@ function SettingsPage() {
 
         {tab === 'general' && (
           <div className="space-y-4 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-            <div>
-              <label
-                htmlFor="project-name"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Project name
-              </label>
-              <input
-                id="project-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="preview-url"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Preview URL
-              </label>
-              <input
-                id="preview-url"
-                type="url"
-                value={previewUrl}
-                onChange={(e) => setPreviewUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm font-mono"
-              />
-            </div>
+            <Field
+              label="Project name"
+              id="project-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Field
+              label="Preview URL"
+              id="preview-url"
+              type="url"
+              value={previewUrl}
+              onChange={(e) => setPreviewUrl(e.target.value)}
+              className="font-mono"
+            />
             <div>
               <span className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5">
                 Project key
@@ -220,7 +207,7 @@ function SettingsPage() {
                 <button
                   type="button"
                   onClick={copyKey}
-                  className="min-h-11 px-3 text-xs text-[var(--accent)] font-mono bg-transparent border border-[var(--line)] rounded-lg cursor-pointer hover:bg-[var(--surface-2)]"
+                  className="min-h-11 px-3 text-xs text-[var(--accent)] font-mono bg-transparent border border-[var(--line)] rounded-full cursor-pointer hover:bg-[var(--surface-2)]"
                 >
                   {keyCopied ? 'Copied' : 'Copy'}
                 </button>
@@ -247,18 +234,13 @@ function SettingsPage() {
             </button>
             {showAdvanced && (
               <div>
-                <label
-                  htmlFor="pin-query-params"
-                  className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-                >
-                  Pin query params
-                </label>
-                <input
+                <Field
+                  label="Pin query params"
                   id="pin-query-params"
                   value={pinQueryParams}
                   onChange={(e) => setPinQueryParams(e.target.value)}
                   placeholder="tab, view"
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm font-mono"
+                  className="font-mono"
                 />
                 <p className="text-xs text-[var(--ink-mute)] mt-1.5">
                   Comma-separated query keys to keep when matching pin URLs (SPA
@@ -267,14 +249,9 @@ function SettingsPage() {
               </div>
             )}
             <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={saveGeneral}
-                disabled={savingGeneral}
-                className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
-              >
+              <Button size="sm" onClick={saveGeneral} disabled={savingGeneral}>
                 {savingGeneral ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
               {generalMsg && (
                 <span className="text-xs text-[var(--ink-mute)]" role="status">
                   {generalMsg}
@@ -286,63 +263,36 @@ function SettingsPage() {
 
         {tab === 'notifications' && (
           <div className="space-y-4 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-            <div>
-              <label
-                htmlFor="notify-email"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Email
-              </label>
-              <input
-                id="notify-email"
-                type="email"
-                value={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.value)}
-                placeholder="owner@example.com"
-                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="discord-webhook"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Discord webhook
-              </label>
-              <input
-                id="discord-webhook"
-                type="url"
-                value={discordWebhook}
-                onChange={(e) => setDiscordWebhook(e.target.value)}
-                placeholder="https://discord.com/api/webhooks/..."
-                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm font-mono"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="slack-webhook"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Slack webhook
-              </label>
-              <input
-                id="slack-webhook"
-                type="url"
-                value={slackWebhook}
-                onChange={(e) => setSlackWebhook(e.target.value)}
-                placeholder="https://hooks.slack.com/services/..."
-                className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm font-mono"
-              />
-            </div>
+            <Field
+              label="Email"
+              id="notify-email"
+              type="email"
+              value={notifyEmail}
+              onChange={(e) => setNotifyEmail(e.target.value)}
+              placeholder="owner@example.com"
+            />
+            <Field
+              label="Discord webhook"
+              id="discord-webhook"
+              type="url"
+              value={discordWebhook}
+              onChange={(e) => setDiscordWebhook(e.target.value)}
+              placeholder="https://discord.com/api/webhooks/..."
+              className="font-mono"
+            />
+            <Field
+              label="Slack webhook"
+              id="slack-webhook"
+              type="url"
+              value={slackWebhook}
+              onChange={(e) => setSlackWebhook(e.target.value)}
+              placeholder="https://hooks.slack.com/services/..."
+              className="font-mono"
+            />
             <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={saveNotifications}
-                disabled={savingNotify}
-                className="min-h-11 px-4 py-2 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
-              >
+              <Button size="sm" onClick={saveNotifications} disabled={savingNotify}>
                 {savingNotify ? 'Saving...' : 'Save'}
-              </button>
+              </Button>
               {notifyMsg && (
                 <span className="text-xs text-[var(--ink-mute)]" role="status">
                   {notifyMsg}
@@ -361,22 +311,22 @@ function SettingsPage() {
               Pins and settings are kept but the project is hidden from your list.
               Type <strong>{project.name}</strong> to confirm.
             </p>
-            <input
+            <Field
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
               placeholder={project.name}
-              className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)] text-sm mb-4"
+              className="mb-4"
             />
-            <button
-              type="button"
+            <Button
+              size="sm"
+              variant="danger"
               onClick={handleArchive}
               disabled={archiving || confirmName !== project.name}
-              className="min-h-11 px-4 py-2 rounded-lg bg-[var(--signal)] text-[var(--bone)] text-xs font-medium hover:opacity-90 disabled:opacity-50"
             >
               {archiving ? 'Archiving...' : 'Archive project'}
-            </button>
+            </Button>
             {dangerMsg && (
-              <p className="text-xs text-[var(--signal)] mt-3" role="alert">
+              <p className="text-xs text-[var(--danger)] mt-3" role="alert">
                 {dangerMsg}
               </p>
             )}

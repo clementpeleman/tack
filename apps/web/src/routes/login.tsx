@@ -3,6 +3,8 @@ import { createServerFn } from '@tanstack/react-start'
 import { setResponseHeader } from '@tanstack/react-start/server'
 import { useState } from 'react'
 import { ThemeToggle } from '#/components/ThemeToggle'
+import { Field } from '#/components/ui/Field'
+import { Button } from '#/components/ui/Button'
 import { isEmailConfigured } from '#/lib/email'
 import { claimFirstOwner, getSessionCookie, hasAnyUser } from '#/lib/auth'
 
@@ -120,38 +122,26 @@ function LoginPage() {
             </p>
 
             <form onSubmit={handleClaim} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="claim-email"
-                  className="block text-xs text-[var(--ink-mute)] mb-1.5 font-mono uppercase"
-                >
-                  Owner email
-                </label>
-                <input
-                  id="claim-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  autoFocus
-                  autoComplete="email"
-                  aria-describedby={error ? 'login-error' : undefined}
-                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-soft)] transition-colors"
-                />
-              </div>
+              <Field
+                label="Owner email"
+                id="claim-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                required
+                autoFocus
+                autoComplete="email"
+                aria-describedby={error ? 'login-error' : undefined}
+              />
               {error && (
                 <p id="login-error" className="text-xs text-[var(--danger)]" role="alert">
                   {error}
                 </p>
               )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-3 py-2.5 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? 'Setting up…' : 'Claim this instance'}
-              </button>
+              </Button>
             </form>
           </>
         ) : sent ? (
@@ -208,33 +198,24 @@ function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="login-email" className="block text-xs text-[var(--ink-mute)] mb-1.5 font-mono uppercase">
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  autoFocus
-                  autoComplete="email"
-                  aria-describedby={error ? 'login-error' : undefined}
-                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--surface)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-soft)] transition-colors"
-                />
-              </div>
+              <Field
+                label="Email"
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                required
+                autoFocus
+                autoComplete="email"
+                aria-describedby={error ? 'login-error' : undefined}
+              />
               {error && (
                 <p id="login-error" className="text-xs text-[var(--danger)]" role="alert">{error}</p>
               )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-3 py-2.5 rounded-full bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-              >
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? 'Sending...' : 'Continue with email'}
-              </button>
+              </Button>
             </form>
           </>
         )}
