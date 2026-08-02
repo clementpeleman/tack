@@ -1,4 +1,5 @@
 import { finder } from '@medv/finder'
+import { ELEMENT_STYLE_KEYS, type ElementStyles } from '@tack/shared'
 
 export function getElementSelector(el: HTMLElement): string {
   try {
@@ -32,6 +33,21 @@ export function getElementXPath(el: HTMLElement): string {
 export function getTackId(el: HTMLElement): string | undefined {
   const value = el.getAttribute('data-tack-id')
   return value ?? undefined
+}
+
+// Fixed, curated computed-style snapshot for the clicked element — see
+// packages/shared/src/element-styles.ts for why this is a whitelist and
+// not an open-ended dump.
+export function getElementComputedStyles(el: HTMLElement): ElementStyles {
+  const computed = getComputedStyle(el)
+  const out: ElementStyles = {}
+  for (const key of ELEMENT_STYLE_KEYS) {
+    const value = computed[key as keyof CSSStyleDeclaration]
+    if (typeof value === 'string' && value.length > 0) {
+      out[key] = value
+    }
+  }
+  return out
 }
 
 function fallbackSelector(el: HTMLElement): string {

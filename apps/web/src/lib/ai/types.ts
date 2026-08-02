@@ -25,6 +25,7 @@ export interface AiPinInput {
   reviewerName: string | null
   selector: string | null
   elementText: string | null
+  elementStyles?: string | null
   browser: string | null
   viewport: string
 }

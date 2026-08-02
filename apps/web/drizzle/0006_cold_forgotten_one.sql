@@ -1,0 +1,1 @@
+ALTER TABLE `pins` ADD `element_styles` text;

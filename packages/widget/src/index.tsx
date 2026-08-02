@@ -25,6 +25,7 @@ import {
   getElementSelector,
   getElementXPath,
   getTackId,
+  getElementComputedStyles,
 } from './lib/element-id'
 import { normalizePinUrl } from '@tack/shared'
 import type { PinPlacement } from '@tack/shared'
@@ -185,6 +186,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
         xpath: el ? getElementXPath(el) : undefined,
         tackId: el ? getTackId(el) : undefined,
         elementText: el?.textContent?.slice(0, 80) || undefined,
+        elementStyles: el ? JSON.stringify(getElementComputedStyles(el)) : undefined,
         body: comment,
         browser: navigator.userAgent.slice(0, 100),
         screenshot: screenshot ?? undefined,

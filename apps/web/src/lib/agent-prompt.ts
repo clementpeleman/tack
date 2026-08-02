@@ -15,6 +15,7 @@ export interface AgentPromptPin {
   xpath: string | null
   tackId: string | null
   elementText: string | null
+  elementStyles?: string | null
   browser: string | null
   os: string | null
   xPct: number
@@ -32,6 +33,17 @@ function pinDeeplink(pin: AgentPromptPin): string {
 
 function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value
+}
+
+function parseElementStyles(value: string): Record<string, string> | null {
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : null
+  } catch {
+    return null
+  }
 }
 
 // One self-contained markdown block per Group: the implementation brief
@@ -66,6 +78,13 @@ export function buildAgentPrompt(
     if (pin.xpath) lines.push(`- XPath: \`${pin.xpath}\``)
     if (pin.elementText) {
       lines.push(`- Element text: "${truncate(pin.elementText, ELEMENT_TEXT_MAX)}"`)
+    }
+    const styles = pin.elementStyles ? parseElementStyles(pin.elementStyles) : null
+    if (styles && Object.keys(styles).length > 0) {
+      lines.push('- Computed style:')
+      for (const [key, value] of Object.entries(styles)) {
+        lines.push(`  - ${key}: ${value}`)
+      }
     }
     lines.push(
       `- Position: ${pin.xPct.toFixed(1)}%, ${pin.yPct.toFixed(1)}% in a ${pin.viewportW}×${pin.viewportH} viewport`,

@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { db } from '#/db/index'
 import { projects, pins, replies } from '#/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
-import { normalizePinUrl } from '@tack/shared'
+import { normalizePinUrl, parseElementStylesJson } from '@tack/shared'
 import type { ProjectNotifySettings } from '#/lib/notifications'
 import { corsHeaders, handleCors } from '#/lib/cors'
 import { enrichPinsWithComments } from '#/lib/pins'
@@ -86,7 +86,7 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
-        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, body: commentBody, browser, os, screenshot } = body as Record<string, any>
+        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, elementStyles, body: commentBody, browser, os, screenshot } = body as Record<string, any>
 
         if (!projectKey || !url || !reviewerId || xPct == null || yPct == null || !commentBody) {
           return Response.json(
@@ -139,6 +139,7 @@ export const Route = createFileRoute('/api/widget/pins')({
             xpath: clamp(xpath, MAX_META),
             tackId: clamp(tackId, MAX_META),
             elementText: clamp(elementText, MAX_META),
+            elementStyles: parseElementStylesJson(elementStyles),
             browser: clamp(browser, MAX_META),
             os: clamp(os, MAX_META),
           })

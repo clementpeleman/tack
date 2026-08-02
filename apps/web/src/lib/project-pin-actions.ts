@@ -32,6 +32,7 @@ export interface PinDetailData {
   xpath: string | null
   tackId: string | null
   elementText: string | null
+  elementStyles: string | null
   browser: string | null
   os: string | null
   screenshotPath: string | null
@@ -197,6 +198,7 @@ export const getPinDetail = createServerFn({ method: 'GET' })
           xpath: pin.xpath,
           tackId: pin.tackId,
           elementText: pin.elementText,
+          elementStyles: pin.elementStyles,
           browser: pin.browser,
           os: pin.os,
           screenshotPath: pin.screenshotPath,

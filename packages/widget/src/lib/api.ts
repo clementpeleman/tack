@@ -57,6 +57,7 @@ export async function createPin(data: {
   xpath?: string
   tackId?: string
   elementText?: string
+  elementStyles?: string
   body: string
   browser?: string
   os?: string

@@ -53,6 +53,10 @@ export const pins = sqliteTable('pins', {
   xpath: text('xpath'),
   tackId: text('tack_id'),
   elementText: text('element_text'),
+  // Sanitized JSON of a fixed computed-style whitelist (see
+  // packages/shared/src/element-styles.ts) captured from the clicked
+  // element — gives triage enough visual context without a DOM/style dump.
+  elementStyles: text('element_styles'),
   screenshotPath: text('screenshot_path'),
   status: text('status', { enum: ['open', 'resolved'] })
     .notNull()

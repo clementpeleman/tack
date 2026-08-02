@@ -10,6 +10,13 @@ export {
   type PinAnchorMetadata,
   type PlacementDisplay,
 } from './placement.ts'
+export {
+  ELEMENT_STYLE_KEYS,
+  sanitizeElementStyles,
+  parseElementStylesJson,
+  type ElementStyleKey,
+  type ElementStyles,
+} from './element-styles.ts'
 
 export interface Pin {
   id: string
@@ -26,6 +33,7 @@ export interface Pin {
   xpath: string | null
   tackId: string | null
   elementText: string | null
+  elementStyles: string | null
   screenshotPath: string | null
   status: PinStatus
   browser: string | null
