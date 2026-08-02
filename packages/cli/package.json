@@ -1,0 +1,36 @@
+{
+  "name": "@usetack/cli",
+  "version": "0.1.0",
+  "description": "Install the Tack feedback widget into your project.",
+  "keywords": ["tack", "feedback", "widget", "cli"],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "tack": "./dist/index.js"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/clementpeleman/tack.git",
+    "directory": "packages/cli"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5.8",
+    "vitest": "^3"
+  }
+}
