@@ -29,6 +29,7 @@ const widgetLimiter = new SlidingWindowLimiter()
 const magicLinkEmailLimiter = new SlidingWindowLimiter()
 const magicLinkIpLimiter = new SlidingWindowLimiter()
 const dashboardLimiter = new SlidingWindowLimiter()
+const cliAuthLimiter = new SlidingWindowLimiter()
 
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for')
@@ -65,6 +66,14 @@ export function enforceDashboardRateLimit(sessionToken: string): void {
   if (!result.allowed) {
     throw rateLimitResponse(result.retryAfterSeconds)
   }
+}
+
+/**
+ * Guards the unauthenticated CLI login handshake (start + exchange) so the
+ * request table can't be flooded and codes can't be brute-forced by IP.
+ */
+export function cliAuthRateLimited(ip: string): boolean {
+  return !cliAuthLimiter.check(`cli-auth:${ip}`, 30, 600_000).allowed
 }
 
 export function magicLinkRateLimited(

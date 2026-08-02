@@ -195,3 +195,52 @@ export const sessions = sqliteTable('sessions', {
   expiresAt: text('expires_at').notNull(),
   createdAt: createdAt(),
 })
+
+/**
+ * Revocable, scope-limited owner tokens for non-browser clients (ADR 0002).
+ * Deliberately separate from `sessions`: that table doubles as pending
+ * magic-link storage, has no revocation or last-used, and anything in it can
+ * be replayed as a `tack_session` cookie to get full dashboard authority. An
+ * owner token is only ever accepted as a bearer credential and only grants the
+ * scopes recorded here.
+ */
+export const ownerTokens = sqliteTable('owner_tokens', {
+  id: id(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id),
+  tokenHash: text('token_hash').notNull().unique(),
+  // Human-readable, shown in the revoke UI, e.g. "tack-cli on clements-mbp".
+  label: text('label').notNull(),
+  source: text('source', { enum: ['cli', 'dashboard'] })
+    .notNull()
+    .default('cli'),
+  scopes: text('scopes', { mode: 'json' }).$type<string[]>().notNull(),
+  lastUsedAt: text('last_used_at'),
+  expiresAt: text('expires_at').notNull(),
+  revokedAt: text('revoked_at'),
+  createdAt: createdAt(),
+})
+
+/**
+ * Short-lived state for the CLI browser-login handshake. The CLI holds a
+ * PKCE verifier and only ever receives a one-shot auth code, so the long-lived
+ * token never travels through the browser (and so never lands in history).
+ */
+export const cliAuthRequests = sqliteTable('cli_auth_requests', {
+  id: id(),
+  requestIdHash: text('request_id_hash').notNull().unique(),
+  codeChallenge: text('code_challenge').notNull(),
+  // null = the CLI could not bind a port (SSH/container), so the approval page
+  // shows the code for the user to paste instead of redirecting.
+  redirectPort: integer('redirect_port'),
+  // Shown on both the approval page and in the CLI, so the owner can confirm
+  // they are approving their own session and not a framed attacker's.
+  userCode: text('user_code').notNull(),
+  clientLabel: text('client_label').notNull(),
+  approvedUserId: text('approved_user_id').references(() => users.id),
+  authCodeHash: text('auth_code_hash'),
+  consumedAt: text('consumed_at'),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: createdAt(),
+})

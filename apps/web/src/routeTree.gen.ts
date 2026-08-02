@@ -14,6 +14,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as ProjectsNewRouteImport } from './routes/projects/new'
+import { Route as CliAuthorizeRouteImport } from './routes/cli/authorize'
 import { Route as ProjectsIdSettingsRouteImport } from './routes/projects/$id/settings'
 import { Route as ProjectsIdInstallRouteImport } from './routes/projects/$id/install'
 import { Route as ProjectsIdInboxRouteImport } from './routes/projects/$id/inbox'
@@ -21,6 +22,8 @@ import { Route as ApiWidgetPlacementRouteImport } from './routes/api/widget/plac
 import { Route as ApiWidgetPinsRouteImport } from './routes/api/widget/pins'
 import { Route as ApiWidgetInitRouteImport } from './routes/api/widget/init'
 import { Route as ApiWidgetEventsRouteImport } from './routes/api/widget/events'
+import { Route as ApiCliWhoamiRouteImport } from './routes/api/cli/whoami'
+import { Route as ApiCliProjectsRouteImport } from './routes/api/cli/projects'
 import { Route as ApiAuthVerifyRouteImport } from './routes/api/auth/verify'
 import { Route as ApiAuthSendMagicLinkRouteImport } from './routes/api/auth/send-magic-link'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
@@ -28,7 +31,11 @@ import { Route as ProjectsIdPinsPinIdRouteImport } from './routes/projects/$id/p
 import { Route as ApiWidgetPinsPinIdRouteImport } from './routes/api/widget/pins/$pinId'
 import { Route as ApiScreenshotsProjectKeyPinIdRouteImport } from './routes/api/screenshots/$projectKey/$pinId'
 import { Route as ApiProjectsIdEventsRouteImport } from './routes/api/projects/$id/events'
+import { Route as ApiCliAuthTokenRouteImport } from './routes/api/cli/auth/token'
+import { Route as ApiCliAuthStartRouteImport } from './routes/api/cli/auth/start'
+import { Route as ApiCliAuthRevokeRouteImport } from './routes/api/cli/auth/revoke'
 import { Route as ApiWidgetPinsPinIdRepliesRouteImport } from './routes/api/widget/pins/$pinId/replies'
+import { Route as ApiCliProjectsIdOriginsRouteImport } from './routes/api/cli/projects/$id/origins'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -53,6 +60,11 @@ const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
 const ProjectsNewRoute = ProjectsNewRouteImport.update({
   id: '/projects/new',
   path: '/projects/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CliAuthorizeRoute = CliAuthorizeRouteImport.update({
+  id: '/cli/authorize',
+  path: '/cli/authorize',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsIdSettingsRoute = ProjectsIdSettingsRouteImport.update({
@@ -88,6 +100,16 @@ const ApiWidgetInitRoute = ApiWidgetInitRouteImport.update({
 const ApiWidgetEventsRoute = ApiWidgetEventsRouteImport.update({
   id: '/api/widget/events',
   path: '/api/widget/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCliWhoamiRoute = ApiCliWhoamiRouteImport.update({
+  id: '/api/cli/whoami',
+  path: '/api/cli/whoami',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCliProjectsRoute = ApiCliProjectsRouteImport.update({
+  id: '/api/cli/projects',
+  path: '/api/cli/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthVerifyRoute = ApiAuthVerifyRouteImport.update({
@@ -126,22 +148,45 @@ const ApiProjectsIdEventsRoute = ApiProjectsIdEventsRouteImport.update({
   path: '/api/projects/$id/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCliAuthTokenRoute = ApiCliAuthTokenRouteImport.update({
+  id: '/api/cli/auth/token',
+  path: '/api/cli/auth/token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCliAuthStartRoute = ApiCliAuthStartRouteImport.update({
+  id: '/api/cli/auth/start',
+  path: '/api/cli/auth/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCliAuthRevokeRoute = ApiCliAuthRevokeRouteImport.update({
+  id: '/api/cli/auth/revoke',
+  path: '/api/cli/auth/revoke',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiWidgetPinsPinIdRepliesRoute =
   ApiWidgetPinsPinIdRepliesRouteImport.update({
     id: '/replies',
     path: '/replies',
     getParentRoute: () => ApiWidgetPinsPinIdRoute,
   } as any)
+const ApiCliProjectsIdOriginsRoute = ApiCliProjectsIdOriginsRouteImport.update({
+  id: '/$id/origins',
+  path: '/$id/origins',
+  getParentRoute: () => ApiCliProjectsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/cli/authorize': typeof CliAuthorizeRoute
   '/projects/new': typeof ProjectsNewRoute
   '/projects/': typeof ProjectsIndexRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
+  '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
@@ -149,21 +194,28 @@ export interface FileRoutesByFullPath {
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
+  '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
+  '/api/cli/auth/start': typeof ApiCliAuthStartRoute
+  '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
   '/projects/$id/pins/$pinId': typeof ProjectsIdPinsPinIdRoute
+  '/api/cli/projects/$id/origins': typeof ApiCliProjectsIdOriginsRoute
   '/api/widget/pins/$pinId/replies': typeof ApiWidgetPinsPinIdRepliesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/cli/authorize': typeof CliAuthorizeRoute
   '/projects/new': typeof ProjectsNewRoute
   '/projects': typeof ProjectsIndexRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
+  '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
@@ -171,10 +223,14 @@ export interface FileRoutesByTo {
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
+  '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
+  '/api/cli/auth/start': typeof ApiCliAuthStartRoute
+  '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
   '/projects/$id/pins/$pinId': typeof ProjectsIdPinsPinIdRoute
+  '/api/cli/projects/$id/origins': typeof ApiCliProjectsIdOriginsRoute
   '/api/widget/pins/$pinId/replies': typeof ApiWidgetPinsPinIdRepliesRoute
 }
 export interface FileRoutesById {
@@ -182,11 +238,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
+  '/cli/authorize': typeof CliAuthorizeRoute
   '/projects/new': typeof ProjectsNewRoute
   '/projects/': typeof ProjectsIndexRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
+  '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
   '/api/widget/pins': typeof ApiWidgetPinsRouteWithChildren
@@ -194,10 +253,14 @@ export interface FileRoutesById {
   '/projects/$id/inbox': typeof ProjectsIdInboxRoute
   '/projects/$id/install': typeof ProjectsIdInstallRoute
   '/projects/$id/settings': typeof ProjectsIdSettingsRoute
+  '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
+  '/api/cli/auth/start': typeof ApiCliAuthStartRoute
+  '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
   '/projects/$id/pins/$pinId': typeof ProjectsIdPinsPinIdRoute
+  '/api/cli/projects/$id/origins': typeof ApiCliProjectsIdOriginsRoute
   '/api/widget/pins/$pinId/replies': typeof ApiWidgetPinsPinIdRepliesRoute
 }
 export interface FileRouteTypes {
@@ -206,11 +269,14 @@ export interface FileRouteTypes {
     | '/'
     | '/demo'
     | '/login'
+    | '/cli/authorize'
     | '/projects/new'
     | '/projects/'
     | '/api/auth/logout'
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
+    | '/api/cli/projects'
+    | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
@@ -218,21 +284,28 @@ export interface FileRouteTypes {
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
+    | '/api/cli/auth/revoke'
+    | '/api/cli/auth/start'
+    | '/api/cli/auth/token'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
     | '/projects/$id/pins/$pinId'
+    | '/api/cli/projects/$id/origins'
     | '/api/widget/pins/$pinId/replies'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/demo'
     | '/login'
+    | '/cli/authorize'
     | '/projects/new'
     | '/projects'
     | '/api/auth/logout'
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
+    | '/api/cli/projects'
+    | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
@@ -240,21 +313,28 @@ export interface FileRouteTypes {
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
+    | '/api/cli/auth/revoke'
+    | '/api/cli/auth/start'
+    | '/api/cli/auth/token'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
     | '/projects/$id/pins/$pinId'
+    | '/api/cli/projects/$id/origins'
     | '/api/widget/pins/$pinId/replies'
   id:
     | '__root__'
     | '/'
     | '/demo'
     | '/login'
+    | '/cli/authorize'
     | '/projects/new'
     | '/projects/'
     | '/api/auth/logout'
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
+    | '/api/cli/projects'
+    | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
     | '/api/widget/pins'
@@ -262,10 +342,14 @@ export interface FileRouteTypes {
     | '/projects/$id/inbox'
     | '/projects/$id/install'
     | '/projects/$id/settings'
+    | '/api/cli/auth/revoke'
+    | '/api/cli/auth/start'
+    | '/api/cli/auth/token'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
     | '/projects/$id/pins/$pinId'
+    | '/api/cli/projects/$id/origins'
     | '/api/widget/pins/$pinId/replies'
   fileRoutesById: FileRoutesById
 }
@@ -273,11 +357,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
+  CliAuthorizeRoute: typeof CliAuthorizeRoute
   ProjectsNewRoute: typeof ProjectsNewRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthSendMagicLinkRoute: typeof ApiAuthSendMagicLinkRoute
   ApiAuthVerifyRoute: typeof ApiAuthVerifyRoute
+  ApiCliProjectsRoute: typeof ApiCliProjectsRouteWithChildren
+  ApiCliWhoamiRoute: typeof ApiCliWhoamiRoute
   ApiWidgetEventsRoute: typeof ApiWidgetEventsRoute
   ApiWidgetInitRoute: typeof ApiWidgetInitRoute
   ApiWidgetPinsRoute: typeof ApiWidgetPinsRouteWithChildren
@@ -285,6 +372,9 @@ export interface RootRouteChildren {
   ProjectsIdInboxRoute: typeof ProjectsIdInboxRoute
   ProjectsIdInstallRoute: typeof ProjectsIdInstallRoute
   ProjectsIdSettingsRoute: typeof ProjectsIdSettingsRoute
+  ApiCliAuthRevokeRoute: typeof ApiCliAuthRevokeRoute
+  ApiCliAuthStartRoute: typeof ApiCliAuthStartRoute
+  ApiCliAuthTokenRoute: typeof ApiCliAuthTokenRoute
   ApiProjectsIdEventsRoute: typeof ApiProjectsIdEventsRoute
   ApiScreenshotsProjectKeyPinIdRoute: typeof ApiScreenshotsProjectKeyPinIdRoute
   ProjectsIdPinsPinIdRoute: typeof ProjectsIdPinsPinIdRoute
@@ -325,6 +415,13 @@ declare module '@tanstack/react-router' {
       path: '/projects/new'
       fullPath: '/projects/new'
       preLoaderRoute: typeof ProjectsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cli/authorize': {
+      id: '/cli/authorize'
+      path: '/cli/authorize'
+      fullPath: '/cli/authorize'
+      preLoaderRoute: typeof CliAuthorizeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects/$id/settings': {
@@ -376,6 +473,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWidgetEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cli/whoami': {
+      id: '/api/cli/whoami'
+      path: '/api/cli/whoami'
+      fullPath: '/api/cli/whoami'
+      preLoaderRoute: typeof ApiCliWhoamiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cli/projects': {
+      id: '/api/cli/projects'
+      path: '/api/cli/projects'
+      fullPath: '/api/cli/projects'
+      preLoaderRoute: typeof ApiCliProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/verify': {
       id: '/api/auth/verify'
       path: '/api/auth/verify'
@@ -425,6 +536,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProjectsIdEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cli/auth/token': {
+      id: '/api/cli/auth/token'
+      path: '/api/cli/auth/token'
+      fullPath: '/api/cli/auth/token'
+      preLoaderRoute: typeof ApiCliAuthTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cli/auth/start': {
+      id: '/api/cli/auth/start'
+      path: '/api/cli/auth/start'
+      fullPath: '/api/cli/auth/start'
+      preLoaderRoute: typeof ApiCliAuthStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cli/auth/revoke': {
+      id: '/api/cli/auth/revoke'
+      path: '/api/cli/auth/revoke'
+      fullPath: '/api/cli/auth/revoke'
+      preLoaderRoute: typeof ApiCliAuthRevokeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/widget/pins/$pinId/replies': {
       id: '/api/widget/pins/$pinId/replies'
       path: '/replies'
@@ -432,8 +564,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWidgetPinsPinIdRepliesRouteImport
       parentRoute: typeof ApiWidgetPinsPinIdRoute
     }
+    '/api/cli/projects/$id/origins': {
+      id: '/api/cli/projects/$id/origins'
+      path: '/$id/origins'
+      fullPath: '/api/cli/projects/$id/origins'
+      preLoaderRoute: typeof ApiCliProjectsIdOriginsRouteImport
+      parentRoute: typeof ApiCliProjectsRoute
+    }
   }
 }
+
+interface ApiCliProjectsRouteChildren {
+  ApiCliProjectsIdOriginsRoute: typeof ApiCliProjectsIdOriginsRoute
+}
+
+const ApiCliProjectsRouteChildren: ApiCliProjectsRouteChildren = {
+  ApiCliProjectsIdOriginsRoute: ApiCliProjectsIdOriginsRoute,
+}
+
+const ApiCliProjectsRouteWithChildren = ApiCliProjectsRoute._addFileChildren(
+  ApiCliProjectsRouteChildren,
+)
 
 interface ApiWidgetPinsPinIdRouteChildren {
   ApiWidgetPinsPinIdRepliesRoute: typeof ApiWidgetPinsPinIdRepliesRoute
@@ -462,11 +613,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
+  CliAuthorizeRoute: CliAuthorizeRoute,
   ProjectsNewRoute: ProjectsNewRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthSendMagicLinkRoute: ApiAuthSendMagicLinkRoute,
   ApiAuthVerifyRoute: ApiAuthVerifyRoute,
+  ApiCliProjectsRoute: ApiCliProjectsRouteWithChildren,
+  ApiCliWhoamiRoute: ApiCliWhoamiRoute,
   ApiWidgetEventsRoute: ApiWidgetEventsRoute,
   ApiWidgetInitRoute: ApiWidgetInitRoute,
   ApiWidgetPinsRoute: ApiWidgetPinsRouteWithChildren,
@@ -474,6 +628,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsIdInboxRoute: ProjectsIdInboxRoute,
   ProjectsIdInstallRoute: ProjectsIdInstallRoute,
   ProjectsIdSettingsRoute: ProjectsIdSettingsRoute,
+  ApiCliAuthRevokeRoute: ApiCliAuthRevokeRoute,
+  ApiCliAuthStartRoute: ApiCliAuthStartRoute,
+  ApiCliAuthTokenRoute: ApiCliAuthTokenRoute,
   ApiProjectsIdEventsRoute: ApiProjectsIdEventsRoute,
   ApiScreenshotsProjectKeyPinIdRoute: ApiScreenshotsProjectKeyPinIdRoute,
   ProjectsIdPinsPinIdRoute: ProjectsIdPinsPinIdRoute,
