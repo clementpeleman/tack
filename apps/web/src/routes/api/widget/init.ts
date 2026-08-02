@@ -6,10 +6,7 @@ import { normalizePinUrl } from '@tack/shared'
 import { corsHeaders } from '#/lib/cors'
 import { enrichPinsWithComments } from '#/lib/pins'
 import type { ProjectNotifySettings } from '#/lib/notifications'
-import {
-  previewOriginMatches,
-  recordWidgetConnection,
-} from '#/lib/widget-connection'
+import { originAllowed, recordWidgetConnection } from '#/lib/widget-connection'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
 
 export const Route = createFileRoute('/api/widget/init')({
@@ -45,35 +42,26 @@ export const Route = createFileRoute('/api/widget/init')({
 
         const settings = (project.settings ?? {}) as ProjectNotifySettings
         const pinQueryParams = settings.pinQueryParams
-        const originMatched = origin
-          ? previewOriginMatches(project.previewUrl, origin)
-          : null
+        const allowed = origin ? originAllowed(project, origin) : null
 
-        if (originMatched === false) {
+        if (allowed === false) {
+          // Deliberately returns no project data. This branch previously
+          // echoed `project.name` and `previewUrl` back with the requesting
+          // origin in `Access-Control-Allow-Origin`, which let any site read
+          // them using only the public project key. The rejection stays
+          // readable (so the widget can log a precise reason) but carries
+          // nothing about the project. `originMatched` is kept alongside the
+          // new field so cached older widget builds still detect this.
           return Response.json(
             {
-              project: {
-                id: project.id,
-                name: project.name,
-                previewUrl: project.previewUrl,
-              },
               pins: [],
-              pinQueryParams,
-              connection: {
-                originMatched: false,
-                previewUrl: project.previewUrl,
-              },
+              connection: { originAllowed: false, originMatched: false },
             },
             { headers },
           )
         }
 
-        const connected = await recordWidgetConnection(
-          project.id,
-          project.previewUrl,
-          project.firstWidgetSeenAt,
-          origin,
-        )
+        const connected = await recordWidgetConnection(project, origin)
 
         const pageUrlRaw = url.searchParams.get('url')
         const pageUrl = pageUrlRaw
@@ -98,7 +86,8 @@ export const Route = createFileRoute('/api/widget/init')({
             pins: pinsWithComments,
             pinQueryParams,
             connection: {
-              originMatched: originMatched ?? true,
+              originAllowed: allowed ?? true,
+              originMatched: allowed ?? true,
               connected,
             },
           },

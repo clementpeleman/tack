@@ -75,7 +75,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
-        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        const originError = enforceWidgetOrigin(auth.project, origin)
         if (originError) return originError
 
         if (typeof comment === 'string' && comment.trim()) {
@@ -143,7 +143,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
-        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        const originError = enforceWidgetOrigin(auth.project, origin)
         if (originError) return originError
 
         await deletePinAndRelated(params.pinId)

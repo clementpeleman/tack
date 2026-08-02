@@ -59,7 +59,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
-        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        const originError = enforceWidgetOrigin(auth.project, origin)
         if (originError) return originError
 
         const repliesList = await enrichRepliesForPin(auth.pin)
@@ -106,7 +106,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
-        const originError = enforceWidgetOrigin(auth.project.previewUrl, origin)
+        const originError = enforceWidgetOrigin(auth.project, origin)
         if (originError) return originError
 
         if (typeof reviewerName === 'string' && reviewerName.trim()) {

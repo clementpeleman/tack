@@ -380,6 +380,7 @@ export const getProjectConnectionStatus = createServerFn({ method: 'GET' })
     return {
       connected: Boolean(project.firstWidgetSeenAt),
       firstWidgetSeenAt: project.firstWidgetSeenAt,
+      firstWidgetOrigin: project.firstWidgetOrigin,
     }
   })
 

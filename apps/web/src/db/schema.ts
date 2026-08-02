@@ -31,7 +31,17 @@ export const projects = sqliteTable('projects', {
   previewUrl: text('preview_url').notNull(),
   projectKey: text('project_key').notNull().unique(),
   settings: text('settings', { mode: 'json' }).$type<Record<string, string>>(),
+  // Extra origins the widget may load from, beyond previewUrl. Stored as
+  // strict normalized origins (scheme://host[:port], no path, no wildcard) —
+  // unlike previewUrl, which is human-typed and tolerates a `*.` prefix.
+  // The origin check is the real authorization gate for reading and writing
+  // pins, since the project key is public by design, so this list is written
+  // only through a validated path.
+  allowedOrigins: text('allowed_origins', { mode: 'json' }).$type<string[]>(),
   firstWidgetSeenAt: text('first_widget_seen_at'),
+  // Which origin first phoned home — lets the dashboard distinguish "connected
+  // from your preview URL" from "connected from localhost".
+  firstWidgetOrigin: text('first_widget_origin'),
   createdAt: createdAt(),
   archivedAt: text('archived_at'),
 })

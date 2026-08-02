@@ -31,6 +31,9 @@ function InstallPage() {
   const { onboarding } = Route.useSearch()
   const router = useRouter()
   const [connected, setConnected] = useState(Boolean(project.firstWidgetSeenAt))
+  const [connectedOrigin, setConnectedOrigin] = useState<string | null>(
+    project.firstWidgetOrigin ?? null,
+  )
   const [waitingSeconds, setWaitingSeconds] = useState(0)
   const [snippetCopied, setSnippetCopied] = useState(false)
   const [showTestStep, setShowTestStep] = useState(false)
@@ -47,6 +50,7 @@ function InstallPage() {
         const status = await getProjectConnectionStatus({ data: { id: project.id } })
         if (status.connected) {
           setConnected(true)
+          setConnectedOrigin(status.firstWidgetOrigin ?? null)
         }
       } catch {
         // ignore poll errors
@@ -142,9 +146,21 @@ function InstallPage() {
             {connected ? 'Connected ✓' : 'Waiting for first ping…'}
           </p>
           <p className="text-xs text-[var(--ink-mute)] mt-1">
-            {connected
-              ? 'Widget loaded from your preview site.'
-              : 'Open your preview site in another tab after adding the snippet.'}
+            {connected ? (
+              connectedOrigin ? (
+                <>
+                  Widget loaded from{' '}
+                  <span className="font-mono text-[var(--ink-soft)]">
+                    {connectedOrigin}
+                  </span>
+                  .
+                </>
+              ) : (
+                'Widget loaded from your preview site.'
+              )
+            ) : (
+              'Open your preview site in another tab after adding the snippet.'
+            )}
           </p>
 
           <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3">
@@ -172,7 +188,10 @@ function InstallPage() {
                 <li>Is the preview URL correct and reachable?</li>
                 <li>Did you paste the snippet before <code>&lt;/body&gt;</code>?</li>
                 <li>Check the browser console for CSP or network errors.</li>
-                <li>Widget requests must come from the same host as the preview URL.</li>
+                <li>
+                  The page must load from an allowed origin — the preview URL, or
+                  an origin added in project settings.
+                </li>
               </ul>
             </div>
           )}

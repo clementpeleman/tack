@@ -39,7 +39,10 @@ The staging/preview deployment of the Project's website where the Widget runs. N
 How confidently a pin can be re-anchored on the live page: **anchored** (id or selector match), **approximate** (xpath or coordinates only), or **lost** (nothing matches; screenshot is the source of truth).
 
 **Connected**:
-A Project's state once the widget has successfully phoned home from an origin matching the preview URL. The install-flow success signal.
+A Project's state once the widget has successfully phoned home from an **allowed origin** — the preview URL, or one of the Project's additional allowed origins (a local dev server registered during install). The install-flow success signal. Because a local origin counts, Connected alone does not prove the client-facing preview site is wired up, so the origin that first phoned home is recorded and shown alongside the state.
+
+**Allowed origin**:
+An origin the Widget may load from for a given Project. The Project key is public by design, so this is the real authorization gate for reading and writing pins. Local dev origins can be registered by the CLI; remote origins require the dashboard.
 
 ### Product layers
 

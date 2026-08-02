@@ -64,6 +64,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
   const [pending, setPending] = useState<PendingPin | null>(null)
   const [selectedPinId, setSelectedPinId] = useState<string | null>(null)
   const [initError, setInitError] = useState<string | null>(null)
+  const [originBlocked, setOriginBlocked] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [threadVersion, setThreadVersion] = useState(0)
   const pinQueryParamsRef = useRef<string[] | undefined>(undefined)
@@ -82,13 +83,22 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
           pinQueryParamsRef.current = data.pinQueryParams as string[]
         }
 
-        if (data.connection?.originMatched === false) {
-          const previewUrl = data.project?.previewUrl ?? data.connection?.previewUrl
-          setInitError(
-            previewUrl
-              ? `This page doesn't match the project preview URL (${previewUrl}).`
-              : "This page doesn't match the project preview URL.",
+        // This origin isn't allowed for the project. Report it to the console
+        // for whoever installed the widget and then render nothing — showing a
+        // visible error here would put a live Tack launcher on a page the
+        // widget was never meant to run on (a production deploy that got the
+        // snippet by mistake), which end users would see and which used to
+        // announce the project's preview URL to them.
+        if (
+          data.connection?.originAllowed === false ||
+          data.connection?.originMatched === false
+        ) {
+          console.warn(
+            `[tack] ${window.location.origin} is not an allowed origin for this project. ` +
+              'Add it in project settings, or run `tack origin add` for a local dev origin. ' +
+              'The widget will not load here.',
           )
+          setOriginBlocked(true)
           setPins([])
           return []
         }
@@ -251,6 +261,9 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
       reviewerName: name || undefined,
     })
   }, [projectKey, reviewerId, selectedPinId])
+
+  // Render nothing at all on a disallowed origin — no launcher, no banner.
+  if (originBlocked) return null
 
   return (
     <>

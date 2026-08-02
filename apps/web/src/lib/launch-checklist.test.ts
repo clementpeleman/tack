@@ -7,7 +7,12 @@ import {
 } from '#/lib/pin-display'
 import {
   enforceWidgetOrigin,
+  isLoopbackOrigin,
+  normalizeOrigin,
+  originAllowed,
   previewOriginMatches,
+  validateAllowedOrigins,
+  MAX_ALLOWED_ORIGINS,
 } from '#/lib/widget-connection'
 import { parseScreenshotBase64 } from '#/lib/storage'
 
@@ -67,16 +72,97 @@ describe('launch checklist: widget connection', () => {
 })
 
 describe('launch checklist: widget origin enforcement', () => {
+  const project = {
+    previewUrl: 'https://preview.example.com',
+    allowedOrigins: null,
+  }
+
   it('blocks a mismatched cross-origin request with 403', () => {
-    const res = enforceWidgetOrigin('https://preview.example.com', 'https://evil.com')
+    const res = enforceWidgetOrigin(project, 'https://evil.com')
     expect(res?.status).toBe(403)
     // disallowed origin must not be able to read the response
     expect(res?.headers.get('Access-Control-Allow-Origin')).toBeNull()
   })
 
   it('allows a matching origin and same-origin (no Origin header)', () => {
-    expect(enforceWidgetOrigin('https://preview.example.com', 'https://preview.example.com')).toBeNull()
-    expect(enforceWidgetOrigin('https://preview.example.com', null)).toBeNull()
+    expect(enforceWidgetOrigin(project, 'https://preview.example.com')).toBeNull()
+    expect(enforceWidgetOrigin(project, null)).toBeNull()
+  })
+
+  it('allows an origin from the project allowlist', () => {
+    const withLocalhost = {
+      previewUrl: 'https://preview.example.com',
+      allowedOrigins: ['http://localhost:5173'],
+    }
+    expect(originAllowed(withLocalhost, 'http://localhost:5173')).toBe(true)
+    expect(enforceWidgetOrigin(withLocalhost, 'http://localhost:5173')).toBeNull()
+    // a different port is a different origin
+    expect(originAllowed(withLocalhost, 'http://localhost:3000')).toBe(false)
+    // the allowlist must not widen anything else
+    expect(originAllowed(withLocalhost, 'https://evil.com')).toBe(false)
+  })
+})
+
+describe('launch checklist: origin normalization', () => {
+  it('normalizes to scheme://host[:port] and drops path', () => {
+    expect(normalizeOrigin('http://Localhost:5173/some/path')).toBe(
+      'http://localhost:5173',
+    )
+    expect(normalizeOrigin('https://preview.example.com')).toBe(
+      'https://preview.example.com',
+    )
+  })
+
+  it('rejects non-http(s) and malformed input', () => {
+    expect(normalizeOrigin('javascript:alert(1)')).toBeNull()
+    expect(normalizeOrigin('file:///etc/passwd')).toBeNull()
+    expect(normalizeOrigin('not a url')).toBeNull()
+    expect(normalizeOrigin('*')).toBeNull()
+  })
+
+  it('identifies loopback origins', () => {
+    expect(isLoopbackOrigin('http://localhost:3000')).toBe(true)
+    expect(isLoopbackOrigin('http://127.0.0.1:8080')).toBe(true)
+    expect(isLoopbackOrigin('http://[::1]:3000')).toBe(true)
+    expect(isLoopbackOrigin('http://app.localhost:3000')).toBe(true)
+    expect(isLoopbackOrigin('https://evil.com')).toBe(false)
+    // must not be fooled by a hostname that merely contains "localhost"
+    expect(isLoopbackOrigin('https://localhost.evil.com')).toBe(false)
+  })
+})
+
+describe('launch checklist: allowlist validation', () => {
+  it('accepts and dedupes valid origins', () => {
+    const res = validateAllowedOrigins([
+      'http://localhost:5173',
+      'http://localhost:5173/',
+    ])
+    expect(res).toEqual({ ok: true, origins: ['http://localhost:5173'] })
+  })
+
+  it('rejects non-loopback origins when loopbackOnly is set', () => {
+    // This is the gate that stops a stolen CLI token from allowlisting a
+    // domain it controls and reading the project's reviewer feedback.
+    const res = validateAllowedOrigins(['https://evil.com'], {
+      loopbackOnly: true,
+    })
+    expect(res.ok).toBe(false)
+  })
+
+  it('allows remote origins when not restricted to loopback', () => {
+    const res = validateAllowedOrigins(['https://staging.example.com'])
+    expect(res.ok).toBe(true)
+  })
+
+  it('enforces the count cap and rejects junk', () => {
+    const tooMany = Array.from(
+      { length: MAX_ALLOWED_ORIGINS + 1 },
+      (_, i) => `http://localhost:${4000 + i}`,
+    )
+    expect(validateAllowedOrigins(tooMany).ok).toBe(false)
+    expect(validateAllowedOrigins('nope').ok).toBe(false)
+    expect(validateAllowedOrigins([123]).ok).toBe(false)
+    expect(validateAllowedOrigins(['http://' + 'a'.repeat(300)]).ok).toBe(false)
   })
 })
 
