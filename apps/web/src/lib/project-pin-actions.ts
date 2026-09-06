@@ -38,6 +38,7 @@ export interface PinDetailData {
   screenshotPath: string | null
   xPct: number
   yPct: number
+  viewportYPct: number | null
   viewportW: number
   viewportH: number
   placementState: 'anchored' | 'approximate' | 'lost' | null
@@ -204,6 +205,7 @@ export const getPinDetail = createServerFn({ method: 'GET' })
           screenshotPath: pin.screenshotPath,
           xPct: pin.xPct,
           yPct: pin.yPct,
+          viewportYPct: pin.viewportYPct,
           viewportW: pin.viewportW,
           viewportH: pin.viewportH,
           placementState: pin.placementState,

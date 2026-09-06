@@ -1,0 +1,1 @@
+ALTER TABLE `pins` ADD `viewport_y_pct` real;

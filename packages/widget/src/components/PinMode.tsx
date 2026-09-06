@@ -1,7 +1,12 @@
 import { useEscapeKey } from '../lib/useEscapeKey'
 
 interface PinModeProps {
-  onPlace: (x: number, y: number, el: HTMLElement | null) => void
+  onPlace: (
+    x: number,
+    y: number,
+    el: HTMLElement | null,
+    viewportYPct: number,
+  ) => void
   onCancel: () => void
 }
 
@@ -23,7 +28,11 @@ export function PinMode({ onPlace, onCancel }: PinModeProps) {
     const xPct = (e.clientX / window.innerWidth) * 100
     const yPct = ((e.clientY + window.scrollY) / document.documentElement.scrollHeight) * 100
 
-    onPlace(xPct, yPct, target)
+    // Position within the visible viewport — the screenshot only covers the
+    // viewport, so this is what the dashboard needs to place the marker on it.
+    const viewportYPct = (e.clientY / window.innerHeight) * 100
+
+    onPlace(xPct, yPct, target, viewportYPct)
   }
 
   return (

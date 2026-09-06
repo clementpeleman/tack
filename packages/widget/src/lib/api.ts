@@ -50,6 +50,7 @@ export async function createPin(data: {
   reviewerName?: string
   xPct: number
   yPct: number
+  viewportYPct?: number
   scrollY: number
   viewportW: number
   viewportH: number

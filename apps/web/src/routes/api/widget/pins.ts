@@ -19,6 +19,9 @@ const MAX_META = 1000
 const clamp = (v: unknown, max: number): string | null =>
   typeof v === 'string' && v.length > 0 ? v.slice(0, max) : null
 
+const pct = (v: unknown): number | null =>
+  typeof v === 'number' && Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : null
+
 export const Route = createFileRoute('/api/widget/pins')({
   server: {
     handlers: {
@@ -86,7 +89,7 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
-        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, elementStyles, body: commentBody, browser, os, screenshot } = body as Record<string, any>
+        const { projectKey, url, reviewerId, reviewerName, xPct, yPct, viewportYPct, scrollY, viewportW, viewportH, selector, xpath, tackId, elementText, elementStyles, body: commentBody, browser, os, screenshot } = body as Record<string, any>
 
         if (!projectKey || !url || !reviewerId || xPct == null || yPct == null || !commentBody) {
           return Response.json(
@@ -132,6 +135,7 @@ export const Route = createFileRoute('/api/widget/pins')({
             reviewerName: clamp(reviewerName, MAX_NAME),
             xPct,
             yPct,
+            viewportYPct: pct(viewportYPct),
             scrollY: scrollY ?? 0,
             viewportW: viewportW ?? 0,
             viewportH: viewportH ?? 0,

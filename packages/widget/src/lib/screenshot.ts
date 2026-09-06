@@ -4,6 +4,10 @@ export async function captureViewportScreenshot(): Promise<string | null> {
   try {
     const dataUrl = await domToJpeg(document.documentElement, {
       quality: 0.7,
+      // Render at 1x regardless of devicePixelRatio: a retina capture is 4x
+      // the pixels to rasterize, encode and upload, and the dashboard shows
+      // it scaled down anyway.
+      scale: 1,
       width: window.innerWidth,
       height: window.innerHeight,
       style: {

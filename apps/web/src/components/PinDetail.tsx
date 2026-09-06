@@ -66,6 +66,11 @@ export function PinDetail({
   const elementStyles = parseElementStyles(pin.elementStyles)
 
   const previewLink = buildPreviewLink(previewUrl, pin.url, pin.id)
+
+  // The screenshot covers the viewport only, so the marker must use the
+  // viewport-relative position. Older pins predate that field; yPct (document
+  // relative) is only right for them when the page wasn't scrolled.
+  const markerTop = pin.viewportYPct ?? pin.yPct
   const screenshotUrl = pin.screenshotPath
     ? `/api/screenshots/${projectKey}/${pin.id}?projectKey=${encodeURIComponent(projectKey)}`
     : null
@@ -161,7 +166,7 @@ export function PinDetail({
               />
               <div
                 className="absolute w-4 h-4 -ml-2 -mt-2 bg-[var(--pin)] rounded-[50%_50%_50%_4px] -rotate-45 border-2 border-[var(--page)] shadow-sm"
-                style={{ left: `${pin.xPct}%`, top: `${pin.yPct}%` }}
+                style={{ left: `${pin.xPct}%`, top: `${markerTop}%` }}
                 aria-hidden="true"
               />
             </div>

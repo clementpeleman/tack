@@ -56,6 +56,10 @@ export const pins = sqliteTable('pins', {
   reviewerName: text('reviewer_name'),
   xPct: real('x_pct').notNull(),
   yPct: real('y_pct').notNull(),
+  // yPct is relative to the full document; the screenshot only covers the
+  // viewport. This is the click position within that viewport (0–100) so the
+  // dashboard can place the marker on the screenshot. Null on older pins.
+  viewportYPct: real('viewport_y_pct'),
   scrollY: real('scroll_y').notNull().default(0),
   viewportW: integer('viewport_w').notNull(),
   viewportH: integer('viewport_h').notNull(),

@@ -48,7 +48,18 @@ interface PinData {
 interface PendingPin {
   xPct: number
   yPct: number
+  /** Click position within the viewport (0–100), matching the screenshot. */
+  viewportYPct: number
   element: HTMLElement | null
+  /** Viewport state at placement time — the screenshot is taken then too. */
+  scrollY: number
+  viewportW: number
+  viewportH: number
+  /**
+   * Screenshot capture started the moment the pin was placed, so it runs
+   * while the reviewer types instead of after they hit "Drop pin".
+   */
+  screenshot: Promise<string | null>
 }
 
 function scrollToPin(pin: PinData) {
@@ -164,11 +175,32 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
     setActive(!active)
   }, [active])
 
-  const handlePlace = useCallback((xPct: number, yPct: number, el: HTMLElement | null) => {
-    setSelectedPinId(null)
-    setPending({ xPct, yPct, element: el })
-    setActive(false)
-  }, [])
+  const handlePlace = useCallback(
+    (xPct: number, yPct: number, el: HTMLElement | null, viewportYPct: number) => {
+      setSelectedPinId(null)
+      // Defer the (heavy, DOM-cloning) capture by a frame so the crosshair is
+      // gone and the comment card is painted before we start.
+      const screenshot = new Promise<string | null>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            captureViewportScreenshot().then(resolve, () => resolve(null))
+          })
+        })
+      })
+      setPending({
+        xPct,
+        yPct,
+        viewportYPct,
+        element: el,
+        scrollY: window.scrollY,
+        viewportW: window.innerWidth,
+        viewportH: window.innerHeight,
+        screenshot,
+      })
+      setActive(false)
+    },
+    [],
+  )
 
   const handleSubmit = useCallback(async (name: string, comment: string) => {
     if (!pending) return
@@ -176,7 +208,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
     try {
       setActionError(null)
       const el = pending.element
-      const screenshot = await captureViewportScreenshot()
+      const screenshot = await pending.screenshot
       const url = normalizePinUrl(
         window.location.pathname,
         window.location.search,
@@ -189,9 +221,10 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
         reviewerName: name || undefined,
         xPct: pending.xPct,
         yPct: pending.yPct,
-        scrollY: window.scrollY,
-        viewportW: window.innerWidth,
-        viewportH: window.innerHeight,
+        viewportYPct: pending.viewportYPct,
+        scrollY: pending.scrollY,
+        viewportW: pending.viewportW,
+        viewportH: pending.viewportH,
         selector: el ? getElementSelector(el) : undefined,
         xpath: el ? getElementXPath(el) : undefined,
         tackId: el ? getTackId(el) : undefined,
