@@ -10,6 +10,7 @@ import {
   setApiHost,
   widgetInit,
   createPin,
+  attachScreenshot,
   updatePin,
   deletePin,
   createReply,
@@ -208,7 +209,6 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
     try {
       setActionError(null)
       const el = pending.element
-      const screenshot = await pending.screenshot
       const url = normalizePinUrl(
         window.location.pathname,
         window.location.search,
@@ -232,11 +232,21 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
         elementStyles: el ? JSON.stringify(getElementComputedStyles(el)) : undefined,
         body: comment,
         browser: navigator.userAgent.slice(0, 100),
-        screenshot: screenshot ?? undefined,
       })
 
       setPins((prev) => [...prev, normalizePin(result.pin, comment)])
       setPending(null)
+
+      // The pin is saved; the screenshot (still rendering, or already done)
+      // follows on its own. Best-effort: a failed capture leaves the pin
+      // without an image rather than surfacing an error to the reviewer.
+      const pinId = String(result.pin.id)
+      void pending.screenshot.then((screenshot) => {
+        if (!screenshot) return
+        return attachScreenshot({ projectKey, pinId, reviewerId, screenshot }).catch(
+          (err) => console.warn('[tack] screenshot upload failed:', err),
+        )
+      })
     } catch (err) {
       const message =
         err instanceof WidgetApiError

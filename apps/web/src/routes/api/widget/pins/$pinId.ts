@@ -8,6 +8,7 @@ import {
   updatePinFirstComment,
 } from '#/lib/pins'
 import { emitProjectEvent } from '#/lib/events'
+import { parseScreenshotBase64, saveScreenshot } from '#/lib/storage'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
 import { enforceWidgetOrigin } from '#/lib/widget-connection'
 
@@ -58,7 +59,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
             { status: 400, headers },
           )
         }
-        const { projectKey, reviewerId, comment, reviewerName } = body as Record<string, any>
+        const { projectKey, reviewerId, comment, reviewerName, screenshot } = body as Record<string, any>
 
         if (!projectKey || !reviewerId) {
           return Response.json(
@@ -78,7 +79,33 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         const originError = enforceWidgetOrigin(auth.project, origin)
         if (originError) return originError
 
-        if (typeof comment === 'string' && comment.trim()) {
+        if (typeof screenshot === 'string' && screenshot.length > 0) {
+          // Screenshot follow-up: the widget posts the pin first so the
+          // reviewer never waits on capture, then attaches the image here.
+          // Only the first one is accepted; a pin's screenshot is immutable.
+          if (auth.pin.screenshotPath) {
+            return Response.json(
+              { error: 'Pin already has a screenshot' },
+              { status: 409, headers },
+            )
+          }
+          const buffer = parseScreenshotBase64(screenshot)
+          if (!buffer) {
+            return Response.json(
+              { error: 'Invalid screenshot' },
+              { status: 400, headers },
+            )
+          }
+          const screenshotPath = await saveScreenshot(
+            auth.project.id,
+            params.pinId,
+            buffer,
+          )
+          await db
+            .update(pins)
+            .set({ screenshotPath })
+            .where(eq(pins.id, params.pinId))
+        } else if (typeof comment === 'string' && comment.trim()) {
           await updatePinFirstComment(
             params.pinId,
             comment.trim(),

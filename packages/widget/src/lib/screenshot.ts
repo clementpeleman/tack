@@ -8,6 +8,9 @@ export async function captureViewportScreenshot(): Promise<string | null> {
       // the pixels to rasterize, encode and upload, and the dashboard shows
       // it scaled down anyway.
       scale: 1,
+      // A single cross-origin font or image without CORS headers would
+      // otherwise stall the capture for the library's 30s default.
+      timeout: 8000,
       width: window.innerWidth,
       height: window.innerHeight,
       style: {

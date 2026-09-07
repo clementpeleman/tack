@@ -92,6 +92,28 @@ export async function updatePin(data: {
   return parseJsonResponse(res)
 }
 
+/**
+ * Attach a screenshot to a pin after it was created. Pins are posted
+ * without one so the reviewer never waits on capture; this follows up.
+ */
+export async function attachScreenshot(data: {
+  projectKey: string
+  pinId: string
+  reviewerId: string
+  screenshot: string
+}) {
+  const res = await fetch(`${apiHost}/api/widget/pins/${data.pinId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      projectKey: data.projectKey,
+      reviewerId: data.reviewerId,
+      screenshot: data.screenshot,
+    }),
+  })
+  return parseJsonResponse(res)
+}
+
 export async function deletePin(data: {
   projectKey: string
   pinId: string
