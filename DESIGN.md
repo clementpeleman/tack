@@ -96,15 +96,14 @@ feedback.fish's serif/white/blue-orange direction, per explicit user choice.
 
 ## Macrostructure family
 
-This is a token- and component-voice-level rebrand of the *existing* page
-structures, not a structural rebuild. Pages keep their current section order and
-information architecture.
+The September 2026 dashboard makeover changed the app's structure (see
+§ Dashboard below); the marketing page and the widget keep theirs.
 
 - **Marketing (landing):** existing hero → 3-step loop → context → agency →
   self-host → CTA → footer structure, unchanged. New type/color/button voice only.
-- **App (dashboard):** existing sidebar + content layout, unchanged. Cards/panels
-  keep their current flat, hairline-bordered shape; only tokens and button shape
-  change.
+- **App (dashboard):** sidebar with a project switcher, three sections (Inbox,
+  Connect, Settings) and an account menu; the inbox is a master-detail
+  workspace. Rules in § Dashboard.
 - **Widget (embedded on third-party sites):** unchanged structure and interaction
   model. Gets the new color system and pill buttons; does **not** get the PT Serif
   display face — see Typography § Widget exception.
@@ -189,3 +188,70 @@ fade-everything.
 canonical token sources for their respective surfaces. No separate
 `tokens.css`/Tailwind-`@theme`/DTCG exports exist yet — ask if another project
 needs to consume this system.
+
+## Dashboard
+
+Added with the September 2026 makeover. These rules are checked against
+PRODUCT.md's anti-references (metric strips, pill rows, nested cards, jargon)
+on every screen.
+
+### Type scale
+
+| Role | Face | Size / weight | Class |
+|---|---|---|---|
+| Page title | PT Serif | 22px / 700 | `.text-page-title` |
+| Pin title (panel) | PT Serif | 18px / 700 | inline |
+| Section head | IBM Plex Sans | 15px / 600 | `.text-section` |
+| Row title | IBM Plex Sans | 14px / 500 | inline |
+| Body | IBM Plex Sans | 14px / 400 | default |
+| Meta / labels | Source Code Pro | 12px (11px uppercase for labels) | `.text-meta` |
+
+One serif size for page titles everywhere; no sans-serif page titles.
+
+### Status is typographic
+
+- Open: a 8px `--accent` dot at the end of the row.
+- Resolved: row title struck through in `--ink-mute`, a `--signal` check
+  where the dot was.
+- Lost placement: the word `lost` in mono, `--danger`.
+- The `StatusPill` is retired for rows. A pill is reserved for a single,
+  glanceable discrete state on a detail surface, and even there prefer text.
+
+### Rows
+
+Pin rows are 56px, hairline-divided, thumbnail 40px with the marker as a
+dot at the pin's position. Hover `--surface-2`; selected `accent` at 10%
+mix; focus ring 2px `--accent` inset. Selection checkbox appears on hover,
+on focus, or while any row is checked.
+
+### Panels
+
+One container level. A panel is either `--surface` fill without a border on
+`--page`, or a hairline border without fill. Never both, never nested. The
+inbox pane is the one exception that carries both fill and border, because
+it sits beside a list that has neither.
+
+### Empty states
+
+One sentence, one primary action, at most one muted secondary line. No
+icon, no illustration, no mosaic device in the dashboard.
+
+### Errors and confirmation
+
+Inline, under the field or beside the action, `--danger` text, `role=alert`.
+Destructive actions (delete pin, revoke link, archive project) go through
+`ConfirmDialog` (Radix AlertDialog). Success is announced via a visually
+hidden `aria-live` region; no toasts.
+
+### Keyboard, inbox
+
+`j`/`k` or arrows move · `Enter` opens on small screens · `r` resolve /
+reopen · `a` focus reply · `⌘↩` send · `x` check · `⌘A` check all visible ·
+`Esc` clear checks, then close the pane. Hints sit under the list in
+`.text-meta` and are hidden below `lg`.
+
+### Primitives
+
+Menu, ConfirmDialog, Tabs and Select wrap Radix Primitives and carry the
+tokens; everything that makes Tack recognisable (rows, thumbnails, the pin
+panel, the connect page) is hand-built. No component catalogues.

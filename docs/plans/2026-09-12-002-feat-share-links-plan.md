@@ -36,6 +36,10 @@ The proxy forwards WebSocket upgrades (`share-proxy.mjs` → `upgrade`): raw soc
 
 Trade-off kept: Cloudflare sits in the trust chain for tunnel shares and the URL changes per run. A self-built tunnel stays the option for the self-host story.
 
+## Dashboard surfaces
+
+Share links live on the Connect page (`/projects/:id/connect`) next to the script tag, the bookmarklet and the allowed-origins editor, since the September 2026 dashboard makeover. The inbox empty state points there with "Create a review link" as the primary action.
+
 ## Infra checklist for the hosted instance
 
 - DNS: `*.share.peleman.io` → the Coolify server.
