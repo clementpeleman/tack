@@ -56,6 +56,10 @@ export async function isPortListening(port: number): Promise<boolean> {
   return (await tryConnect('127.0.0.1', port)) || (await tryConnect('::1', port))
 }
 
+export type TunnelDnsResult =
+  | { ok: true; waitedMs: number }
+  | { ok: false; reason: 'timeout' | 'resolvers-unreachable'; waitedMs: number }
+
 /**
  * A quick tunnel's hostname is minted when cloudflared connects, and the DNS
  * record follows a few seconds later. Asking the system resolver before it
@@ -63,27 +67,54 @@ export async function isPortListening(port: number): Promise<boolean> {
  * minutes, on this machine and, if the share were created now, on the Tack
  * server. So the name is checked against public resolvers directly, and the
  * share is only created once both of them answer.
+ *
+ * Never fatal: on a network that blocks public DNS (some hotspots and
+ * corporate networks) it waits a fixed grace period instead, and on a
+ * timeout the caller proceeds anyway — the server retries its own lookup.
  */
-export async function waitForTunnel(url: string, timeoutMs = 60_000): Promise<void> {
+export async function waitForTunnel(
+  url: string,
+  onProgress?: (elapsedMs: number) => void,
+  timeoutMs = 45_000,
+): Promise<TunnelDnsResult> {
   const hostname = new URL(url).hostname
-  const deadline = Date.now() + timeoutMs
+  const started = Date.now()
   const resolvers = ['1.1.1.1', '8.8.8.8'].map((server) => {
     const r = new Resolver({ timeout: 2000, tries: 1 })
     r.setServers([server])
     return r
   })
-  while (Date.now() < deadline) {
+
+  // Can we reach public DNS at all? If a name that certainly exists does
+  // not resolve through either, the network is blocking us; do not spend
+  // 45 s learning that.
+  const reachable = await Promise.all(
+    resolvers.map((r) => r.resolve4('cloudflare.com').then(() => true, () => false)),
+  )
+  if (!reachable.some(Boolean)) {
+    await new Promise((r) => setTimeout(r, 8000))
+    return { ok: false, reason: 'resolvers-unreachable', waitedMs: Date.now() - started }
+  }
+  const usable = resolvers.filter((_, i) => reachable[i])
+
+  let lastTick = 0
+  while (Date.now() - started < timeoutMs) {
     const answers = await Promise.all(
-      resolvers.map((r) => r.resolve4(hostname).then((a) => a.length > 0, () => false)),
+      usable.map((r) => r.resolve4(hostname).then((a) => a.length > 0, () => false)),
     )
     if (answers.every(Boolean)) {
       // One more beat so resolvers in between have it too.
       await new Promise((r) => setTimeout(r, 2000))
-      return
+      return { ok: true, waitedMs: Date.now() - started }
+    }
+    const elapsed = Date.now() - started
+    if (elapsed - lastTick >= 10_000) {
+      lastTick = elapsed
+      onProgress?.(elapsed)
     }
     await new Promise((r) => setTimeout(r, 1500))
   }
-  throw new Error('The tunnel hostname did not appear in DNS within 60 seconds. Try again.')
+  return { ok: false, reason: 'timeout', waitedMs: Date.now() - started }
 }
 
 export interface Tunnel {

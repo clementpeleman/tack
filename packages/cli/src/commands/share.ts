@@ -176,12 +176,15 @@ async function shareLocal(
   info(`Opening a tunnel to localhost:${port}…`)
   const tunnel = await startTunnel(port)
   info(dim('Waiting for the tunnel hostname to appear in DNS…'))
-  try {
-    await waitForTunnel(tunnel.url)
-  } catch (err) {
-    await tunnel.stop()
-    devServer?.stop()
-    throw err
+  const dns = await waitForTunnel(tunnel.url, (elapsed) =>
+    info(dim(`  still waiting (${Math.round(elapsed / 1000)}s)…`)),
+  )
+  if (!dns.ok) {
+    warn(
+      dns.reason === 'resolvers-unreachable'
+        ? 'Public DNS is not reachable from this network; continuing after a short pause.'
+        : 'The tunnel hostname is slow to appear in DNS; continuing anyway. If the link fails, wait a minute and retry.',
+    )
   }
 
   let shareId: string | null = null
