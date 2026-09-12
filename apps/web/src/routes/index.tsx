@@ -23,7 +23,7 @@ export const Route = createFileRoute('/')({
   },
   head: () => ({
     meta: [
-      { title: 'Tack — visual feedback for preview sites, pinned' },
+      { title: 'Tack: pinned visual feedback for preview sites' },
       {
         name: 'description',
         content:

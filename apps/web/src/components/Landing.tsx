@@ -30,8 +30,8 @@ function FauxBar() {
   )
 }
 
-/** The signature hero artifact: a live preview you can pin. Decorative — the
- *  meaning is carried by the copy, so the container stays aria-hidden. */
+/** The signature hero artifact: a live preview you can pin. Decorative, so the
+ *  container stays aria-hidden; the copy carries the meaning. */
 function HeroArtifact() {
   const [pins, setPins] = useState<{ id: number; x: number; y: number }[]>([])
   const [interacted, setInteracted] = useState(false)
@@ -59,7 +59,7 @@ function HeroArtifact() {
           className="relative cursor-crosshair space-y-4 p-6 select-none sm:p-8"
           onClick={dropPin}
         >
-          {/* invitation to interact — fades after the first pin */}
+          {/* invitation to interact; fades after the first pin */}
           <div
             className={`pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 transition-opacity duration-300 ${interacted ? 'opacity-0' : 'opacity-100'}`}
           >
@@ -114,7 +114,7 @@ function HeroArtifact() {
         </div>
       </div>
 
-      {/* floating collaborators — decorative; the meaning is in the copy */}
+      {/* floating collaborators, decorative; the meaning is in the copy */}
       <div className="tk-rise absolute -top-3.5 left-2 z-10 hidden sm:block lg:-left-10" style={{ animationDelay: '0.5s' }}>
         <Pointer label="Sam · client" tone="var(--pt-green)" />
       </div>
@@ -132,7 +132,7 @@ function HeroArtifact() {
           <span className="text-xs text-[var(--ink-soft)]">· client</span>
         </div>
         <p className="text-sm leading-snug text-[var(--ink)]">
-          This headline should be punchier — and the CTA feels buried.
+          This headline should be punchier, and the CTA feels buried.
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {['.hero h1', '1440×900', 'Chrome'].map((chip) => (
@@ -221,7 +221,7 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ── The loop (genuine 3-step sequence) ──────────── */}
+        {/* ── The loop ───────────────────────────────────── */}
         <section className="tk-loop-section">
           <div className="tk-loop-content mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
             <h2
@@ -231,7 +231,7 @@ export function Landing() {
               What happens when someone leaves a comment.
             </h2>
             <p className="mt-4 max-w-xl text-[var(--ink-mute)]" style={{ textWrap: 'pretty' }}>
-              No screenshots pasted into Slack, no thread spent working out which
+              You skip the pasted Slack screenshot and the thread about which
               button they meant.
             </p>
 
@@ -240,7 +240,7 @@ export function Landing() {
                 {
                   n: '1',
                   title: 'A reviewer leaves a comment',
-                  body: 'They click the element, type what is wrong, and submit. The widget is already on your preview site, so there is nothing to install and no account to create.',
+                  body: 'They click the element, type what is wrong, and submit. The widget already sits on your preview site, so they install nothing and never sign up.',
                   visual: (
                     <div className="tk-loop-card relative rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="space-y-2">
@@ -254,7 +254,7 @@ export function Landing() {
                 {
                   n: '2',
                   title: 'It arrives with context',
-                  body: 'The comment lands in your inbox with the page URL, the CSS selector, a screenshot, the viewport, and the browser — enough to reproduce it without asking.',
+                  body: 'The comment lands in your inbox with the page URL, the CSS selector, a screenshot, the viewport, and the browser. That is usually enough to reproduce it without asking them anything.',
                   visual: (
                     <div className="tk-loop-card rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export function Landing() {
                 {
                   n: '3',
                   title: 'You triage it',
-                  body: 'Reply, set a status, group duplicates, and resolve. “Open in preview” jumps straight back to the element on the live page.',
+                  body: 'Reply, set a status, group duplicates, and resolve. "Open in preview" jumps straight back to the element on the live page.',
                   visual: (
                     <div className="tk-loop-card rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
                       <div className="space-y-2.5">
@@ -316,14 +316,14 @@ export function Landing() {
               </h2>
               <p className="mt-5 max-w-md text-[var(--ink-mute)]" style={{ textWrap: 'pretty' }}>
                 Each comment is anchored to the element it's about and arrives with
-                the details below. “Open in preview” takes you straight back to it
-                on the live page.
+                the details below. &quot;Open in preview&quot; takes you straight
+                back to it on the live page.
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[var(--shadow-float)] sm:p-8">
               <div className="mb-4 flex items-center gap-2.5">
                 <span className="h-3.5 w-3.5 rounded-[50%_50%_50%_3px] -rotate-45 bg-[var(--pin)]" aria-hidden="true" />
-                <span className="text-sm font-medium text-[var(--ink)]">Pin · “Headline too soft”</span>
+                <span className="text-sm font-medium text-[var(--ink)]">Pin · &quot;Headline too soft&quot;</span>
               </div>
               <dl>
                 <ContextRow label="Page" value="/pricing" />
@@ -349,10 +349,10 @@ export function Landing() {
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--ink-mute)]" style={{ textWrap: 'pretty' }}>
               You already share a preview link with clients. Put Tack's widget on
-              it, and every stakeholder can leave feedback in place — they click,
-              type, and you get it with full context. Nothing for them to install,
-              no account to create. Every comment and reply stays in one inbox you
-              control.
+              it and everyone reviewing can leave feedback in place: they click,
+              they type, and it reaches you with the full context, without an
+              install or an account on their side. Every comment and reply stays
+              in one inbox you control.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
               <Button href={DEMO_URL} arrow>Try the demo</Button>
@@ -372,7 +372,7 @@ export function Landing() {
               </h2>
               <p className="mt-5 max-w-md text-[var(--ink-mute)]" style={{ textWrap: 'pretty' }}>
                 Tack is AGPL open source. Run it on your own infrastructure with
-                Docker and claim the instance with your email — your data stays with
+                Docker and claim the instance with your email. Your data stays with
                 you. The AI Inbox is optional and uses your own API key.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -398,7 +398,7 @@ export function Landing() {
             <div>
               <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--ink)]">
                 <div className="flex items-center justify-between border-b border-[color-mix(in_oklab,var(--page)_18%,var(--ink))] px-4 py-2.5">
-                  <span className="text-xs text-[color-mix(in_oklab,var(--page)_62%,var(--ink))]">Terminal — from the repo root</span>
+                  <span className="text-xs text-[color-mix(in_oklab,var(--page)_62%,var(--ink))]">Terminal, from the repo root</span>
                   <button
                     type="button"
                     onClick={copyCommand}
