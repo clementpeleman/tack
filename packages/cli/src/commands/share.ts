@@ -1,14 +1,24 @@
 import { api, ApiError, type TackProject } from '../api.js'
 import { login } from '../auth.js'
 import { resolveToken } from '../config.js'
-import { bold, dim, error, info, isInteractive, log, select, step } from '../ui.js'
+import { detectFramework } from '../detect.js'
+import {
+  cloudflaredInstallHint,
+  hasCloudflared,
+  isPortListening,
+  startTunnel,
+} from '../tunnel.js'
+import { bold, dim, error, info, isInteractive, log, select, step, warn } from '../ui.js'
 
 export interface ShareOptions {
   host: string
+  cwd: string
   token?: string
   project?: string
-  /** Site to share. Required until the tunnel exists (`tack share` alone). */
+  /** Site to share. Without it, the local dev server is tunnelled instead. */
   url?: string
+  /** Local port to tunnel; default from framework detection. */
+  port?: number
   passcode?: string
   days?: number
   label?: string
@@ -104,13 +114,9 @@ export async function shareCommand(options: ShareOptions): Promise<number> {
     return 0
   }
 
-  const target = options.url ?? project.previewUrl
-  if (!target) {
-    error('Pass the site to share: tack share https://preview.acme.com')
-    info(dim('Sharing a local dev server directly is not available yet.'))
-    return 1
-  }
+  if (!options.url) return shareLocal(client, project, options)
 
+  const target = options.url
   const { url, share } = await client.createShare({
     projectId: project.id,
     targetUrl: target,
@@ -133,5 +139,92 @@ export async function shareCommand(options: ShareOptions): Promise<number> {
       `Expires ${share.expiresAt.slice(0, 10)}${share.hasPasscode ? ' · passcode required' : ''} · revoke with: tack share revoke ${share.id}`,
     ),
   )
+  return 0
+}
+
+/**
+ * `tack share` with no URL: tunnel the dev server through cloudflared, put a
+ * share in front of the tunnel URL, keep both alive until Ctrl-C, then revoke.
+ */
+async function shareLocal(
+  client: ReturnType<typeof api>,
+  project: TackProject,
+  options: ShareOptions,
+): Promise<number> {
+  let port = options.port
+  if (!port) {
+    const detection = await detectFramework(options.cwd)
+    port = detection?.devPort ?? 3000
+  }
+
+  if (!(await isPortListening(port))) {
+    error(`Nothing is listening on localhost:${port}.`)
+    info('Start your dev server first, or pass --port, or share a URL instead:')
+    info(dim('  tack share https://preview.acme.com'))
+    return 1
+  }
+
+  if (!(await hasCloudflared())) {
+    error('Sharing a local dev server needs cloudflared, which is not installed.')
+    info(`Install it with: ${bold(cloudflaredInstallHint())}`)
+    info(dim('Or share a deployed preview instead: tack share https://…'))
+    return 1
+  }
+
+  info(`Opening a tunnel to localhost:${port}…`)
+  const tunnel = await startTunnel(port)
+
+  let shareId: string | null = null
+  const cleanup = async () => {
+    await tunnel.stop()
+    if (shareId) {
+      try {
+        await client.revokeShare(shareId)
+        info('Share link closed.')
+      } catch {
+        warn(`Could not revoke the share; run: tack share revoke ${shareId}`)
+      }
+    }
+  }
+
+  try {
+    const { url, share } = await client.createShare({
+      projectId: project.id,
+      targetUrl: tunnel.url,
+      passcode: options.passcode,
+      days: options.days ?? 1,
+      label: options.label ?? `local dev on port ${port}`,
+    })
+    shareId = share.id
+
+    log()
+    step('Project', `${project.name} ${dim(project.projectKey)}`)
+    step('Sharing', `localhost:${port} ${dim(`via ${tunnel.url}`)}`)
+    log()
+    log(`  ${bold(url)}`)
+    log()
+    info('Send this to your client. Feedback lands in your inbox:')
+    info(dim(`${options.host}/projects/${project.id}/inbox`))
+    log()
+    info(dim(`Live while this runs${share.hasPasscode ? ' · passcode required' : ''}. Press Ctrl-C to stop sharing.`))
+  } catch (err) {
+    await tunnel.stop()
+    throw err
+  }
+
+  await new Promise<void>((resolve) => {
+    const onSignal = () => {
+      log()
+      resolve()
+    }
+    process.once('SIGINT', onSignal)
+    process.once('SIGTERM', onSignal)
+    void tunnel.exited.then(() => {
+      warn('The tunnel closed.')
+      resolve()
+    })
+  })
+
+  await cleanup()
   return 0
 }

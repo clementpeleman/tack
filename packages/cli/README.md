@@ -16,6 +16,7 @@ tack login                Sign in to a Tack instance
 tack logout               Revoke this machine's token and forget it
 tack status               Show host, sign-in state and detected framework
 tack origin add <url>     Allow an extra local dev origin
+tack share                Share your running dev server through a tunnel, until Ctrl-C
 tack share <url>          Create a review link that serves the site with the widget injected
 tack share list           Show active review links
 tack share revoke <id>    Close a review link
@@ -29,7 +30,15 @@ npx @usetack/cli share https://preview.acme.com --passcode monday
 
 Prints a link on the instance's share domain. Tack serves the site through that link with the widget already on it, so there is nothing to install on the site and a strict Content-Security-Policy on the preview does not get in the way. Links expire after 7 days by default (`--days`), can require a passcode, and can be closed with `tack share revoke <id>`.
 
-Requires the instance to have `TACK_SHARE_DOMAIN` configured. Sharing a local dev server directly is planned; today the site has to be reachable on the public internet.
+Requires the instance to have `TACK_SHARE_DOMAIN` configured.
+
+### Share your dev server
+
+```bash
+npx @usetack/cli share
+```
+
+With no URL, `share` tunnels the dev server on the detected port (or `--port`) through [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) and puts a review link in front of it. Hot reload keeps working through the link. The link lives while the command runs and is revoked on Ctrl-C; the share expires after a day regardless. cloudflared must be installed (`brew install cloudflared` on macOS); Cloudflare sees the traffic, so use a deployed preview for anything you would not send through a third party.
 
 ## Supported frameworks
 

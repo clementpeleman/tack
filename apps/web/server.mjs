@@ -83,7 +83,7 @@ const shareProxy = shareDomain
   : null
 if (shareDomain) console.log(`Share links served on *.${shareDomain}`)
 
-createServer(async (req, res) => {
+const server = createServer(async (req, res) => {
   try {
     if (shareProxy && (await shareProxy(req, res))) return
 
@@ -136,7 +136,20 @@ createServer(async (req, res) => {
     res.writeHead(500, { 'Content-Type': 'text/plain' })
     res.end('Internal Server Error')
   }
-}).listen(port, () => {
+})
+
+if (shareProxy) {
+  server.on('upgrade', (req, socket, head) => {
+    shareProxy.upgrade(req, socket, head).then(
+      (handled) => {
+        if (!handled) socket.destroy()
+      },
+      () => socket.destroy(),
+    )
+  })
+}
+
+server.listen(port, () => {
   console.log(`Tack listening on http://0.0.0.0:${port}`)
   console.log(`Data directory: ${process.env.DATABASE_URL ?? join(rootDir, 'tack.db')}`)
 })

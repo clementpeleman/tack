@@ -1,7 +1,7 @@
 ---
 date: 2026-09-12
 topic: share-links
-status: phase 1 built, phase 2 planned
+status: phase 1 and 2 built
 ---
 
 # Share links: `tack share`
@@ -20,20 +20,21 @@ Reviewers open one link and see the preview with the widget already on it. The s
 
 ### Known limits
 
-- WebSocket upgrades are not proxied. Fine for static and SSR previews; a dev server's HMR socket will not connect through a share (relevant for phase 2).
 - DNS is checked before the fetch, not pinned to the resolved address. A rebinding attack needs control of the target's DNS and a sub-60-second TTL; acceptable for v1, revisit if the hosted instance grows.
 - Pins do not record which share they came from yet. The inbox shows the origin that first phoned home only.
 
-## Phase 2 (planned): localhost via cloudflared
+## Phase 2 (built): localhost via cloudflared
 
-Decision: lean on `cloudflared` for the tunnel first rather than building one. `tack share` with no URL will:
+`tack share` with no URL (`packages/cli/src/tunnel.ts`, `commands/share.ts`):
 
-1. Detect the dev port (existing `detectFramework`).
-2. Spawn `cloudflared tunnel --url http://localhost:<port>` (prompt to install if missing; `brew install cloudflared` / winget / apt).
-3. Read the assigned `*.trycloudflare.com` URL from its output.
-4. Create a share with that URL as target, print the share link, keep both processes alive until Ctrl-C, then revoke the share.
+1. Detects the dev port (`detectFramework`, or `--port`) and checks something listens on it over IPv4 and IPv6 (Vite binds `::1` on recent Node).
+2. Spawns `cloudflared tunnel --url http://localhost:<port> --http-host-header localhost:<port> --no-autoupdate`; the host-header flag keeps Vite from refusing the request. Missing binary: prints the install command for the platform.
+3. Reads the `*.trycloudflare.com` URL from cloudflared's output (45 s timeout).
+4. Creates a one-day share on that URL, prints the link, and waits. Ctrl-C (or cloudflared exiting) revokes the share and stops the tunnel; cloudflared's 30 s grace period is cut short with SIGKILL after 3 s.
 
-Trade-off: Cloudflare sits in the trust chain and the tunnel URL changes each run, so the share target is per session. A self-built tunnel (WebSocket multiplexing in the CLI, ~300 lines each side) stays the option for the self-host story if agencies ask for it. Also needed for phase 2: proxying WebSocket upgrades so HMR works through the share.
+The proxy forwards WebSocket upgrades (`share-proxy.mjs` → `upgrade`): raw socket piping to the target with the Host rewritten, behind the same share and passcode checks. In dev, `vite.config.ts` wraps Vite's own `upgrade` listener so share hosts go to the proxy and Vite keeps its HMR. Verified end to end: `[vite] connected` and `hot updated: /main.js` through a share, both against a local target and through a cloudflared tunnel.
+
+Trade-off kept: Cloudflare sits in the trust chain for tunnel shares and the URL changes per run. A self-built tunnel stays the option for the self-host story.
 
 ## Infra checklist for the hosted instance
 

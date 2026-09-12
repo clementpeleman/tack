@@ -31,6 +31,24 @@ function shareProxyPlugin(): Plugin {
       server.middlewares.use((req, res, next) => {
         proxy(req, res).then((handled) => { if (!handled) next() }, next)
       })
+      // Vite registers its own 'upgrade' listener for HMR and would try to
+      // claim a share host's socket too. Wrap the existing listeners so share
+      // hosts go to the proxy and everything else stays with Vite.
+      const httpServer = server.httpServer
+      if (!httpServer) return
+      const wrap = () => {
+        const existing = httpServer.listeners('upgrade') as Array<(...a: unknown[]) => void>
+        httpServer.removeAllListeners('upgrade')
+        httpServer.on('upgrade', (req, socket, head) => {
+          if (!proxy.isShareHost(req)) {
+            for (const listener of existing) listener.call(httpServer, req, socket, head)
+            return
+          }
+          proxy.upgrade(req, socket, head).catch(() => socket.destroy())
+        })
+      }
+      if (httpServer.listening) wrap()
+      else httpServer.once('listening', wrap)
     },
   }
 }

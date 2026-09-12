@@ -5,8 +5,9 @@
 import Database from 'better-sqlite3'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { lookup } from 'node:dns/promises'
-import { isIP } from 'node:net'
+import { connect as netConnect, isIP } from 'node:net'
 import { Readable } from 'node:stream'
+import { connect as tlsConnect } from 'node:tls'
 
 const HOP_BY_HOP = new Set([
   'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
@@ -88,7 +89,10 @@ function parseCookies(header) {
  *        Origin of the Tack instance (for the widget script and API).
  * @param {boolean} [options.allowLocal]  Allow private targets (dev only).
  * @param {(msg: string) => void} [options.log]
- * @returns {(req, res) => Promise<boolean>}  true when the request was handled.
+ * @returns {((req, res) => Promise<boolean>) & { upgrade: (req, socket, head) => Promise<boolean>, isShareHost: (req) => boolean }}
+ *          `true` when the request was handled. `upgrade` does the same for
+ *          WebSocket upgrades (a dev server's hot-reload socket), so a share
+ *          of a Vite or Next.js dev server keeps live reload working.
  */
 export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal = false, log = () => {} }) {
   const domain = shareDomain.toLowerCase().replace(/^\*\./, '')
@@ -123,22 +127,107 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
     if (!ok) throw new Error('private')
   }
 
-  return async function handle(req, res) {
+  function shareHost(req) {
     const rawHost = String(req.headers['x-forwarded-host'] ?? req.headers.host ?? '')
       .split(',')[0]
       .trim()
       .toLowerCase()
     const hostOnly = rawHost.replace(/:\d+$/, '')
-    if (!hostOnly.endsWith(suffix)) return false
-
+    if (!hostOnly.endsWith(suffix)) return null
     const slug = hostOnly.slice(0, -suffix.length)
-    if (!slug || slug.includes('.')) {
+    return { rawHost, slug: slug && !slug.includes('.') ? slug : null }
+  }
+
+  function liveShare(slug) {
+    const share = findShare.get(slug)
+    if (!share || share.revoked_at || Date.parse(share.expires_at) <= Date.now()) return null
+    return share
+  }
+
+  function passcodeOk(share, req) {
+    if (!share.passcode_hash) return true
+    const cookie = parseCookies(req.headers.cookie)[PASSCODE_COOKIE] ?? ''
+    const a = Buffer.from(cookie), b = Buffer.from(share.passcode_hash)
+    return a.length === b.length && timingSafeEqual(a, b)
+  }
+
+  /**
+   * WebSocket upgrade for a share host. Raw socket piping: the upgrade
+   * request is re-sent to the target with the Host rewritten, and from then
+   * on bytes flow both ways untouched. No frame parsing needed.
+   */
+  async function upgrade(req, socket, head) {
+    const match = shareHost(req)
+    if (!match) return false
+    const share = match.slug && liveShare(match.slug)
+    if (!share || !passcodeOk(share, req)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+      socket.destroy()
+      return true
+    }
+
+    const target = new URL(share.target_url)
+    try {
+      await assertPublic(target.hostname)
+    } catch {
+      socket.write('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+      socket.destroy()
+      return true
+    }
+
+    const secure = target.protocol === 'https:'
+    const port = Number(target.port) || (secure ? 443 : 80)
+    const upstream = secure
+      ? tlsConnect({ host: target.hostname, port, servername: target.hostname })
+      : netConnect({ host: target.hostname, port })
+
+    const path = target.pathname.replace(/\/$/, '') + (req.url ?? '/')
+    const lines = [`${req.method} ${path} HTTP/1.1`]
+    for (const [k, v] of Object.entries(req.headers)) {
+      if (k === 'host' || k === 'cookie' || k.startsWith('proxy-') || k === 'x-forwarded-host') continue
+      if (k === 'origin' && v === `${req.headers['x-forwarded-proto'] ?? 'http'}://${match.rawHost}`) {
+        lines.push(`origin: ${target.origin}`)
+        continue
+      }
+      lines.push(`${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+    }
+    const kept = Object.entries(parseCookies(req.headers.cookie)).filter(([n]) => n !== PASSCODE_COOKIE)
+    if (kept.length) lines.push(`cookie: ${kept.map(([n, val]) => `${n}=${val}`).join('; ')}`)
+    lines.push(`host: ${target.host}`)
+
+    const fail = () => {
+      if (!socket.destroyed) {
+        socket.write('HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+        socket.destroy()
+      }
+    }
+    upstream.once('error', (err) => {
+      log(`websocket upstream error for ${match.slug}: ${err?.message ?? err}`)
+      fail()
+    })
+    upstream.once(secure ? 'secureConnect' : 'connect', () => {
+      upstream.write(lines.join('\r\n') + '\r\n\r\n')
+      if (head && head.length) upstream.write(head)
+      upstream.pipe(socket)
+      socket.pipe(upstream)
+    })
+    socket.once('error', () => upstream.destroy())
+    socket.once('close', () => upstream.destroy())
+    upstream.once('close', () => socket.destroy())
+    return true
+  }
+
+  async function handle(req, res) {
+    const match = shareHost(req)
+    if (!match) return false
+    const { rawHost, slug } = match
+    if (!slug) {
       page(res, 404, 'Not found', '<h1>Not found</h1><p>This is not a valid share link.</p>')
       return true
     }
 
-    const share = findShare.get(slug)
-    if (!share || share.revoked_at || Date.parse(share.expires_at) <= Date.now()) {
+    const share = liveShare(slug)
+    if (!share) {
       page(
         res, 410, 'Link expired',
         '<h1>This review link is no longer active</h1><p>It expired or was closed by the person who shared it. Ask them for a fresh link.</p>',
@@ -170,9 +259,7 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
         page(res, 401, 'Passcode', passcodeForm(true))
         return true
       }
-      const cookie = parseCookies(req.headers.cookie)[PASSCODE_COOKIE] ?? ''
-      const a = Buffer.from(cookie), b = Buffer.from(share.passcode_hash)
-      if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      if (!passcodeOk(share, req)) {
         page(res, 401, 'Passcode', passcodeForm(false))
         return true
       }
@@ -280,6 +367,10 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
     }
     return true
   }
+
+  handle.upgrade = upgrade
+  handle.isShareHost = (req) => shareHost(req) !== null
+  return handle
 }
 
 function passcodeForm(wrong) {

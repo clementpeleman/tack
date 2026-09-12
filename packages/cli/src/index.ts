@@ -28,8 +28,10 @@ const HELP = `
     logout               Revoke this machine's token and forget it
     status               Show host, sign-in state and detected framework
     origin add <url>     Allow an extra local dev origin
-    share <url>          Create a review link that serves the site with the
-                         widget injected — nothing to install on the site
+    share                Share your running dev server: opens a tunnel and
+                         prints a review link that lives until Ctrl-C
+    share <url>          Create a review link for a deployed preview that
+                         serves it with the widget injected
     share list           Show active review links
     share revoke <id>    Close a review link
 
@@ -47,7 +49,8 @@ const HELP = `
     --no-browser         Print the URL instead of opening a browser
     --token <token>      Discouraged; prefer TACK_TOKEN (argv is visible in ps)
     --passcode <code>    share: require a passcode to open the link
-    --days <n>           share: expiry in days (default 7, max 90)
+    --days <n>           share: expiry in days (default 7 for a URL, 1 for a tunnel)
+    --port <n>           share: local port to tunnel (default: detected dev port)
     --help, --version
 
   Environment
@@ -104,6 +107,7 @@ async function main(): Promise<number> {
       token: { type: 'string' },
       passcode: { type: 'string' },
       days: { type: 'string' },
+      port: { type: 'string' },
       yes: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
       'no-browser': { type: 'boolean', default: false },
@@ -169,9 +173,16 @@ async function main(): Promise<number> {
         error('--days must be a whole number')
         return 1
       }
+      const port = values.port == null ? undefined : Number(values.port)
+      if (port !== undefined && !(Number.isInteger(port) && port > 0 && port < 65536)) {
+        error('--port must be a port number')
+        return 1
+      }
       return shareCommand({
         host,
+        cwd,
         token,
+        port,
         project: values.project as string | undefined,
         url: sub === 'list' || sub === 'revoke' ? undefined : sub,
         passcode: values.passcode as string | undefined,
