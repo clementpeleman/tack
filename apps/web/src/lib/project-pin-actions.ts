@@ -10,7 +10,7 @@ import {
   pins,
   replies,
 } from '#/db/schema'
-import { eq, and, desc, isNull, asc } from 'drizzle-orm'
+import { eq, and, desc, isNull, asc, inArray } from 'drizzle-orm'
 import { requireDashboardAuth } from '#/lib/auth'
 import {
   deletePinAndRelated,
@@ -390,3 +390,35 @@ export const getProjectConnectionStatus = createServerFn({ method: 'GET' })
   })
 
 export type { ProjectNotifySettings }
+
+/** Resolve or reopen several pins at once (inbox multi-select). */
+export const bulkUpdatePinStatus = createServerFn({ method: 'POST' })
+  .inputValidator(
+    (data: { projectId: string; pinIds: string[]; status: 'open' | 'resolved' }) => data,
+  )
+  .handler(async ({ data }): Promise<{ ok: true; updated: number }> => {
+    const request = getRequest()
+    const { userId } = await requireDashboardAuth(request)
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, data.projectId), eq(projects.userId, userId)))
+    if (!project) throw new Response('Not found', { status: 404 })
+
+    const ids = data.pinIds.filter((id) => typeof id === 'string').slice(0, 200)
+    if (ids.length === 0) return { ok: true, updated: 0 }
+
+    const result = await db
+      .update(pins)
+      .set({
+        status: data.status,
+        resolvedAt: data.status === 'resolved' ? new Date().toISOString() : null,
+      })
+      .where(and(eq(pins.projectId, project.id), inArray(pins.id, ids)))
+
+    for (const pinId of ids) {
+      emitProjectEvent({ type: 'pin.updated', projectId: project.id, pinId })
+    }
+    return { ok: true, updated: result.changes ?? ids.length }
+  })

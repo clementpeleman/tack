@@ -46,8 +46,11 @@ export interface PinWithComment {
   screenshotPath: string | null
   xPct: number
   yPct: number
+  viewportYPct: number | null
   viewportW: number
   viewportH: number
+  placementState: 'anchored' | 'approximate' | 'lost' | null
+  placementCheckedAt: string | null
   createdAt: string
   resolvedAt: string | null
   comment: string | null
@@ -58,6 +61,7 @@ export interface PinWithComment {
   aiSummary: string | null
   aiAmbiguous: boolean
   aiGroupTitle: string | null
+  aiGroupBrief: string | null
   tackId: string | null
   xpath: string | null
   placement: PlacementDisplay
@@ -190,6 +194,7 @@ export const getProjectWithPins = createServerFn({ method: 'GET' })
       previewUrl: string
       projectKey: string
       appOrigin: string
+      connected: boolean
       settings: ProjectNotifySettings
     }
     pins: PinWithComment[]
@@ -236,10 +241,10 @@ export const getProjectWithPins = createServerFn({ method: 'GET' })
             .where(eq(aiPinInsights.runId, aiInbox.latestRun.id))
         : []
     const insightsByPin = new Map(latestInsights.map((insight) => [insight.pinId, insight]))
-    const groupTitleByPin = new Map<string, string>()
+    const groupByPin = new Map<string, { title: string; brief: string }>()
     for (const group of aiInbox.groups) {
       for (const pinId of group.pinIds) {
-        groupTitleByPin.set(pinId, group.title)
+        groupByPin.set(pinId, { title: group.title, brief: group.implementationBrief })
       }
     }
 
@@ -286,8 +291,11 @@ export const getProjectWithPins = createServerFn({ method: 'GET' })
           screenshotPath: pin.screenshotPath,
           xPct: pin.xPct,
           yPct: pin.yPct,
+          viewportYPct: pin.viewportYPct,
           viewportW: pin.viewportW,
           viewportH: pin.viewportH,
+          placementState: pin.placementState,
+          placementCheckedAt: pin.placementCheckedAt,
           createdAt: pin.createdAt,
           resolvedAt: pin.resolvedAt,
           comment: pinReplies[0]?.body ?? null,
@@ -297,7 +305,8 @@ export const getProjectWithPins = createServerFn({ method: 'GET' })
           aiPriority: insightsByPin.get(pin.id)?.priority ?? null,
           aiSummary: insightsByPin.get(pin.id)?.summary ?? null,
           aiAmbiguous: insightsByPin.get(pin.id)?.ambiguous ?? false,
-          aiGroupTitle: groupTitleByPin.get(pin.id) ?? null,
+          aiGroupTitle: groupByPin.get(pin.id)?.title ?? null,
+          aiGroupBrief: groupByPin.get(pin.id)?.brief ?? null,
         }
       }),
     )
@@ -314,6 +323,7 @@ export const getProjectWithPins = createServerFn({ method: 'GET' })
         previewUrl: project.previewUrl,
         projectKey: project.projectKey,
         appOrigin,
+        connected: Boolean(project.firstWidgetSeenAt),
         settings: (project.settings ?? {}) as ProjectNotifySettings,
       },
       pins: pinsWithComments,
