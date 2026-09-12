@@ -17,6 +17,9 @@ tack init                 Detect the framework and add the widget
 tack login                Sign in to a Tack instance
 tack logout               Revoke this machine's token and forget it
 tack status               Show host, sign-in state and detected framework
+tack project create [name] [--preview-url <url>]
+                          Create a project; name defaults to package.json
+tack project list         Show your projects
 tack origin add <url>     Allow an extra local dev origin
 tack share                Share your running dev server through a tunnel, until Ctrl-C
 tack share <url>          Create a review link that serves the site with the widget injected

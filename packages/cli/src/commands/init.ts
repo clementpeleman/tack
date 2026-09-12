@@ -1,9 +1,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { api, ApiError, type TackProject } from '../api.js'
-import { login } from '../auth.js'
-import { resolveToken } from '../config.js'
 import { detectFramework } from '../detect.js'
+import { chooseProject, signedInClient } from '../project.js'
 import {
   applyPatch,
   buildSnippet,
@@ -14,21 +12,7 @@ import {
   renderDiff,
   type Gate,
 } from '../patch.js'
-import {
-  bold,
-  confirm,
-  dim,
-  error,
-  info,
-  isInteractive,
-  log,
-  prompt,
-  select,
-  step,
-  warn,
-} from '../ui.js'
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { bold, confirm, dim, error, info, log, step, warn } from '../ui.js'
 
 const run = promisify(execFile)
 
@@ -44,18 +28,6 @@ export interface InitOptions {
   noBrowser: boolean
 }
 
-/** `name` from the project's package.json, as a default for a new Tack project. */
-async function packageName(root: string): Promise<string | null> {
-  try {
-    const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
-    const name = typeof pkg?.name === 'string' ? pkg.name.trim() : ''
-    // Strip an npm scope; "@acme/website" reads better as "website".
-    return name ? name.replace(/^@[^/]+\//, '') : null
-  } catch {
-    return null
-  }
-}
-
 async function isDirty(root: string, file: string): Promise<boolean | null> {
   try {
     const { stdout } = await run('git', ['status', '--porcelain', '--', file], {
@@ -66,61 +38,6 @@ async function isDirty(root: string, file: string): Promise<boolean | null> {
     // Not a git repo, or git isn't installed.
     return null
   }
-}
-
-async function resolveProject(
-  client: ReturnType<typeof api>,
-  options: InitOptions,
-): Promise<TackProject | null> {
-  const { projects } = await client.listProjects()
-
-  if (options.project) {
-    const match = projects.find(
-      (p) => p.id === options.project || p.projectKey === options.project,
-    )
-    if (!match) {
-      error(`No project matching "${options.project}".`)
-      return null
-    }
-    return match
-  }
-
-  if (projects.length === 0) {
-    if (!isInteractive()) {
-      error('No projects yet. Create one in the dashboard, or pass --project.')
-      return null
-    }
-    info('No projects yet — creating one.')
-    const suggested = await packageName(options.cwd)
-    const name =
-      (await prompt(suggested ? `Project name [${suggested}]:` : 'Project name:')) ||
-      suggested
-    if (!name) {
-      error('A project name is required.')
-      return null
-    }
-    // The preview URL is usually not known until the first deploy; it can be
-    // filled in from settings later and the widget still works locally.
-    const previewUrl = await prompt('Preview URL (optional, where clients will review):')
-    const { project } = await client.createProject({ name, previewUrl })
-    return project
-  }
-
-  if (projects.length === 1) return projects[0]!
-
-  if (!isInteractive()) {
-    error('Multiple projects found. Pass --project <id|pk_…> in non-interactive use.')
-    return null
-  }
-
-  return select(
-    'Which project?',
-    projects.map((p) => ({
-      label: p.name,
-      hint: p.previewUrl,
-      value: p,
-    })),
-  )
 }
 
 export async function initCommand(options: InitOptions): Promise<number> {
@@ -136,33 +53,11 @@ export async function initCommand(options: InitOptions): Promise<number> {
   }
 
   // Auth before touching any files, so a login failure leaves nothing behind.
-  let token = await resolveToken(options.host, options.token)
-  let email: string | null = null
+  const signedIn = await signedInClient(options)
+  if (!signedIn) return 1
+  const { client, email } = signedIn
 
-  if (token) {
-    try {
-      email = (await api(options.host, token).whoami()).email
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        token = null
-      } else {
-        throw err
-      }
-    }
-  }
-
-  if (!token) {
-    if (!isInteractive()) {
-      error('Not signed in. Set TACK_TOKEN, or run `tack login` first.')
-      return 1
-    }
-    const result = await login({ host: options.host, noBrowser: options.noBrowser })
-    token = result.token
-    email = result.email
-  }
-
-  const client = api(options.host, token)
-  const project = await resolveProject(client, options)
+  const project = await chooseProject(client, { wanted: options.project, cwd: root })
   if (!project) return 1
 
   const devOrigin = options.origin ?? `http://localhost:${detection.devPort}`

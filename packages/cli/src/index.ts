@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { ApiError } from './api.js'
 import { initCommand } from './commands/init.js'
 import { shareCommand } from './commands/share.js'
+import { projectCommand } from './commands/project.js'
 import {
   loginCommand,
   logoutCommand,
@@ -30,6 +31,9 @@ const HELP = `
     login                Sign in to a Tack instance
     logout               Revoke this machine's token and forget it
     status               Show host, sign-in state and detected framework
+    project create [name]
+                         Create a project (name defaults to package.json)
+    project list         Show your projects
     origin add <url>     Allow an extra local dev origin
     share                Share your running dev server: opens a tunnel and
                          prints a review link that lives until Ctrl-C
@@ -55,6 +59,7 @@ const HELP = `
     --passcode <code>    share: require a passcode to open the link
     --days <n>           share: expiry in days (default 7 for a URL, 1 for a tunnel)
     --port <n>           share: local port to tunnel (default: detected dev port)
+    --preview-url <url>  project create: where clients will review (optional)
     --help, --version
 
   Environment
@@ -111,6 +116,7 @@ async function main(): Promise<number> {
       passcode: { type: 'string' },
       days: { type: 'string' },
       port: { type: 'string' },
+      'preview-url': { type: 'string' },
       yes: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
       'no-browser': { type: 'boolean', default: false },
@@ -168,6 +174,17 @@ async function main(): Promise<number> {
 
     case 'status':
       return statusCommand({ host, cwd, token })
+
+    case 'project':
+      return projectCommand({
+        host,
+        cwd,
+        token,
+        noBrowser: Boolean(values['no-browser']),
+        sub: positionals[1],
+        name: positionals[2],
+        previewUrl: values['preview-url'] as string | undefined,
+      })
 
     case 'share': {
       const sub = positionals[1]

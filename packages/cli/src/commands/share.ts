@@ -1,14 +1,13 @@
-import { api, ApiError, type TackProject } from '../api.js'
-import { login } from '../auth.js'
-import { resolveToken } from '../config.js'
+import type { api, TackProject } from '../api.js'
 import { detectFramework } from '../detect.js'
+import { chooseProject, signedInClient } from '../project.js'
 import {
   cloudflaredInstallHint,
   hasCloudflared,
   isPortListening,
   startTunnel,
 } from '../tunnel.js'
-import { bold, dim, error, info, isInteractive, log, select, step, warn } from '../ui.js'
+import { bold, dim, error, info, log, step, warn } from '../ui.js'
 
 export interface ShareOptions {
   host: string
@@ -28,51 +27,6 @@ export interface ShareOptions {
   shareId?: string
 }
 
-async function signedInClient(options: ShareOptions) {
-  let token = await resolveToken(options.host, options.token)
-  if (token) {
-    try {
-      await api(options.host, token).whoami()
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) token = null
-      else throw err
-    }
-  }
-  if (!token) {
-    if (!isInteractive()) {
-      error('Not signed in. Set TACK_TOKEN, or run `tack login` first.')
-      return null
-    }
-    token = (await login({ host: options.host, noBrowser: options.noBrowser })).token
-  }
-  return api(options.host, token)
-}
-
-async function pickProject(
-  client: ReturnType<typeof api>,
-  wanted: string | undefined,
-): Promise<TackProject | null> {
-  const { projects } = await client.listProjects()
-  if (wanted) {
-    const match = projects.find((p) => p.id === wanted || p.projectKey === wanted)
-    if (!match) error(`No project matching "${wanted}".`)
-    return match ?? null
-  }
-  if (projects.length === 0) {
-    error('No projects yet. Run `tack init` or create one in the dashboard.')
-    return null
-  }
-  if (projects.length === 1) return projects[0]!
-  if (!isInteractive()) {
-    error('Multiple projects — pass --project <id|pk_…>.')
-    return null
-  }
-  return select(
-    'Which project?',
-    projects.map((p) => ({ label: p.name, hint: p.previewUrl, value: p })),
-  )
-}
-
 /**
  * `tack share <url>`: mint a review link that proxies the site with the
  * widget injected. The site itself is untouched, which is the point — it
@@ -80,10 +34,11 @@ async function pickProject(
  * script tag.
  */
 export async function shareCommand(options: ShareOptions): Promise<number> {
-  const client = await signedInClient(options)
-  if (!client) return 1
+  const signedIn = await signedInClient(options)
+  if (!signedIn) return 1
+  const { client } = signedIn
 
-  const project = await pickProject(client, options.project)
+  const project = await chooseProject(client, { wanted: options.project, cwd: options.cwd })
   if (!project) return 1
 
   if (options.sub === 'list') {
