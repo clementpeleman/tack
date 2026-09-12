@@ -55,7 +55,7 @@ export async function projectCommand(options: ProjectOptions): Promise<number> {
   info('Next:')
   info(`${dim('1.')} tack init                 add the widget to this codebase`)
   info(`${dim('2.')} tack share                or share your dev server right away`)
-  info(dim(`Dashboard: ${options.host}/projects/${project.id}/install`))
+  info(dim(`Dashboard: ${options.host}/projects/${project.id}/connect`))
   return 0
 }
 

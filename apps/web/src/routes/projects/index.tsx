@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { getProjects } from '#/lib/projects'
 import { getCurrentUser } from '#/lib/user'
-import { ThemeToggle } from '#/components/ThemeToggle'
+import { AccountMenu } from '#/components/AccountMenu'
 import { Logo } from '#/components/brand/Logo'
 import { buttonClasses } from '#/components/ui/Button'
 
@@ -20,11 +20,14 @@ export const Route = createFileRoute('/projects/')({
     }
   },
   component: ProjectsPage,
-  loader: () => getProjects(),
+  loader: async () => {
+    const [projects, user] = await Promise.all([getProjects(), getCurrentUser()])
+    return { projects, userEmail: user.email }
+  },
 })
 
 function ProjectsPage() {
-  const projects = Route.useLoaderData()
+  const { projects, userEmail } = Route.useLoaderData()
 
   return (
     <main className="min-h-screen bg-[var(--page)]">
@@ -32,13 +35,11 @@ function ProjectsPage() {
         <div className="flex items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-2">
             <Logo size={18} wordmark={false} />
-            <h1 className="text-xl font-semibold text-[var(--ink)]">
-              Projects
-            </h1>
+            <h1 className="text-page-title">Projects</h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-40 hidden sm:block">
-              <ThemeToggle compact />
+            <div className="hidden w-52 sm:block">
+              <AccountMenu email={userEmail} align="end" side="bottom" />
             </div>
             <Link
               to="/projects/new"
@@ -50,8 +51,8 @@ function ProjectsPage() {
           </div>
         </div>
 
-        <div className="sm:hidden mb-6">
-          <ThemeToggle compact />
+        <div className="mb-6 sm:hidden">
+          <AccountMenu email={userEmail} side="bottom" />
         </div>
 
         {projects.length === 0 ? (

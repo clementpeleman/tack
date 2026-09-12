@@ -12,6 +12,7 @@ import {
   updateProjectDetails,
   updateProjectSettings,
 } from '#/lib/projects'
+import { getCurrentUser } from '#/lib/user'
 
 type SettingsTab = 'general' | 'notifications' | 'danger'
 
@@ -24,12 +25,14 @@ export const Route = createFileRoute('/projects/$id/settings')({
         : undefined,
   }),
   loader: async ({ params }) => {
-    const [project, sidebarProjects] = await Promise.all([
+    const [project, sidebarProjects, user] = await Promise.all([
       getProject({ data: { id: params.id } }),
       getProjects(),
+      getCurrentUser(),
     ])
     return {
       project,
+      userEmail: user.email,
       sidebarProjects: sidebarProjects.map((p) => ({ id: p.id, name: p.name })),
       settings: (project.settings ?? {}) as ProjectNotifySettings,
     }
@@ -37,7 +40,7 @@ export const Route = createFileRoute('/projects/$id/settings')({
 })
 
 function SettingsPage() {
-  const { project, sidebarProjects, settings } = Route.useLoaderData()
+  const { project, sidebarProjects, settings, userEmail } = Route.useLoaderData()
   const { tab: searchTab } = Route.useSearch()
   const router = useRouter()
   const tab: SettingsTab = searchTab ?? 'general'
@@ -179,11 +182,10 @@ function SettingsPage() {
       projectName={project.name}
       sidebarProjects={sidebarProjects}
       activeSection="settings"
+      userEmail={userEmail}
     >
       <div className="max-w-2xl">
-        <h1 className="text-xl font-semibold text-[var(--ink)] mb-6">
-          Settings
-        </h1>
+        <h1 className="text-page-title mb-6">Settings</h1>
 
         <div className="flex items-center gap-1 mb-6 border-b border-[var(--line)]">
           {(
@@ -245,12 +247,12 @@ function SettingsPage() {
             <p className="text-xs text-[var(--ink-mute)]">
               Install the widget from the{' '}
               <Link
-                to="/projects/$id/install"
+                to="/projects/$id/connect"
                 params={{ id: project.id }}
                 search={{ onboarding: false }}
                 className="text-[var(--accent)]"
               >
-                install page
+                connect page
               </Link>
               .
             </p>

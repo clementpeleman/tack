@@ -130,9 +130,7 @@ export function PinDetail({
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-[var(--ink)]">
-              Pin detail
-            </h1>
+            <h1 className="text-page-title">Pin detail</h1>
             <p className="text-xs text-[var(--ink-soft)] font-mono mt-0.5">
               {pin.reviewerName ?? 'Anonymous'} · {getTimeAgo(pin.createdAt)}
             </p>

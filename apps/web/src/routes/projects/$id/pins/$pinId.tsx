@@ -7,17 +7,21 @@ import {
   getPinDetail,
   updatePinStatus,
 } from '#/lib/project-pin-actions'
+import { getCurrentUser } from '#/lib/user'
 
 export const Route = createFileRoute('/projects/$id/pins/$pinId')({
   component: PinDetailPage,
-  loader: ({ params }) =>
-    getPinDetail({
-      data: { projectId: params.id, pinId: params.pinId },
-    }),
+  loader: async ({ params }) => {
+    const [data, user] = await Promise.all([
+      getPinDetail({ data: { projectId: params.id, pinId: params.pinId } }),
+      getCurrentUser(),
+    ])
+    return { ...data, userEmail: user.email }
+  },
 })
 
 function PinDetailPage() {
-  const { project, pin, sidebarProjects } = Route.useLoaderData()
+  const { project, pin, sidebarProjects, userEmail } = Route.useLoaderData()
   const router = useRouter()
 
   return (
@@ -25,6 +29,7 @@ function PinDetailPage() {
       projectId={project.id}
       projectName={project.name}
       sidebarProjects={sidebarProjects}
+      userEmail={userEmail}
     >
       <PinDetail
         projectId={project.id}

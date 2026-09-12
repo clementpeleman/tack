@@ -189,7 +189,7 @@ export async function initCommand(options: InitOptions): Promise<number> {
       'Set the preview URL in project settings once the site is deployed — until then only the dev origin above can load the widget.',
     )
   }
-  steps.push(`Dashboard: ${options.host}/projects/${project.id}/install`)
+  steps.push(`Dashboard: ${options.host}/projects/${project.id}/connect`)
   steps.forEach((s, i) => info(`${dim(`${i + 1}.`)} ${s}`))
   log()
   info(dim('The widget only loads at viewports 768px and wider.'))

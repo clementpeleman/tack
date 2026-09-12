@@ -31,7 +31,7 @@ function NewProjectPage() {
         data: { name, previewUrl },
       })
       navigate({
-        to: '/projects/$id/install',
+        to: '/projects/$id/connect',
         params: { id: project.id },
         search: { onboarding },
       })
