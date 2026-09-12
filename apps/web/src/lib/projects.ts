@@ -3,14 +3,109 @@ import { getRequest } from '@tanstack/react-start/server'
 import { db } from '#/db/index'
 import { projects } from '#/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-import { requireAuth } from '#/lib/auth'
+import { requireDashboardAuth } from '#/lib/auth'
 import { generateProjectKey } from '#/lib/project-key'
+import { validateAllowedOrigins } from '#/lib/widget-connection'
+import { configuredPublicOrigin } from '#/lib/public-url'
 import type { ProjectNotifySettings } from '#/lib/notifications'
+
+const MAX_NAME = 120
+const MAX_URL = 500
+const MAX_QUERY_PARAMS = 20
+
+/**
+ * Webhook targets are fetched server-side, so an unrestricted URL is a
+ * server-side request forgery primitive on a shared instance. Only the two
+ * providers' own webhook hosts are accepted.
+ */
+const WEBHOOK_PREFIXES: Record<'discordWebhook' | 'slackWebhook', string[]> = {
+  discordWebhook: [
+    'https://discord.com/api/webhooks/',
+    'https://discordapp.com/api/webhooks/',
+  ],
+  slackWebhook: ['https://hooks.slack.com/'],
+}
+
+export function validateNotifySettings(
+  input: unknown,
+): { ok: true; settings: ProjectNotifySettings } | { ok: false; error: string } {
+  if (!input || typeof input !== 'object') {
+    return { ok: false, error: 'Settings must be an object.' }
+  }
+  const raw = input as Record<string, unknown>
+  const settings: ProjectNotifySettings = {}
+
+  if (raw.notifyEmail != null && raw.notifyEmail !== '') {
+    const email = String(raw.notifyEmail).trim()
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { ok: false, error: 'Notification email is not a valid address.' }
+    }
+    settings.notifyEmail = email
+  }
+
+  for (const key of ['discordWebhook', 'slackWebhook'] as const) {
+    const value = raw[key]
+    if (value == null || value === '') continue
+    const url = String(value).trim()
+    if (
+      url.length > MAX_URL ||
+      !WEBHOOK_PREFIXES[key].some((prefix) => url.startsWith(prefix))
+    ) {
+      const label = key === 'discordWebhook' ? 'Discord' : 'Slack'
+      return {
+        ok: false,
+        error: `${label} webhook must be a ${WEBHOOK_PREFIXES[key][0]}… URL.`,
+      }
+    }
+    settings[key] = url
+  }
+
+  if (raw.pinQueryParams != null) {
+    if (!Array.isArray(raw.pinQueryParams)) {
+      return { ok: false, error: 'pinQueryParams must be a list.' }
+    }
+    const params = raw.pinQueryParams
+      .filter((p): p is string => typeof p === 'string')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0 && p.length <= 64)
+    if (params.length > MAX_QUERY_PARAMS) {
+      return { ok: false, error: `At most ${MAX_QUERY_PARAMS} query params.` }
+    }
+    settings.pinQueryParams = params
+  }
+
+  return { ok: true, settings }
+}
+
+function validateDetails(
+  name: unknown,
+  previewUrl: unknown,
+): { ok: true; name: string; previewUrl: string } | { ok: false; error: string } {
+  const trimmedName = typeof name === 'string' ? name.trim() : ''
+  if (!trimmedName) return { ok: false, error: 'Name is required.' }
+  if (trimmedName.length > MAX_NAME) {
+    return { ok: false, error: `Name must be under ${MAX_NAME} characters.` }
+  }
+  const trimmedUrl = typeof previewUrl === 'string' ? previewUrl.trim() : ''
+  if (trimmedUrl.length > MAX_URL) {
+    return { ok: false, error: `Preview URL must be under ${MAX_URL} characters.` }
+  }
+  return { ok: true, name: trimmedName, previewUrl: trimmedUrl }
+}
+
+/**
+ * The origin the dashboard is served from, resolved on the server. Reading
+ * `window.location.origin` in a component renders an empty string during
+ * SSR and the real origin on the client, which is a hydration mismatch.
+ */
+export const getAppOrigin = createServerFn({ method: 'GET' }).handler(
+  async () => configuredPublicOrigin() ?? new URL(getRequest().url).origin,
+)
 
 export const getProjects = createServerFn({ method: 'GET' }).handler(
   async () => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     return db
       .select()
@@ -23,7 +118,7 @@ export const getProject = createServerFn({ method: 'GET' })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -38,14 +133,17 @@ export const createProject = createServerFn({ method: 'POST' })
   .inputValidator((data: { name: string; previewUrl: string }) => data)
   .handler(async ({ data }) => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
+
+    const valid = validateDetails(data.name, data.previewUrl)
+    if (!valid.ok) throw new Error(valid.error)
 
     const [project] = await db
       .insert(projects)
       .values({
         userId,
-        name: data.name,
-        previewUrl: data.previewUrl,
+        name: valid.name,
+        previewUrl: valid.previewUrl,
         projectKey: generateProjectKey(),
       })
       .returning()
@@ -59,7 +157,7 @@ export const updateProjectSettings = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -68,9 +166,12 @@ export const updateProjectSettings = createServerFn({ method: 'POST' })
 
     if (!project) throw new Response('Not found', { status: 404 })
 
+    const valid = validateNotifySettings(data.settings)
+    if (!valid.ok) throw new Error(valid.error)
+
     await db
       .update(projects)
-      .set({ settings: data.settings })
+      .set({ settings: valid.settings as Record<string, string | string[]> })
       .where(eq(projects.id, project.id))
 
     return { ok: true }
@@ -82,7 +183,7 @@ export const updateProjectDetails = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -91,15 +192,52 @@ export const updateProjectDetails = createServerFn({ method: 'POST' })
 
     if (!project) throw new Response('Not found', { status: 404 })
 
+    const valid = validateDetails(data.name, data.previewUrl)
+    if (!valid.ok) throw new Error(valid.error)
+
     await db
       .update(projects)
-      .set({
-        name: data.name.trim(),
-        previewUrl: data.previewUrl.trim(),
-      })
+      .set({ name: valid.name, previewUrl: valid.previewUrl })
       .where(eq(projects.id, project.id))
 
     return { ok: true }
+  })
+
+/**
+ * Dashboard path for the allowlist. Unlike the CLI route this accepts remote
+ * origins: the caller is a session-authenticated owner, not a token that may
+ * have leaked from a developer machine.
+ */
+export const updateAllowedOrigins = createServerFn({ method: 'POST' })
+  .inputValidator((data: { projectId: string; origins: string[] }) => data)
+  .handler(async ({ data }): Promise<{ ok: true; origins: string[] }> => {
+    const request = getRequest()
+    const { userId } = await requireDashboardAuth(request)
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, data.projectId), eq(projects.userId, userId)))
+
+    if (!project) throw new Response('Not found', { status: 404 })
+
+    const valid = validateAllowedOrigins(data.origins)
+    if (!valid.ok) throw new Error(valid.error)
+
+    await db
+      .update(projects)
+      .set({
+        allowedOrigins: valid.origins,
+        // The origin that was just allowed is no longer a rejection worth
+        // showing; clear it so the hint disappears with the fix.
+        lastRejectedOrigin:
+          project.lastRejectedOrigin && valid.origins.includes(project.lastRejectedOrigin)
+            ? null
+            : project.lastRejectedOrigin,
+      })
+      .where(eq(projects.id, project.id))
+
+    return { ok: true, origins: valid.origins }
   })
 
 export const archiveProject = createServerFn({ method: 'POST' })
@@ -108,7 +246,7 @@ export const archiveProject = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()

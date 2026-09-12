@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm -r --if-present typecheck
+
+      - name: Test
+        run: pnpm -r --if-present test
+
+      - name: Build widget and web
+        run: pnpm --filter @tack/widget build && pnpm --filter @tack/web build
+
+      - name: Committed widget bundle matches the build
+        run: |
+          if ! git diff --quiet -- apps/web/public/tack-widget.js; then
+            echo "apps/web/public/tack-widget.js is stale. Run: pnpm --filter @tack/widget build" >&2
+            git --no-pager diff --stat -- apps/web/public/tack-widget.js
+            exit 1
+          fi
+
+      - name: Build CLI
+        run: pnpm --filter @usetack/cli build
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image and smoke test
+        run: |
+          docker build -t tack-ci .
+          docker run -d --rm --name tack-ci -p 3001:3000 tack-ci
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3001/login >/dev/null && break
+            sleep 2
+          done
+          sh scripts/smoke-docker.sh http://localhost:3001
+          docker stop tack-ci

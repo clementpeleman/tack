@@ -7,17 +7,26 @@ import { addPinReply, enrichRepliesForPin } from '#/lib/pins'
 import { enqueueNotification } from '#/lib/notifications'
 import { emitProjectEvent } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
-import { enforceWidgetOrigin } from '#/lib/widget-connection'
+import { enforceWidgetOrigin, resolveRequestOrigin } from '#/lib/widget-connection'
 
 const MAX_COMMENT = 5000
 
-async function authorizePinAccess(pinId: string, projectKey: string) {
+async function authorizePinAccess(
+  pinId: string,
+  projectKey: string,
+  origin: string | null,
+) {
   const [project] = await db
     .select()
     .from(projects)
     .where(eq(projects.projectKey, projectKey))
 
   if (!project) return { error: 'Invalid project key', status: 404 as const }
+
+  // Origin before the pin lookup: a caller outside an allowed origin must
+  // not learn whether a pin id exists.
+  const originError = enforceWidgetOrigin(project, origin)
+  if (originError) return { response: originError }
 
   const [pin] = await db
     .select()
@@ -36,7 +45,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
         handleCors(request) ?? new Response(null, { status: 204 }),
 
       GET: async ({ request, params }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const cors = handleCors(request)
         if (cors) return cors
@@ -54,20 +63,18 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
         const limited = enforceWidgetRateLimit(projectKey, headers)
         if (limited) return limited
 
-        const auth = await authorizePinAccess(params.pinId, projectKey)
+        const auth = await authorizePinAccess(params.pinId, projectKey, origin)
+        if ('response' in auth) return auth.response
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
-
-        const originError = enforceWidgetOrigin(auth.project, origin)
-        if (originError) return originError
 
         const repliesList = await enrichRepliesForPin(auth.pin)
         return Response.json({ replies: repliesList }, { headers })
       },
 
       POST: async ({ request, params }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const cors = handleCors(request)
         if (cors) return cors
@@ -101,18 +108,23 @@ export const Route = createFileRoute('/api/widget/pins/$pinId/replies')({
         const limited = enforceWidgetRateLimit(projectKey, headers)
         if (limited) return limited
 
-        const auth = await authorizePinAccess(params.pinId, projectKey)
+        const auth = await authorizePinAccess(params.pinId, projectKey, origin)
+        if ('response' in auth) return auth.response
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
 
-        const originError = enforceWidgetOrigin(auth.project, origin)
-        if (originError) return originError
-
-        if (typeof reviewerName === 'string' && reviewerName.trim()) {
+        // A reply may carry the replier's name, but only the pin's own author
+        // may rename the pin: otherwise any reviewer on the preview could
+        // relabel someone else's feedback.
+        if (
+          typeof reviewerName === 'string' &&
+          reviewerName.trim() &&
+          auth.pin.reviewerId === String(reviewerId)
+        ) {
           await db
             .update(pins)
-            .set({ reviewerName: reviewerName.trim() })
+            .set({ reviewerName: reviewerName.trim().slice(0, 120) })
             .where(eq(pins.id, params.pinId))
         }
 

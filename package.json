@@ -5,6 +5,9 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "check": "turbo typecheck test build",
     "db:generate": "pnpm --filter @tack/web db:generate",
     "db:migrate": "pnpm --filter @tack/web db:migrate",
     "db:studio": "pnpm --filter @tack/web db:studio"

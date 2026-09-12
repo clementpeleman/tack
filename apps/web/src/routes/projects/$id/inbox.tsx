@@ -12,7 +12,7 @@ import {
   replies,
 } from '#/db/schema'
 import { eq, and, desc, inArray, isNull, gte } from 'drizzle-orm'
-import { requireAuth } from '#/lib/auth'
+import { requireDashboardAuth } from '#/lib/auth'
 import {
   getOwnerDisplayName,
   type EnrichedReply,
@@ -34,9 +34,9 @@ import { buildAgentPrompt } from '#/lib/agent-prompt'
 import type { AiLabel, AiPinInput, AiPriority } from '#/lib/ai/types'
 import { Layout } from '#/components/Layout'
 import { PinRow } from '#/components/PinRow'
-import { Button } from '#/components/ui/Button'
+import { Button, buttonClasses } from '#/components/ui/Button'
 import { resolvePlacementForDisplay, type PlacementDisplay } from '@tack/shared'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   AlertCircle,
   Bookmark,
@@ -213,7 +213,7 @@ const getProjectWithPins = createServerFn({ method: 'GET' })
     sidebarProjects: { id: string; name: string }[]
   }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
     const appOrigin = new URL(request.url).origin
 
     const [project] = await db
@@ -342,7 +342,7 @@ const analyzeProjectPins = createServerFn({ method: 'POST' })
   .inputValidator((data: { projectId: string; pinIds?: string[] }) => data)
   .handler(async ({ data }): Promise<{ runId: string; status: string }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -1241,17 +1241,24 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 function BookmarkletLink({ href, label }: { href: string; label: string }) {
+  // React 19 refuses `javascript:` URLs passed as props and replaces them
+  // with a throwing stub, which broke dragging the link to the bookmarks bar.
+  // Setting the attribute imperatively keeps the drag working; clicks are
+  // still prevented so the page itself never runs it.
+  const ref = useRef<HTMLAnchorElement>(null)
+  useEffect(() => {
+    ref.current?.setAttribute('href', href)
+  }, [href])
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Button
-        href={href}
-        size="sm"
+      <a
+        ref={ref}
         draggable="true"
         onClick={(event) => event.preventDefault()}
-        className="cursor-grab active:cursor-grabbing"
+        className={`${buttonClasses('primary', 'sm')} cursor-grab active:cursor-grabbing`}
       >
         {label}
-      </Button>
+      </a>
       <span className="text-[10px] text-[var(--ink-soft)] font-mono">
         Drag to bookmarks bar
       </span>

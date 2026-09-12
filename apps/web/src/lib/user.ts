@@ -3,12 +3,12 @@ import { getRequest } from '@tanstack/react-start/server'
 import { db } from '#/db/index'
 import { users } from '#/db/schema'
 import { eq } from 'drizzle-orm'
-import { requireAuth } from '#/lib/auth'
+import { requireDashboardAuth } from '#/lib/auth'
 
 export const getCurrentUser = createServerFn({ method: 'GET' }).handler(
   async () => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [user] = await db.select().from(users).where(eq(users.id, userId))
     if (!user) throw new Response('Not found', { status: 404 })
@@ -25,7 +25,7 @@ export const getCurrentUser = createServerFn({ method: 'GET' }).handler(
 export const completeOnboarding = createServerFn({ method: 'POST' }).handler(
   async () => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     await db
       .update(users)

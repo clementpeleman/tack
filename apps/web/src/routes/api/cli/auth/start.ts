@@ -4,6 +4,7 @@ import {
   startAuthRequest,
 } from '#/lib/cli-auth'
 import { cliAuthRateLimited, getClientIp } from '#/lib/rate-limit'
+import { configuredPublicOrigin } from '#/lib/public-url'
 
 /**
  * Begins the CLI browser-login handshake. Unauthenticated by design — anyone
@@ -65,9 +66,12 @@ export const Route = createFileRoute('/api/cli/auth/start')({
           clientLabel,
         })
 
+        // The CLI already knows which host it is talking to; the URL only
+        // tells it where to open the browser, so the request origin is a
+        // safe fallback here.
         const authorizeUrl = new URL(
           '/cli/authorize',
-          new URL(request.url).origin,
+          configuredPublicOrigin() ?? new URL(request.url).origin,
         )
         authorizeUrl.searchParams.set('request', started.requestId)
 

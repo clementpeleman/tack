@@ -1,12 +1,19 @@
 interface LauncherProps {
   active: boolean
   pinCount: number
+  /** First-visit hint; the owner's mail rarely explains what the button is. */
+  showHint?: boolean
   onClick: () => void
 }
 
-export function Launcher({ active, pinCount, onClick }: LauncherProps) {
+export function Launcher({ active, pinCount, showHint = false, onClick }: LauncherProps) {
   return (
     <>
+      {showHint && (
+        <div class="tack-launcher-hint" role="note">
+          Click the pin, then click anything on the page to leave feedback.
+        </div>
+      )}
       <button
         class={`tack-launcher ${active ? 'active' : ''}`}
         onClick={onClick}

@@ -105,7 +105,7 @@ export const Route = createFileRoute('/api/auth/verify')({
           status: 302,
           headers: {
             Location: '/projects',
-            'Set-Cookie': getSessionCookie(result.sessionId),
+            'Set-Cookie': getSessionCookie(result.sessionId, request),
           },
         })
       },

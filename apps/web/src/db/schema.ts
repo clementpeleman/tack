@@ -30,7 +30,7 @@ export const projects = sqliteTable('projects', {
   name: text('name').notNull(),
   previewUrl: text('preview_url').notNull(),
   projectKey: text('project_key').notNull().unique(),
-  settings: text('settings', { mode: 'json' }).$type<Record<string, string>>(),
+  settings: text('settings', { mode: 'json' }).$type<Record<string, string | string[]>>(),
   // Extra origins the widget may load from, beyond previewUrl. Stored as
   // strict normalized origins (scheme://host[:port], no path, no wildcard) —
   // unlike previewUrl, which is human-typed and tolerates a `*.` prefix.
@@ -42,6 +42,11 @@ export const projects = sqliteTable('projects', {
   // Which origin first phoned home — lets the dashboard distinguish "connected
   // from your preview URL" from "connected from localhost".
   firstWidgetOrigin: text('first_widget_origin'),
+  // Most recent origin the widget tried to load from and was refused. Lets
+  // the dashboard name the origin that needs allowing instead of leaving the
+  // owner to guess from a silent "not connected".
+  lastRejectedOrigin: text('last_rejected_origin'),
+  lastRejectedAt: text('last_rejected_at'),
   createdAt: createdAt(),
   archivedAt: text('archived_at'),
 })

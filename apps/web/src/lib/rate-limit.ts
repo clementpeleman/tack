@@ -1,3 +1,5 @@
+const SWEEP_INTERVAL_MS = 5 * 60_000
+
 export interface RateLimitResult {
   allowed: boolean
   retryAfterSeconds: number
@@ -5,9 +7,23 @@ export interface RateLimitResult {
 
 class SlidingWindowLimiter {
   private buckets = new Map<string, number[]>()
+  private lastSweep = Date.now()
+
+  /** Drop buckets whose every timestamp fell out of the window, so keys an attacker invents cannot grow memory forever. */
+  private sweep(now: number, windowMs: number): void {
+    if (now - this.lastSweep < SWEEP_INTERVAL_MS) return
+    this.lastSweep = now
+    const cutoff = now - windowMs
+    for (const [key, timestamps] of this.buckets) {
+      if (timestamps.length === 0 || timestamps[timestamps.length - 1]! <= cutoff) {
+        this.buckets.delete(key)
+      }
+    }
+  }
 
   check(key: string, limit: number, windowMs: number): RateLimitResult {
     const now = Date.now()
+    this.sweep(now, windowMs)
     const windowStart = now - windowMs
     let timestamps = this.buckets.get(key) ?? []
     timestamps = timestamps.filter((t) => t > windowStart)
@@ -31,9 +47,18 @@ const magicLinkIpLimiter = new SlidingWindowLimiter()
 const dashboardLimiter = new SlidingWindowLimiter()
 const cliAuthLimiter = new SlidingWindowLimiter()
 
+/**
+ * Behind a reverse proxy the socket address is the proxy, so the client IP
+ * has to come from X-Forwarded-For. The proxy appends the address it saw as
+ * the LAST entry; anything before it was sent by the client and is free to
+ * forge. Taking the last hop is what makes IP-keyed limits hold up.
+ */
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0]!.trim()
+  if (forwarded) {
+    const hops = forwarded.split(',').map((h) => h.trim()).filter(Boolean)
+    if (hops.length > 0) return hops[hops.length - 1]!
+  }
   return request.headers.get('x-real-ip') ?? 'unknown'
 }
 

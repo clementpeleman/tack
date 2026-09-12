@@ -139,10 +139,31 @@ export function planPatch(
     }
   }
 
-  const indent = (lines[anchor]!.match(/^\s*/)?.[0] ?? '') + '  '
+  const anchorLine = lines[anchor]!
+  const baseIndent = anchorLine.match(/^\s*/)?.[0] ?? ''
+  const indent = baseIndent + '  '
   const block = snippet.split('\n').map((line) => (line ? indent + line : line))
 
   const patchedLines = [...lines]
+
+  // `<body>…</body>` on a single line (a minimal layout): inserting above the
+  // line would put the tag outside <body>. Split the line at </body> so the
+  // snippet lands inside it; the opening part keeps its original text.
+  const closeAt = anchorLine.lastIndexOf('</body>')
+  const head = anchorLine.slice(0, closeAt)
+  if (head.trim().length > 0) {
+    const tail = baseIndent + anchorLine.slice(closeAt)
+    patchedLines.splice(anchor, 1, head.replace(/\s+$/, ''), ...block, tail)
+    return {
+      file: detection.file,
+      original: contents,
+      patched: patchedLines.join(eol),
+      insertedAt: anchor + 1,
+      insertedLines: block,
+      eol,
+    }
+  }
+
   patchedLines.splice(anchor, 0, ...block)
 
   return {

@@ -13,8 +13,9 @@ export interface MountTackWidgetOptions {
 
 /**
  * Mount the Tack widget into the current document. Returns `false` (and does
- * nothing) when the viewport is too small, the project key is missing, or the
- * widget is already mounted.
+ * nothing) when the project key is missing or the widget is already mounted.
+ * On viewports narrower than 768px a short dismissible notice is mounted
+ * instead of the pin UI.
  */
 export function mountTackWidget(options: MountTackWidgetOptions): boolean
 

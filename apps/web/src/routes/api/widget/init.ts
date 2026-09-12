@@ -6,14 +6,19 @@ import { normalizePinUrl } from '@tack/shared'
 import { corsHeaders } from '#/lib/cors'
 import { enrichPinsWithComments } from '#/lib/pins'
 import type { ProjectNotifySettings } from '#/lib/notifications'
-import { originAllowed, recordWidgetConnection } from '#/lib/widget-connection'
+import {
+  originAllowed,
+  recordRejectedOrigin,
+  recordWidgetConnection,
+  resolveRequestOrigin,
+} from '#/lib/widget-connection'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
 
 export const Route = createFileRoute('/api/widget/init')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const url = new URL(request.url)
         const projectKey = url.searchParams.get('projectKey')
@@ -42,9 +47,12 @@ export const Route = createFileRoute('/api/widget/init')({
 
         const settings = (project.settings ?? {}) as ProjectNotifySettings
         const pinQueryParams = settings.pinQueryParams
-        const allowed = origin ? originAllowed(project, origin) : null
+        // No resolvable origin means this is not a browser running the
+        // widget; treat it exactly like a disallowed one.
+        const allowed = origin ? originAllowed(project, origin) : false
 
-        if (allowed === false) {
+        if (!allowed) {
+          if (origin) await recordRejectedOrigin(project.id, origin)
           // Deliberately returns no project data. This branch previously
           // echoed `project.name` and `previewUrl` back with the requesting
           // origin in `Access-Control-Allow-Origin`, which let any site read
@@ -86,8 +94,8 @@ export const Route = createFileRoute('/api/widget/init')({
             pins: pinsWithComments,
             pinQueryParams,
             connection: {
-              originAllowed: allowed ?? true,
-              originMatched: allowed ?? true,
+              originAllowed: true,
+              originMatched: true,
               connected,
             },
           },

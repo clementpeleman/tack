@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks'
 import { useEscapeKey } from '../lib/useEscapeKey'
 import { fetchReplies, type WidgetReply } from '../lib/api'
+import { getReviewerName } from '../lib/reviewer'
 
 export interface PinPopoverData {
   id: string
@@ -35,7 +36,11 @@ export function PinPopover({
   onDelete,
   onReply,
 }: PinPopoverProps) {
-  const [name, setName] = useState(pin.reviewerName ?? '')
+  // Own pin: the name on the pin. Someone else's: the name this browser last
+  // used, so a reply is attributed without retyping.
+  const [name, setName] = useState(
+    isOwn ? (pin.reviewerName ?? getReviewerName()) : getReviewerName(),
+  )
   const [comment, setComment] = useState(pin.comment ?? '')
   const [replyText, setReplyText] = useState('')
   const [replies, setReplies] = useState<WidgetReply[]>([])

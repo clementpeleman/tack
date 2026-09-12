@@ -10,12 +10,13 @@ import {
 import { emitProjectEvent } from '#/lib/events'
 import { parseScreenshotBase64, saveScreenshot } from '#/lib/storage'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
-import { enforceWidgetOrigin } from '#/lib/widget-connection'
+import { enforceWidgetOrigin, resolveRequestOrigin } from '#/lib/widget-connection'
 
 async function authorizePin(
   pinId: string,
   projectKey: string,
   reviewerId: string,
+  origin: string | null,
 ) {
   const [project] = await db
     .select()
@@ -23,6 +24,11 @@ async function authorizePin(
     .where(eq(projects.projectKey, projectKey))
 
   if (!project) return { error: 'Invalid project key', status: 404 as const }
+
+  // Origin before the pin lookup: a caller outside an allowed origin must
+  // not learn whether a pin id exists.
+  const originError = enforceWidgetOrigin(project, origin)
+  if (originError) return { response: originError }
 
   const [pin] = await db
     .select()
@@ -44,7 +50,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
       OPTIONS: async ({ request }) => handleCors(request) ?? new Response(null, { status: 204 }),
 
       PATCH: async ({ request, params }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const cors = handleCors(request)
         if (cors) return cors
@@ -71,13 +77,11 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         const limited = enforceWidgetRateLimit(projectKey, headers)
         if (limited) return limited
 
-        const auth = await authorizePin(params.pinId, projectKey, reviewerId)
+        const auth = await authorizePin(params.pinId, projectKey, reviewerId, origin)
+        if ('response' in auth) return auth.response
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
-
-        const originError = enforceWidgetOrigin(auth.project, origin)
-        if (originError) return originError
 
         if (typeof screenshot === 'string' && screenshot.length > 0) {
           // Screenshot follow-up: the widget posts the pin first so the
@@ -138,7 +142,7 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
       },
 
       DELETE: async ({ request, params }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const cors = handleCors(request)
         if (cors) return cors
@@ -165,13 +169,11 @@ export const Route = createFileRoute('/api/widget/pins/$pinId')({
         const limited = enforceWidgetRateLimit(projectKey, headers)
         if (limited) return limited
 
-        const auth = await authorizePin(params.pinId, projectKey, reviewerId)
+        const auth = await authorizePin(params.pinId, projectKey, reviewerId, origin)
+        if ('response' in auth) return auth.response
         if ('error' in auth) {
           return Response.json({ error: auth.error }, { status: auth.status, headers })
         }
-
-        const originError = enforceWidgetOrigin(auth.project, origin)
-        if (originError) return originError
 
         await deletePinAndRelated(params.pinId)
         emitProjectEvent({

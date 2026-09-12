@@ -5,13 +5,13 @@ import { eq } from 'drizzle-orm'
 import { corsHeaders } from '#/lib/cors'
 import { createProjectEventStream } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
-import { enforceWidgetOrigin } from '#/lib/widget-connection'
+import { enforceWidgetOrigin, resolveRequestOrigin } from '#/lib/widget-connection'
 
 export const Route = createFileRoute('/api/widget/events')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = {
           ...corsHeaders(origin),
           'Content-Type': 'text/event-stream',

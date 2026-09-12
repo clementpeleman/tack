@@ -4,7 +4,7 @@ import { projects, pins } from '#/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { corsHeaders, handleCors } from '#/lib/cors'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
-import { enforceWidgetOrigin } from '#/lib/widget-connection'
+import { enforceWidgetOrigin, resolveRequestOrigin } from '#/lib/widget-connection'
 
 const VALID_STATES = new Set(['anchored', 'approximate', 'lost'])
 const MAX_BATCH = 200
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/api/widget/placement')({
         handleCors(request) ?? new Response(null, { status: 204 }),
 
       POST: async ({ request }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
 
         let body: { projectKey?: unknown; placements?: unknown }

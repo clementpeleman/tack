@@ -11,9 +11,11 @@ import {
   normalizeOrigin,
   originAllowed,
   previewOriginMatches,
+  resolveRequestOrigin,
   validateAllowedOrigins,
   MAX_ALLOWED_ORIGINS,
 } from '#/lib/widget-connection'
+import { getClientIp } from '#/lib/rate-limit'
 import { parseScreenshotBase64 } from '#/lib/storage'
 
 describe('launch checklist: open in preview', () => {
@@ -84,9 +86,42 @@ describe('launch checklist: widget origin enforcement', () => {
     expect(res?.headers.get('Access-Control-Allow-Origin')).toBeNull()
   })
 
-  it('allows a matching origin and same-origin (no Origin header)', () => {
+  it('allows a matching origin', () => {
     expect(enforceWidgetOrigin(project, 'https://preview.example.com')).toBeNull()
-    expect(enforceWidgetOrigin(project, null)).toBeNull()
+  })
+
+  it('rejects a request with no resolvable origin (curl, scripts)', () => {
+    // The project key is public; "no Origin header" must not bypass the gate.
+    const res = enforceWidgetOrigin(project, null)
+    expect(res?.status).toBe(403)
+  })
+
+  it('resolves the origin from Origin, then Referer, else null', () => {
+    const withOrigin = new Request('https://tack.test/api/widget/init', {
+      headers: { origin: 'https://preview.example.com', referer: 'https://other.example/' },
+    })
+    expect(resolveRequestOrigin(withOrigin)).toBe('https://preview.example.com')
+
+    // Same-origin GET (widget on the Tack host itself) carries only Referer.
+    const withReferer = new Request('https://tack.test/api/widget/init', {
+      headers: { referer: 'https://tack.test/demo?x=1' },
+    })
+    expect(resolveRequestOrigin(withReferer)).toBe('https://tack.test')
+
+    const opaque = new Request('https://tack.test/api/widget/init', {
+      headers: { origin: 'null' },
+    })
+    expect(resolveRequestOrigin(opaque)).toBeNull()
+
+    const bare = new Request('https://tack.test/api/widget/init')
+    expect(resolveRequestOrigin(bare)).toBeNull()
+  })
+
+  it('takes the last X-Forwarded-For hop, which the proxy wrote', () => {
+    const req = new Request('https://tack.test/', {
+      headers: { 'x-forwarded-for': '1.1.1.1, 203.0.113.9' },
+    })
+    expect(getClientIp(req)).toBe('203.0.113.9')
   })
 
   it('allows an origin from the project allowlist', () => {

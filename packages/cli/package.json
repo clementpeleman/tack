@@ -25,6 +25,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run typecheck && pnpm run test && pnpm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

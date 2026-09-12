@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "vite build --watch",
+    "typecheck": "tsc -p tsconfig.json",
     "build": "vite build && vite build -c vite.lib.config.ts && cp dist/tack-widget.js ../../apps/web/public/tack-widget.js"
   },
   "dependencies": {

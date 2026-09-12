@@ -4,6 +4,9 @@ import preact from '@preact/preset-vite'
 export default defineConfig({
   plugins: [preact()],
   build: {
+    // Class-field helpers for lower targets are emitted as top-level `var`s
+    // outside the IIFE and leak onto the host page's window.
+    target: 'es2022',
     lib: {
       entry: 'src/script-entry.tsx',
       name: 'TackWidget',

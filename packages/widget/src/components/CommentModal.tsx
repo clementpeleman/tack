@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useEscapeKey } from '../lib/useEscapeKey'
+import { getReviewerName } from '../lib/reviewer'
 
 interface CommentModalProps {
   x: number
@@ -9,7 +10,7 @@ interface CommentModalProps {
 }
 
 export function CommentModal({ x, y, onSubmit, onCancel }: CommentModalProps) {
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => getReviewerName())
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
 

@@ -120,6 +120,27 @@ describe('patch: body anchor', () => {
     expect(markerLine.startsWith('        ')).toBe(true)
   })
 
+  it('splits a single-line <body>…</body> so the tag lands inside body', () => {
+    const oneLine = [
+      'export default function RootLayout({ children }) {',
+      '  return (',
+      '    <html>',
+      '      <body>{children}</body>',
+      '    </html>',
+      '  )',
+      '}',
+    ].join('\n')
+    const snippet = buildSnippet(nextDetection, input)
+    const plan = planPatch(nextDetection, oneLine, snippet)
+    if ('error' in plan) throw new Error(plan.error)
+    const lines = plan.patched.split('\n')
+    expect(lines[3]).toBe('      <body>{children}')
+    expect(lines[lines.length - 4]).toBe('      </body>')
+    expect(plan.patched.indexOf(MARKER)).toBeGreaterThan(plan.patched.indexOf('<body>'))
+    expect(plan.patched.indexOf(MARKER)).toBeLessThan(plan.patched.indexOf('</body>'))
+    expect(plan.insertedAt).toBe(4)
+  })
+
   it('reports an error instead of guessing when there is no </body>', () => {
     const plan = planPatch(nextDetection, 'export default function X() {}', 'x')
     expect('error' in plan).toBe(true)

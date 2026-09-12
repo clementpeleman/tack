@@ -11,7 +11,7 @@ import {
   replies,
 } from '#/db/schema'
 import { eq, and, desc, isNull, asc } from 'drizzle-orm'
-import { requireAuth } from '#/lib/auth'
+import { requireDashboardAuth } from '#/lib/auth'
 import {
   deletePinAndRelated,
   updatePinFirstComment,
@@ -140,7 +140,7 @@ export const getPinDetail = createServerFn({ method: 'GET' })
       sidebarProjects: { id: string; name: string }[]
     }> => {
       const request = getRequest()
-      const { userId } = await requireAuth(request)
+      const { userId } = await requireDashboardAuth(request)
 
       const [project] = await db
         .select()
@@ -226,7 +226,7 @@ export const deleteProjectPin = createServerFn({ method: 'POST' })
   .inputValidator((data: { projectId: string; pinId: string }) => data)
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -258,7 +258,7 @@ export const updatePinStatus = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -298,7 +298,7 @@ export const updateProjectPin = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -329,7 +329,7 @@ export const addOwnerReply = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -370,7 +370,7 @@ export const getProjectConnectionStatus = createServerFn({ method: 'GET' })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const request = getRequest()
-    const { userId } = await requireAuth(request)
+    const { userId } = await requireDashboardAuth(request)
 
     const [project] = await db
       .select()
@@ -383,6 +383,9 @@ export const getProjectConnectionStatus = createServerFn({ method: 'GET' })
       connected: Boolean(project.firstWidgetSeenAt),
       firstWidgetSeenAt: project.firstWidgetSeenAt,
       firstWidgetOrigin: project.firstWidgetOrigin,
+      lastRejectedOrigin: project.lastRejectedOrigin,
+      lastRejectedAt: project.lastRejectedAt,
+      allowedOrigins: project.allowedOrigins ?? [],
     }
   })
 

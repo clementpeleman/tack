@@ -45,7 +45,7 @@ On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` ro
 | `DATABASE_URL` | `./tack.db` | SQLite file path |
 | `SCREENSHOTS_DIR` | `./data/screenshots` | Pin screenshot storage |
 | `TACK_DEPLOYMENT` | `selfhost` | Deployment mode |
-| `TACK_PUBLIC_URL` | from request | Public URL behind a reverse proxy (e.g. `https://tack.example.com`) — keeps the embed snippet and magic links on https |
+| `TACK_PUBLIC_URL` | from request | Public URL of this instance (e.g. `https://tack.example.com`). **Required in production once an email provider is set**: without it sign-in links would be built from the request's Host header, which an attacker can spoof to receive a valid link for your address. Also keeps the embed snippet on https. |
 | `TACK_ALLOW_SIGNUP` | off | Allow accounts beyond the first claimed owner (self-host) |
 | `RESEND_API_KEY` | — | Email via Resend |
 | `SMTP_HOST` / `SMTP_FROM` | — | Email via SMTP |

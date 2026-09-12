@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-02T00:00:00Z",
+  "title": "Design System: Tack",
+  "extensions": {
+    "colorMeta": {
+      "pin-blue": {
+        "role": "primary",
+        "displayName": "Pin Blue",
+        "canonical": "oklch(60% 0.15 225)",
+        "tonalRamp": [
+          "oklch(16% 0.07 225)",
+          "oklch(28% 0.11 225)",
+          "oklch(38% 0.14 225)",
+          "oklch(50% 0.15 225)",
+          "oklch(60% 0.15 225)",
+          "oklch(70% 0.13 225)",
+          "oklch(82% 0.09 225)",
+          "oklch(93% 0.04 225)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(20.5% 0.006 285)",
+        "tonalRamp": [
+          "oklch(12% 0.005 285)",
+          "oklch(20.5% 0.006 285)",
+          "oklch(31% 0.007 285)",
+          "oklch(43% 0.008 285)",
+          "oklch(53.8% 0.009 285)",
+          "oklch(65.1% 0.009 285)",
+          "oklch(78% 0.006 285)",
+          "oklch(90.8% 0.006 285)"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "Page",
+        "canonical": "oklch(99.2% 0.004 285)",
+        "tonalRamp": [
+          "oklch(20.3% 0.016 285)",
+          "oklch(24.8% 0.018 285)",
+          "oklch(30.4% 0.021 285)",
+          "oklch(36.3% 0.024 285)",
+          "oklch(39.8% 0.025 285)",
+          "oklch(93.3% 0.006 285)",
+          "oklch(96.9% 0.005 285)",
+          "oklch(99.2% 0.004 285)"
+        ]
+      },
+      "signal-resolved": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "oklch(63.5% 0.14 168)",
+        "tonalRamp": [
+          "oklch(18% 0.05 168)",
+          "oklch(30% 0.08 168)",
+          "oklch(42% 0.11 168)",
+          "oklch(53% 0.13 168)",
+          "oklch(63.5% 0.14 168)",
+          "oklch(73% 0.12 168)",
+          "oklch(84% 0.08 168)",
+          "oklch(94% 0.03 168)"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Warn Amber",
+        "canonical": "oklch(64.2% 0.16 70)",
+        "tonalRamp": [
+          "oklch(18% 0.06 70)",
+          "oklch(30% 0.09 70)",
+          "oklch(42% 0.12 70)",
+          "oklch(53% 0.15 70)",
+          "oklch(64.2% 0.16 70)",
+          "oklch(74% 0.13 70)",
+          "oklch(85% 0.08 70)",
+          "oklch(95% 0.03 70)"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Danger Red",
+        "canonical": "oklch(58.5% 0.18 22)",
+        "tonalRamp": [
+          "oklch(16% 0.07 22)",
+          "oklch(28% 0.11 22)",
+          "oklch(38% 0.15 22)",
+          "oklch(48% 0.17 22)",
+          "oklch(58.5% 0.18 22)",
+          "oklch(69% 0.15 22)",
+          "oklch(81% 0.09 22)",
+          "oklch(92% 0.04 22)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Page-level title. One per screen." },
+      "title": { "displayName": "Title", "purpose": "Section headers within a screen." },
+      "body": { "displayName": "Body", "purpose": "Default UI text: descriptions, comments, values." },
+      "label": { "displayName": "Label", "purpose": "Metadata and data values in Geist Mono. Used sparingly, not as default section decoration." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 1px 1px oklch(20.5% 0.006 285 / 0.08), 0 12px 24px -16px oklch(20.5% 0.006 285 / 0.28)", "purpose": "Small floating/interactive elements above host-page content: widget launcher, dropped pin marker." },
+      { "name": "modal", "value": "0 1px 2px oklch(20.5% 0.006 285 / 0.12), 0 24px 48px -28px oklch(20.5% 0.006 285 / 0.32)", "purpose": "Dialogs, popovers, the comment-entry card — anything that blocks the rest of the page." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "180ms ease", "purpose": "Default hover/press/state transitions (buttons, launcher, focus rings)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one non-accent-coloured interactive element by design: Ink fill, Page text. Used for the single primary action on a screen.",
+      "html": "<button class=\"ds-btn-primary\">Save changes</button>",
+      "css": ".ds-btn-primary { background: var(--ink); color: var(--page); border: none; border-radius: 6px; padding: 10px 16px; font: 500 0.875rem/1.4 Geist, sans-serif; cursor: pointer; transition: opacity 180ms ease; } .ds-btn-primary:hover { opacity: 0.9; } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary/tertiary action: bordered, Surface background. Used for every non-primary action.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; font: 500 0.875rem/1.4 Geist, sans-serif; cursor: pointer; transition: background-color 180ms ease; } .ds-btn-ghost:hover { background: var(--surface-2); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill-open",
+      "description": "One discrete, glanceable state per row. Never stacked with sibling pills for other metadata — that metadata becomes plain text instead.",
+      "html": "<span class=\"ds-pill ds-pill--open\">Open</span>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font: 500 0.6875rem/1.3 'Geist Mono', monospace; text-transform: uppercase; letter-spacing: 0.02em; } .ds-pill--open { background: color-mix(in oklab, var(--accent) 18%, transparent); color: var(--accent); } .ds-pill--resolved { background: color-mix(in oklab, var(--signal) 18%, transparent); color: var(--signal); }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The one card pattern in the system: flat, single border, no shadow, no nested inner card. Sub-sections are typographic, separated by a single rule line if needed — never a second bordered box.",
+      "html": "<section class=\"ds-panel\"><p class=\"ds-panel-title\">Connect preview</p><p class=\"ds-panel-body\">Install once for the preview site.</p></section>",
+      "css": ".ds-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; } .ds-panel-title { font: 500 0.875rem/1.4 Geist, sans-serif; color: var(--ink); margin: 0 0 4px; } .ds-panel-body { font: 400 0.75rem/1.5 Geist, sans-serif; color: var(--ink-mute); margin: 0; }"
+    },
+    {
+      "name": "Stat Strip",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature component: several related numbers in one flat bordered container, divided by internal rule lines — the reference pattern for 'related metrics' that replaces stacking separate metric cards.",
+      "html": "<div class=\"ds-stat-strip\"><div class=\"ds-stat\"><p class=\"ds-stat-label\">Pins</p><p class=\"ds-stat-value\">6</p></div><div class=\"ds-stat\"><p class=\"ds-stat-label\">Open</p><p class=\"ds-stat-value ds-stat-value--accent\">5</p></div><div class=\"ds-stat\"><p class=\"ds-stat-label\">Resolved</p><p class=\"ds-stat-value ds-stat-value--signal\">1</p></div></div>",
+      "css": ".ds-stat-strip { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); } .ds-stat { flex: 1; padding: 12px; border-right: 1px solid var(--line); } .ds-stat:last-child { border-right: none; } .ds-stat-label { font: 500 0.6875rem/1.3 'Geist Mono', monospace; text-transform: uppercase; color: var(--ink-soft); margin: 0; } .ds-stat-value { font: 600 0.875rem/1.4 Geist, sans-serif; color: var(--ink); margin: 4px 0 0; } .ds-stat-value--accent { color: var(--accent); } .ds-stat-value--signal { color: var(--signal); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": null,
+      "description": "Label sits above the field as persistent Geist Mono text, not as a disappearing placeholder.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Email</span><input class=\"ds-field-input\" type=\"email\" placeholder=\"you@company.com\" /></label>",
+      "css": ".ds-field { display: block; } .ds-field-label { display: block; margin-bottom: 6px; font: 500 0.6875rem/1.3 'Geist Mono', monospace; text-transform: uppercase; color: var(--ink-mute); } .ds-field-input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: 400 0.875rem/1.4 Geist, sans-serif; } .ds-field-input:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; border-color: var(--accent); }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Active state is a tone shift (Surface 2) plus text weight, never an accent-coloured pill or icon badge.",
+      "html": "<a class=\"ds-nav-item ds-nav-item--active\" href=\"#\">Inbox</a>",
+      "css": ".ds-nav-item { display: block; padding: 8px 10px; border-radius: 6px; font: 400 0.8125rem/1.4 Geist, sans-serif; color: var(--ink-mute); text-decoration: none; } .ds-nav-item--active { background: var(--surface-2); color: var(--ink); font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Instrument",
+    "overview": "Tack is a precision tool that stays out of the way until it's needed. The surface is monochrome and calm — near-white in light, near-black in dark — with exactly one accent in active use: Pin Blue, reserved for the things that are actually actionable (focus, links, selection, the pin marker itself). Nothing in the interface performs confidence; it demonstrates it, by being operational, specific, and quiet under load. A page with six open pins and a page with sixty should feel like the same calm tool, not a dashboard straining to look busy.\n\nTack explicitly rejects the generic-SaaS dashboard vocabulary: gradient hero panels, AI-mascot theatrics, tiny tracked-uppercase eyebrows on every section, stacked pill badges standing in for real hierarchy, and cards nested inside cards pretending to be structure. Status and metadata are typographic first — weight and colour-on-text before a pill; a pill earns its place only when it names one genuinely discrete, glanceable state, never when three or four of them compete on the same row.",
+    "keyCharacteristics": [
+      "Monochrome neutral base; Pin Blue is the only sustained colour, used sparingly and always with intent.",
+      "Near-black primary actions (not the accent colour) — the accent marks state, not buttons.",
+      "Flat panels with internal typographic hierarchy over stacked bordered boxes.",
+      "Geist for all UI text; Geist Mono reserved for data that benefits from fixed-width alignment — never a default label treatment.",
+      "Fixed rem type scale, not fluid — this is a working tool viewed at consistent DPI, not a marketing page."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Pin Blue is the only sustained colour in the system. If a second decorative hue shows up on a screen that isn't a functional status colour, it's off-system.", "section": "colors" },
+      { "name": "The Ink Button Rule", "body": "Primary actions are near-black (or near-white in dark mode), never accent-filled. The accent's job is to mark state and selection, not to fill buttons.", "section": "colors" },
+      { "name": "The Fixed-Scale Rule", "body": "No clamp(), no fluid type in the product surface. Users view the dashboard at consistent DPI in a working session; a heading that resizes with the viewport reads as unfinished, not responsive.", "section": "typography" },
+      { "name": "The Mono-Earns-It Rule", "body": "Geist Mono appears only where fixed-width alignment or a 'this is data' signal genuinely helps (a CSS selector, a project key, a URL, a timestamp column). It is not a default styling flourish for labels.", "section": "typography" },
+      { "name": "The Floating-Only Rule", "body": "A static panel — a row, a card, a sidebar — never has a box-shadow. If something needs to look 'lifted,' that's a sign it should be a modal/popover, not a card with a shadow bolted on.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Pin Blue for exactly one job at a time: focus, selection, links, or the pin marker — never as page decoration.",
+      "Do build primary buttons from Ink/Page, not the accent colour (The Ink Button Rule).",
+      "Do default to typography (weight, colour-on-text, a plain label) for status and metadata before reaching for a pill.",
+      "Do use one Status Pill per row when a state is genuinely discrete and glanceable.",
+      "Do build multi-metric summaries as one bordered container with internal divider lines (the Stat Strip pattern), not as separate cards.",
+      "Do keep shadows exclusively on floating/overlay elements (modals, popovers, the widget launcher) per The Floating-Only Rule.",
+      "Do use Geist Mono only where the content is genuinely data (selectors, keys, URLs, timestamps)."
+    ],
+    "donts": [
+      "Don't stack multiple pill badges (status + AI label + placement + priority) on a single row competing for attention — this is the 'pill badges everywhere' anti-pattern named in PRODUCT.md, and it is explicitly retired. Fold secondary metadata into plain text or a single combined label instead.",
+      "Don't nest a bordered card inside another bordered card to represent a sub-section — nested cards are always wrong. Use one flat panel with an internal rule line, or drop the border on the inner block entirely.",
+      "Don't use a tiny tracked-uppercase eyebrow pill above a section heading when the heading already says what the section is.",
+      "Don't dress up a simple state — an empty state, a single count, an 'off' toggle — in the same heavy bordered-box-plus-icon treatment used for real data.",
+      "Don't use purple/violet, gradients, or neon accents anywhere — the old Tack direction, deliberately retired.",
+      "Don't use 'AI-powered' hero copy, magic-wand framing, or AI-mascot theatrics; describe what the AI Inbox actually does in plain terms.",
+      "Don't use fluid/clamp() type sizing on product screens — fixed rem sizes only (The Fixed-Scale Rule).",
+      "Don't write vague copy that names a feeling instead of a fact ('seamless', 'powerful,' 'supercharged'). Say what happens."
+    ]
+  }
+}

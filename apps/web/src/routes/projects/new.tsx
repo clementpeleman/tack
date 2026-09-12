@@ -22,7 +22,7 @@ function NewProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !previewUrl) return
+    if (!name) return
     setError('')
     setLoading(true)
 
@@ -33,7 +33,7 @@ function NewProjectPage() {
       navigate({
         to: '/projects/$id/install',
         params: { id: project.id },
-        search: onboarding ? { onboarding: true } : {},
+        search: { onboarding },
       })
     } catch {
       setError('Failed to create project. Please try again.')
@@ -93,10 +93,12 @@ function NewProjectPage() {
               value={previewUrl}
               onChange={(e) => setPreviewUrl(e.target.value)}
               placeholder="https://preview.acme.com"
-              required
             />
             <p className="text-[11px] text-[var(--ink-soft)] mt-1.5">
-              Where the widget will be embedded. You can change this later.
+              Where reviewers will see the site. Optional for now: set it once
+              the preview is deployed. Use a wildcard like{' '}
+              <span className="font-mono">https://*.vercel.app</span> when the
+              host changes per branch.
             </p>
           </div>
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util'
+import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { ApiError } from './api.js'
 import { initCommand } from './commands/init.js'
@@ -10,9 +11,9 @@ import {
   statusCommand,
 } from './commands/misc.js'
 import type { Gate } from './patch.js'
-import { error, log } from './ui.js'
+import { error, log, warn } from './ui.js'
 
-const VERSION = '0.1.0'
+const VERSION: string = createRequire(import.meta.url)('../package.json').version
 
 const HELP = `
   tack — install the Tack feedback widget
@@ -54,10 +55,26 @@ function resolveHost(flag?: string): string | null {
   if (!raw) return null
   try {
     const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
-    return new URL(withScheme).origin
+    const url = new URL(withScheme)
+    // The bearer token travels in every request; over plain http to a remote
+    // host it is readable on the wire. Loopback is the one legitimate case.
+    if (url.protocol === 'http:' && !isLoopbackHost(url.hostname)) {
+      warn(`${url.origin} is plain http — your token will be sent unencrypted.`)
+    }
+    return url.origin
   } catch {
     return null
   }
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const bare = hostname.replace(/^\[|\]$/g, '').toLowerCase()
+  return (
+    bare === 'localhost' ||
+    bare === '::1' ||
+    bare.endsWith('.localhost') ||
+    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(bare)
+  )
 }
 
 function parseGate(value: string | undefined): Gate | null {

@@ -1,6 +1,11 @@
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { getProject, getProjects } from '#/lib/projects'
+import {
+  getAppOrigin,
+  getProject,
+  getProjects,
+  updateAllowedOrigins,
+} from '#/lib/projects'
 import { getProjectConnectionStatus } from '#/lib/project-pin-actions'
 import { completeOnboarding } from '#/lib/user'
 import { Layout } from '#/components/Layout'
@@ -9,12 +14,14 @@ import { Button } from '#/components/ui/Button'
 export const Route = createFileRoute('/projects/$id/install')({
   component: InstallPage,
   loader: async ({ params }) => {
-    const [project, sidebarProjects] = await Promise.all([
+    const [project, sidebarProjects, appOrigin] = await Promise.all([
       getProject({ data: { id: params.id } }),
       getProjects(),
+      getAppOrigin(),
     ])
     return {
       project,
+      appOrigin,
       sidebarProjects: sidebarProjects.map((p) => ({
         id: p.id,
         name: p.name,
@@ -27,24 +34,33 @@ export const Route = createFileRoute('/projects/$id/install')({
 })
 
 function InstallPage() {
-  const { project, sidebarProjects } = Route.useLoaderData()
+  const { project, sidebarProjects, appOrigin } = Route.useLoaderData()
   const { onboarding } = Route.useSearch()
   const router = useRouter()
   const [connected, setConnected] = useState(Boolean(project.firstWidgetSeenAt))
   const [connectedOrigin, setConnectedOrigin] = useState<string | null>(
     project.firstWidgetOrigin ?? null,
   )
+  const [rejectedOrigin, setRejectedOrigin] = useState<string | null>(
+    project.lastRejectedOrigin ?? null,
+  )
+  const [allowedOrigins, setAllowedOrigins] = useState<string[]>(
+    project.allowedOrigins ?? [],
+  )
+  const [allowing, setAllowing] = useState(false)
+  const [allowError, setAllowError] = useState('')
   const [waitingSeconds, setWaitingSeconds] = useState(0)
   const [snippetCopied, setSnippetCopied] = useState(false)
   const [showTestStep, setShowTestStep] = useState(false)
   const [finishing, setFinishing] = useState(false)
 
-  const tackOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  const tackOrigin = appOrigin
   const snippet = `<script src="${tackOrigin}/tack-widget.js" data-project="${project.projectKey}" data-api="${tackOrigin}"></script>`
 
   useEffect(() => {
-    if (connected) return
-
+    // Keep polling while connected too: a rejected origin (a preview deploy
+    // on a host that is not allowed yet) can show up after the local dev
+    // origin already connected.
     const poll = async () => {
       try {
         const status = await getProjectConnectionStatus({ data: { id: project.id } })
@@ -52,6 +68,8 @@ function InstallPage() {
           setConnected(true)
           setConnectedOrigin(status.firstWidgetOrigin ?? null)
         }
+        setRejectedOrigin(status.lastRejectedOrigin ?? null)
+        setAllowedOrigins(status.allowedOrigins)
       } catch {
         // ignore poll errors
       }
@@ -80,9 +98,26 @@ function InstallPage() {
   }, [connected, onboarding])
 
   const copySnippet = () => {
-    navigator.clipboard.writeText(snippet)
+    navigator.clipboard.writeText(snippet).catch(() => {})
     setSnippetCopied(true)
     setTimeout(() => setSnippetCopied(false), 2000)
+  }
+
+  const allowRejectedOrigin = async () => {
+    if (!rejectedOrigin) return
+    setAllowing(true)
+    setAllowError('')
+    try {
+      const result = await updateAllowedOrigins({
+        data: { projectId: project.id, origins: [...allowedOrigins, rejectedOrigin] },
+      })
+      setAllowedOrigins(result.origins)
+      setRejectedOrigin(null)
+    } catch (err) {
+      setAllowError(err instanceof Error ? err.message : 'Could not allow origin')
+    } finally {
+      setAllowing(false)
+    }
   }
 
   const finishOnboarding = async () => {
@@ -180,6 +215,30 @@ function InstallPage() {
               {snippet}
             </code>
           </div>
+
+          {rejectedOrigin && !allowedOrigins.includes(rejectedOrigin) && (
+            <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3">
+              <p className="text-sm font-medium text-[var(--ink)] mb-1">
+                {connected
+                  ? 'The widget also tried to load from an origin that is not allowed'
+                  : 'The widget loaded, but from an origin that is not allowed'}
+              </p>
+              <p className="text-xs text-[var(--ink-mute)] mb-3">
+                It tried from{' '}
+                <span className="font-mono text-[var(--ink-soft)]">{rejectedOrigin}</span>
+                , which is not the preview URL. Allow it if that is your preview
+                or dev site. Reload the page there afterwards.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button size="sm" onClick={allowRejectedOrigin} disabled={allowing}>
+                  {allowing ? 'Allowing…' : `Allow ${rejectedOrigin}`}
+                </Button>
+                {allowError && (
+                  <span className="text-xs text-[var(--danger)]">{allowError}</span>
+                )}
+              </div>
+            </div>
+          )}
 
           {!connected && waitingSeconds >= 30 && (
             <div className="mt-3 border-t border-[color-mix(in_oklab,var(--ink)_10%,transparent)] pt-3 text-xs text-[var(--ink-mute)]">

@@ -22,10 +22,13 @@ import {
   info,
   isInteractive,
   log,
+  prompt,
   select,
   step,
   warn,
 } from '../ui.js'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 const run = promisify(execFile)
 
@@ -39,6 +42,18 @@ export interface InitOptions {
   yes: boolean
   dryRun: boolean
   noBrowser: boolean
+}
+
+/** `name` from the project's package.json, as a default for a new Tack project. */
+async function packageName(root: string): Promise<string | null> {
+  try {
+    const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
+    const name = typeof pkg?.name === 'string' ? pkg.name.trim() : ''
+    // Strip an npm scope; "@acme/website" reads better as "website".
+    return name ? name.replace(/^@[^/]+\//, '') : null
+  } catch {
+    return null
+  }
 }
 
 async function isDirty(root: string, file: string): Promise<boolean | null> {
@@ -76,17 +91,22 @@ async function resolveProject(
       return null
     }
     info('No projects yet — creating one.')
-    const name = await (await import('../ui.js')).prompt('Project name:')
-    const previewUrl = await (await import('../ui.js')).prompt(
-      'Preview URL (where clients will review):',
-    )
-    if (!name || !previewUrl) {
-      error('A name and preview URL are required.')
+    const suggested = await packageName(options.cwd)
+    const name =
+      (await prompt(suggested ? `Project name [${suggested}]:` : 'Project name:')) ||
+      suggested
+    if (!name) {
+      error('A project name is required.')
       return null
     }
+    // The preview URL is usually not known until the first deploy; it can be
+    // filled in from settings later and the widget still works locally.
+    const previewUrl = await prompt('Preview URL (optional, where clients will review):')
     const { project } = await client.createProject({ name, previewUrl })
     return project
   }
+
+  if (projects.length === 1) return projects[0]!
 
   if (!isInteractive()) {
     error('Multiple projects found. Pass --project <id|pk_…> in non-interactive use.')
@@ -245,10 +265,38 @@ export async function initCommand(options: InitOptions): Promise<number> {
   await applyPatch(root, plan)
 
   log()
-  info(`${bold('Done.')} Start your dev server and open the page.`)
-  if (options.gate === 'env' && detection.framework === 'next-app') {
-    info(dim('Remember: TACK_ENABLED=1 must be set for the widget to render.'))
+  info(`${bold('Done.')} What happens next:`)
+  log()
+  const steps: string[] = []
+  if (options.gate === 'env') {
+    steps.push(
+      detection.strategy === 'entry-module'
+        ? 'Locally nothing to set: the widget is on in `vite dev`.'
+        : 'Set TACK_ENABLED=1 in your local env and start the dev server.',
+    )
+  } else {
+    steps.push('Start your dev server.')
   }
+  steps.push(`Open ${devOrigin} — the pin button appears bottom-right.`)
+  if (options.gate === 'env') {
+    steps.push(
+      detection.strategy === 'entry-module'
+        ? 'On preview deploys set VITE_TACK_ENABLED=true, then deploy.'
+        : 'On preview deploys set TACK_ENABLED=1, then deploy.',
+    )
+  }
+  if (project.previewUrl) {
+    steps.push(
+      `Reviewers use ${project.previewUrl}. If your preview host changes per branch, set the preview URL to a wildcard like https://*.vercel.app in project settings.`,
+    )
+  } else {
+    steps.push(
+      'Set the preview URL in project settings once the site is deployed — until then only the dev origin above can load the widget.',
+    )
+  }
+  steps.push(`Dashboard: ${options.host}/projects/${project.id}/install`)
+  steps.forEach((s, i) => info(`${dim(`${i + 1}.`)} ${s}`))
+  log()
   info(dim('The widget only loads at viewports 768px and wider.'))
 
   return 0

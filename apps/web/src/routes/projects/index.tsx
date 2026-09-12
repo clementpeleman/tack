@@ -40,7 +40,11 @@ function ProjectsPage() {
             <div className="w-40 hidden sm:block">
               <ThemeToggle compact />
             </div>
-            <Link to="/projects/new" className={buttonClasses('primary', 'md')}>
+            <Link
+              to="/projects/new"
+              search={{ onboarding: false }}
+              className={buttonClasses('primary', 'md')}
+            >
               New project
             </Link>
           </div>
@@ -85,7 +89,11 @@ function ProjectsPage() {
               Create a project and embed the Tack widget on your preview site to
               start collecting feedback.
             </p>
-            <Link to="/projects/new" className={buttonClasses('primary', 'md')}>
+            <Link
+              to="/projects/new"
+              search={{ onboarding: false }}
+              className={buttonClasses('primary', 'md')}
+            >
               Create your first project
             </Link>
           </div>

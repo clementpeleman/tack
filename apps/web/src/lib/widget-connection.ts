@@ -129,23 +129,73 @@ export function validateAllowedOrigins(
 }
 
 /**
- * Gate a widget request by origin. Same-origin requests omit the `Origin`
- * header and are allowed; cross-origin requests must match the project's
- * preview origin or one of its allowed origins. Returns a 403 Response (with
- * no ACAO, so the disallowed origin cannot read it) when the origin is present
- * and does not match.
+ * The origin a widget request comes from. Browsers send `Origin` on every
+ * cross-origin fetch and on same-origin POSTs; a same-origin GET (the widget
+ * running on the Tack host itself, e.g. `/demo`) carries only `Referer`, so
+ * that is the fallback. A request with neither is not a browser running the
+ * widget and gets `null`, which the gate rejects. Never trust a client-sent
+ * `X-*` header here: the whole point of the origin gate is that the project
+ * key is public, so the only credential is what the browser itself asserts.
+ */
+export function resolveRequestOrigin(request: Request): string | null {
+  const origin = request.headers.get('origin')
+  if (origin && origin !== 'null') return origin
+  const referer = request.headers.get('referer')
+  if (referer) {
+    try {
+      return new URL(referer).origin
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
+/**
+ * Gate a widget request by origin. The request origin must match the
+ * project's preview origin or one of its allowed origins. A request with no
+ * resolvable origin at all (curl, a script) is rejected too: the project key
+ * is public, so "no origin" must not be a way around the only real check.
+ * Returns a 403 Response with no ACAO, so a disallowed origin cannot read it.
  */
 export function enforceWidgetOrigin(
   project: OriginScope,
   origin: string | null,
 ): Response | null {
-  if (origin && !originAllowed(project, origin)) {
+  if (!origin || !originAllowed(project, origin)) {
     return Response.json(
-      { error: "This origin is not allowed for this project." },
+      { error: 'This origin is not allowed for this project.' },
       { status: 403, headers: corsHeaders(null) },
     )
   }
   return null
+}
+
+/**
+ * Remember the most recent origin that tried to load the widget and was
+ * refused, so the dashboard can say "the widget tried to load from X" instead
+ * of a bare "not connected". Throttled per process so a hostile page cannot
+ * turn every request into a write.
+ */
+const rejectedWriteAt = new Map<string, number>()
+const REJECTED_WRITE_INTERVAL_MS = 30_000
+
+export async function recordRejectedOrigin(
+  projectId: string,
+  origin: string,
+): Promise<void> {
+  const normalized = normalizeOrigin(origin)
+  if (!normalized) return
+  const last = rejectedWriteAt.get(projectId) ?? 0
+  if (Date.now() - last < REJECTED_WRITE_INTERVAL_MS) return
+  rejectedWriteAt.set(projectId, Date.now())
+  await db
+    .update(projects)
+    .set({
+      lastRejectedOrigin: normalized,
+      lastRejectedAt: new Date().toISOString(),
+    })
+    .where(eq(projects.id, projectId))
 }
 
 export async function recordWidgetConnection(

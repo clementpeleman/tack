@@ -4,7 +4,7 @@ import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { useState } from 'react'
 import { Button } from '#/components/ui/Button'
 import { Logo } from '#/components/brand/Logo'
-import { requireAuth } from '#/lib/auth'
+import { requireDashboardAuth } from '#/lib/auth'
 import {
   approveAuthRequest,
   buildLoopbackRedirect,
@@ -17,7 +17,7 @@ const loadRequest = createServerFn({ method: 'GET' })
   .inputValidator((data: { request: string }) => data)
   .handler(async ({ data }) => {
     const request = getRequest()
-    await requireAuth(request)
+    await requireDashboardAuth(request)
 
     // The page is only ever rendered top-level; framing it would let an
     // attacker's request be approved by a distracted owner.
@@ -48,7 +48,7 @@ const approve = createServerFn({ method: 'POST' })
   .inputValidator((data: { request: string }) => data)
   .handler(async ({ data }) => {
     const httpRequest = getRequest()
-    const { userId } = await requireAuth(httpRequest)
+    const { userId } = await requireDashboardAuth(httpRequest)
 
     // SameSite=Lax already blocks a cross-site POST from carrying the session
     // cookie; this rejects a same-site-but-wrong-origin submission too.

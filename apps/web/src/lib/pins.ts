@@ -7,7 +7,7 @@ import {
   replies,
   users,
 } from '#/db/schema'
-import { eq, inArray, asc, desc } from 'drizzle-orm'
+import { eq, inArray, asc } from 'drizzle-orm'
 import { deleteScreenshot } from '#/lib/storage'
 
 type PinRow = typeof pins.$inferSelect

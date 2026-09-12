@@ -84,9 +84,17 @@ createServer(async (req, res) => {
       })
     }
 
+    // Without a signal, `request.signal` in the SSE routes never fires and
+    // every dropped client leaves a subscriber and a heartbeat timer behind
+    // for the life of the process.
+    const abort = new AbortController()
+    req.on('close', () => abort.abort())
+    res.on('close', () => abort.abort())
+
     const requestInit = {
       method: req.method,
       headers: req.headers,
+      signal: abort.signal,
     }
     if (body && body.length > 0) {
       requestInit.body = body

@@ -19,7 +19,13 @@ import {
   WidgetApiError,
 } from './lib/api'
 import { resolvePinPlacement } from './lib/placement'
-import { getReviewerId } from './lib/reviewer'
+import {
+  getReviewerId,
+  hasSeenLauncherHint,
+  markLauncherHintSeen,
+  rememberReviewerName,
+} from './lib/reviewer'
+import { SmallScreenNotice } from './components/SmallScreenNotice'
 import { watchWidgetTheme } from './lib/theme'
 import { captureViewportScreenshot } from './lib/screenshot'
 import {
@@ -82,6 +88,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
   const pinQueryParamsRef = useRef<string[] | undefined>(undefined)
   const deeplinkHandled = useRef(false)
   const reviewerId = useMemo(() => getReviewerId(), [])
+  const [showHint, setShowHint] = useState(() => !hasSeenLauncherHint())
 
   const reloadPins = useCallback((): Promise<PinData[]> => {
     const url = normalizePinUrl(
@@ -172,9 +179,13 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
     if (active) {
       setPending(null)
     }
+    if (showHint) {
+      setShowHint(false)
+      markLauncherHintSeen()
+    }
     setSelectedPinId(null)
     setActive(!active)
-  }, [active])
+  }, [active, showHint])
 
   const handlePlace = useCallback(
     (xPct: number, yPct: number, el: HTMLElement | null, viewportYPct: number) => {
@@ -208,6 +219,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
 
     try {
       setActionError(null)
+      rememberReviewerName(name)
       const el = pending.element
       const url = normalizePinUrl(
         window.location.pathname,
@@ -271,6 +283,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
 
   const handleSavePin = useCallback(async (comment: string, name: string) => {
     if (!selectedPinId) return
+    rememberReviewerName(name)
     await updatePin({
       projectKey,
       pinId: selectedPinId,
@@ -296,6 +309,7 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
 
   const handleReply = useCallback(async (comment: string, name: string) => {
     if (!selectedPinId) return
+    rememberReviewerName(name)
     await createReply({
       projectKey,
       pinId: selectedPinId,
@@ -349,7 +363,12 @@ function Widget({ projectKey, apiHost }: { projectKey: string; apiHost: string }
           onReply={handleReply}
         />
       )}
-      <Launcher active={active} pinCount={pins.length} onClick={handleToggle} />
+      <Launcher
+        active={active}
+        pinCount={pins.length}
+        showHint={showHint && !pending && !selectedPin}
+        onClick={handleToggle}
+      />
     </>
   )
 }
@@ -388,21 +407,31 @@ export interface MountTackWidgetOptions {
   themeScript?: HTMLScriptElement | null
 }
 
+/** Below this width the pin UI does not fit; a short notice is shown instead of nothing. */
+export const MIN_VIEWPORT_WIDTH = 768
+
+let mounted: {
+  host: HTMLElement
+  mountPoint: HTMLElement
+  observer: MutationObserver | null
+  stopTheme: (() => void) | null
+} | null = null
+
 /**
  * Mount the Tack widget into the current document. Loader-agnostic: the
  * script-tag IIFE and the browser extension's content script both call this
  * with explicit config instead of relying on `document.currentScript`.
  *
- * Returns `false` (and does nothing) when the viewport is too small, the
- * project key is missing, or the widget is already mounted.
+ * Returns `false` (and does nothing) when the project key is missing or the
+ * widget is already mounted. On a viewport narrower than MIN_VIEWPORT_WIDTH
+ * it mounts a small dismissible notice instead of the pin UI, so a reviewer
+ * on a tablet learns why nothing happens rather than assuming it is broken.
  */
 export function mountTackWidget({
   projectKey,
   apiHost,
   themeScript = null,
 }: MountTackWidgetOptions): boolean {
-  if (window.innerWidth < 768) return false
-
   if (!projectKey) {
     console.error('[tack] mountTackWidget requires a projectKey')
     return false
@@ -414,7 +443,7 @@ export function mountTackWidget({
   host.id = 'tack-widget-host'
   document.body.appendChild(host)
 
-  watchWidgetTheme(host, themeScript)
+  const stopTheme = watchWidgetTheme(host, themeScript)
 
   const shadow = host.attachShadow({ mode: 'open' })
 
@@ -431,18 +460,38 @@ export function mountTackWidget({
 
   const observer = new MutationObserver(() => {
     mountPoint.querySelectorAll(
-      'button, .tack-crosshair-overlay, .tack-modal, .tack-pin-hit, .tack-popover-backdrop',
+      'button, .tack-crosshair-overlay, .tack-modal, .tack-pin-hit, .tack-popover-backdrop, .tack-small-screen',
     ).forEach((el) => {
       ;(el as HTMLElement).style.pointerEvents = 'auto'
     })
   })
   observer.observe(mountPoint, { childList: true, subtree: true })
 
+  mounted = { host, mountPoint, observer, stopTheme }
+
+  if (window.innerWidth < MIN_VIEWPORT_WIDTH) {
+    render(<SmallScreenNotice onDismiss={unmountTackWidget} />, mountPoint)
+    return true
+  }
+
   render(<Widget projectKey={projectKey} apiHost={apiHost} />, mountPoint)
   return true
 }
 
-/** Remove a mounted widget, if present. */
+/**
+ * Remove a mounted widget, if present. Unmounts the Preact tree first so
+ * effects clean up (the event stream, scroll and resize listeners); removing
+ * the host element alone would leave those running.
+ */
 export function unmountTackWidget(): void {
+  const current = mounted
+  mounted = null
+  if (current) {
+    render(null, current.mountPoint)
+    current.observer?.disconnect()
+    current.stopTheme?.()
+    current.host.remove()
+    return
+  }
   document.getElementById('tack-widget-host')?.remove()
 }

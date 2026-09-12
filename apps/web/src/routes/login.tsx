@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
-import { setResponseHeader } from '@tanstack/react-start/server'
+import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { useState } from 'react'
 import { ThemeToggle } from '#/components/ThemeToggle'
 import { Field } from '#/components/ui/Field'
@@ -27,7 +27,7 @@ const claimInstance = createServerFn({ method: 'POST' })
         error: 'This instance is already set up. Sign in instead.',
       }
     }
-    setResponseHeader('Set-Cookie', getSessionCookie(result.sessionId))
+    setResponseHeader('Set-Cookie', getSessionCookie(result.sessionId, getRequest()))
     return { ok: true as const }
   })
 

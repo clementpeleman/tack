@@ -40,9 +40,11 @@ export const Route = createFileRoute('/api/cli/projects')({
         if (typeof name !== 'string' || name.trim().length === 0) {
           return Response.json({ error: 'name is required' }, { status: 400 })
         }
-        if (typeof previewUrl !== 'string' || previewUrl.trim().length === 0) {
+        // Optional: a project without a preview URL can still be used from
+        // its allowed (dev) origins; the URL is set in settings after deploy.
+        if (previewUrl != null && typeof previewUrl !== 'string') {
           return Response.json(
-            { error: 'previewUrl is required' },
+            { error: 'previewUrl must be a string' },
             { status: 400 },
           )
         }
@@ -52,7 +54,7 @@ export const Route = createFileRoute('/api/cli/projects')({
           .values({
             userId,
             name: name.trim().slice(0, 120),
-            previewUrl: previewUrl.trim().slice(0, 500),
+            previewUrl: (previewUrl ?? '').trim().slice(0, 500),
             projectKey: generateProjectKey(),
           })
           .returning()

@@ -10,7 +10,7 @@ import { parseScreenshotBase64, saveScreenshot } from '#/lib/storage'
 import { enqueueNotification } from '#/lib/notifications'
 import { emitProjectEvent } from '#/lib/events'
 import { enforceWidgetRateLimit } from '#/lib/rate-limit'
-import { enforceWidgetOrigin } from '#/lib/widget-connection'
+import { enforceWidgetOrigin, resolveRequestOrigin } from '#/lib/widget-connection'
 
 const MAX_COMMENT = 5000
 const MAX_NAME = 120
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/api/widget/pins')({
         handleCors(request) ?? new Response(null, { status: 204 }),
 
       GET: async ({ request }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const url = new URL(request.url)
         const projectKey = url.searchParams.get('projectKey')
@@ -75,7 +75,7 @@ export const Route = createFileRoute('/api/widget/pins')({
       },
 
       POST: async ({ request }) => {
-        const origin = request.headers.get('origin')
+        const origin = resolveRequestOrigin(request)
         const headers = corsHeaders(origin)
         const text = await request.text()
 

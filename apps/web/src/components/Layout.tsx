@@ -115,6 +115,7 @@ export function Layout({
           </div>
           <Link
             to="/projects/new"
+            search={{ onboarding: false }}
             className="flex items-center gap-2 min-h-11 px-3 py-2 rounded-lg text-xs text-[var(--ink-soft)] hover:text-[var(--ink-mute)] hover:bg-[var(--surface-2)] no-underline transition-colors"
             onClick={() => setSidebarOpen(false)}
           >

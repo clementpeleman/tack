@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { redirect } from '@tanstack/react-router'
 import { db } from '../db/index.ts'
 import { sessions, users } from '../db/schema.ts'
 import { eq, and, gt } from 'drizzle-orm'
@@ -16,6 +17,32 @@ export function generateToken(): string {
 
 export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
+}
+
+/**
+ * Magic-link tokens live in the same `sessions` table as real sessions. They
+ * are hashed under a distinct prefix so the raw token from an email can never
+ * be presented as a `tack_session` cookie: the cookie path hashes the bare
+ * value, which will not match a row stored under the prefixed one.
+ */
+function hashMagicLinkToken(token: string): string {
+  return hashToken(`magic-link:${token}`)
+}
+
+/**
+ * `Secure` is set whenever the instance is known to be served over https
+ * (TACK_PUBLIC_URL) or the request itself arrived over https. Behind a TLS
+ * proxy the app sees plain http, so the env var is what makes this reliable.
+ */
+export function isSecureDeployment(request?: Request): boolean {
+  const publicUrl = process.env.TACK_PUBLIC_URL
+  if (publicUrl?.startsWith('https://')) return true
+  if (request) {
+    const proto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim()
+    if (proto === 'https') return true
+    if (request.url.startsWith('https://')) return true
+  }
+  return false
 }
 
 export function generateProjectKey(): string {
@@ -75,7 +102,7 @@ export async function createMagicLinkToken(
 
   await db.insert(sessions).values({
     userId: user.id,
-    tokenHash: hashToken(token),
+    tokenHash: hashMagicLinkToken(token),
     expiresAt,
   })
 
@@ -85,7 +112,7 @@ export async function createMagicLinkToken(
 export async function verifyMagicLinkToken(
   token: string,
 ): Promise<{ userId: string; sessionId: string } | null> {
-  const tokenHash = hashToken(token)
+  const tokenHash = hashMagicLinkToken(token)
   const now = new Date().toISOString()
 
   const [session] = await db
@@ -121,13 +148,18 @@ export async function invalidateSession(sessionToken: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash))
 }
 
-export function getSessionCookie(sessionToken: string): string {
+export function getSessionCookie(
+  sessionToken: string,
+  request?: Request,
+): string {
   const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60
-  return `tack_session=${sessionToken}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`
+  const secure = isSecureDeployment(request) ? '; Secure' : ''
+  return `tack_session=${sessionToken}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure}`
 }
 
-export function clearSessionCookie(): string {
-  return 'tack_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'
+export function clearSessionCookie(request?: Request): string {
+  const secure = isSecureDeployment(request) ? '; Secure' : ''
+  return `tack_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secure}`
 }
 
 export function getSessionTokenFromRequest(request: Request): string | null {
@@ -137,13 +169,36 @@ export function getSessionTokenFromRequest(request: Request): string | null {
   return match?.[1] ?? null
 }
 
+/**
+ * For dashboard server functions. A signed-out browser hitting a dashboard
+ * route used to get a 500 page (a thrown 401 Response is not something a
+ * route loader knows how to render); a redirect to the login page is what
+ * the person actually needs. API routes keep `requireAuth` and its 401.
+ */
+export async function requireDashboardAuth(
+  request: Request,
+): Promise<{ userId: string }> {
+  try {
+    return await requireAuth(request)
+  } catch (err) {
+    if (err instanceof Response && err.status === 401) {
+      throw redirect({ to: '/login' })
+    }
+    throw err
+  }
+}
+
 export async function requireAuth(
   request: Request,
 ): Promise<{ userId: string }> {
   const token = getSessionTokenFromRequest(request)
   if (!token) throw new Response('Unauthorized', { status: 401 })
 
-  enforceDashboardRateLimit(token)
+  // Keyed on the hash, not the raw cookie, so an attacker sending random
+  // cookie values cannot fill the limiter with unbounded distinct keys of
+  // their choosing (the hash is still distinct per value, but bounded in
+  // length and never the secret itself).
+  enforceDashboardRateLimit(hashToken(token).slice(0, 16))
 
   const session = await validateSession(token)
   if (!session) throw new Response('Unauthorized', { status: 401 })

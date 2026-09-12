@@ -37,11 +37,13 @@ export function watchWidgetTheme(host: HTMLElement, script: HTMLScriptElement | 
   const media = window.matchMedia('(prefers-color-scheme: light)')
   media.addEventListener('change', apply)
 
-  window.addEventListener('storage', (event) => {
+  const onStorage = (event: StorageEvent) => {
     if (event.key === STORAGE_KEY) apply()
-  })
+  }
+  window.addEventListener('storage', onStorage)
 
   return () => {
     media.removeEventListener('change', apply)
+    window.removeEventListener('storage', onStorage)
   }
 }

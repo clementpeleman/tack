@@ -18,7 +18,7 @@ export const Route = createFileRoute('/api/auth/logout')({
           status: 302,
           headers: {
             Location: '/login',
-            'Set-Cookie': clearSessionCookie(),
+            'Set-Cookie': clearSessionCookie(request),
           },
         })
       },

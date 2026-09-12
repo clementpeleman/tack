@@ -457,3 +457,64 @@
   font-family: var(--font-mono);
   z-index: 2147483647;
 }
+
+.tack-launcher-hint {
+  position: fixed;
+  bottom: 32px;
+  right: 84px;
+  max-width: 260px;
+  background: var(--ink);
+  color: var(--page);
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-float);
+  z-index: 2147483647;
+  pointer-events: none;
+}
+.tack-launcher-hint::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  background: var(--ink);
+  transform: rotate(45deg);
+}
+
+.tack-small-screen {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  padding: 10px 10px 10px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: var(--shadow-float);
+  z-index: 2147483647;
+}
+.tack-small-screen span { flex: 1; }
+.tack-small-screen button {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tack-small-screen button svg { width: 16px; height: 16px; }

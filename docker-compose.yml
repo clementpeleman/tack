@@ -10,8 +10,9 @@ services:
       SCREENSHOTS_DIR: /data/screenshots
       TACK_DEPLOYMENT: selfhost
       PORT: 3000
-      # Public URL of this instance. Set this behind a reverse proxy so the
-      # widget embed snippet and magic links use https + your real domain:
+      # Public URL of this instance. Required as soon as you configure an
+      # email provider below: sign-in links are built from it. Without it
+      # they would come from the request's Host header, which is spoofable.
       # TACK_PUBLIC_URL: https://tack.yourdomain.com
       # First launch: open the app and claim the instance with your email —
       # no email provider needed. Open signup for additional accounts stays
