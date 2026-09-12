@@ -5,6 +5,28 @@ import { isPortListening } from './tunnel.js'
 
 const START_TIMEOUT_MS = 60_000
 
+/** A dev server for a site answers GET / with HTML; an API or CMS backend does not. */
+async function servesHtml(port: number): Promise<boolean> {
+  if (!(await isPortListening(port))) return false
+  for (const host of ['127.0.0.1', '[::1]']) {
+    try {
+      const res = await fetch(`http://${host}:${port}/`, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(2500),
+        headers: { accept: 'text/html' },
+      })
+      const type = res.headers.get('content-type') ?? ''
+      if (res.status < 500 && /text\/html/i.test(type)) return true
+      // A redirect to a page still means a web app lives here.
+      if (res.status >= 300 && res.status < 400) return true
+      return false
+    } catch {
+      /* try the other family */
+    }
+  }
+  return false
+}
+
 type PackageManager = 'pnpm' | 'yarn' | 'bun' | 'npm'
 
 async function exists(path: string): Promise<boolean> {
@@ -70,6 +92,7 @@ export function startDevServer(
       settled = true
       clearTimeout(timer)
       clearInterval(poll)
+      if (graceTimer) clearTimeout(graceTimer)
       resolve({ port, stop, exited })
     }
 
@@ -83,18 +106,41 @@ export function startDevServer(
 
     // Fallback for servers that print nothing recognisable.
     const poll = setInterval(() => {
-      void isPortListening(expectedPort).then((up) => { if (up) finish(expectedPort) })
+      void servesHtml(expectedPort).then((ok) => { if (ok) finish(expectedPort) })
     }, 1000)
+
+    // Tooling often prints several URLs (a CMS API, a GraphQL playground, a
+    // proxy) before the app itself. Only a port that answers with HTML on "/"
+    // counts, and a line the tool marks as "Local:" (Vite, Next, Astro) wins
+    // outright; other candidates get a short grace period in case that line
+    // is still coming.
+    const seen = new Set<number>()
+    let graceTimer: ReturnType<typeof setTimeout> | null = null
+    const consider = (port: number, preferred: boolean) => {
+      if (seen.has(port)) return
+      seen.add(port)
+      void servesHtml(port).then((ok) => {
+        if (!ok || settled) return
+        if (preferred) {
+          finish(port)
+          return
+        }
+        if (!graceTimer) graceTimer = setTimeout(() => finish(port), 3000)
+      })
+    }
 
     const scan = (chunk: Buffer) => {
       // Vite colours its URL even with FORCE_COLOR=0; strip ANSI before matching.
       const text = chunk.toString('utf8').replace(/\x1b\[[0-9;]*m/g, '')
-      for (const line of text.split('\n')) if (line.trim()) onLog?.(line)
-      const match = text.match(/https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(\d{2,5})/)
-      if (match) {
-        const port = Number(match[1])
-        // Confirm it accepts connections before handing it out.
-        void isPortListening(port).then((up) => { if (up) finish(port) })
+      for (const line of text.split('\n')) {
+        if (!line.trim()) continue
+        onLog?.(line)
+        const re = /https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0):(\d{2,5})(\/[^\s]*)?/g
+        for (const m of line.matchAll(re)) {
+          const path = m[2] ?? '/'
+          if (path !== '/' && path !== '') continue // an API or playground URL
+          consider(Number(m[1]), /\blocal\b/i.test(line))
+        }
       }
     }
     child.stdout?.on('data', scan)
