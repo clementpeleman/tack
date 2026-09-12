@@ -6,12 +6,8 @@ import { ThemeToggle } from '#/components/ThemeToggle'
 import { Field } from '#/components/ui/Field'
 import { Button } from '#/components/ui/Button'
 import { isEmailConfigured } from '#/lib/email'
-import {
-  claimFirstOwner,
-  getSessionCookie,
-  hasAnyUser,
-  safeReturnPath,
-} from '#/lib/auth'
+import { claimFirstOwner, getSessionCookie, hasAnyUser } from '#/lib/auth'
+import { safeReturnPath } from '#/lib/return-path'
 
 const getLoginConfig = createServerFn({ method: 'GET' }).handler(async () => ({
   emailConfigured: isEmailConfigured(),

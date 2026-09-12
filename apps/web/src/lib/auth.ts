@@ -1,5 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { redirect } from '@tanstack/react-router'
+import { safeReturnPath } from './return-path.ts'
+
+export { safeReturnPath }
 import { db } from '../db/index.ts'
 import { sessions, users } from '../db/schema.ts'
 import { eq, and, gt } from 'drizzle-orm'
@@ -167,19 +170,6 @@ export function getSessionTokenFromRequest(request: Request): string | null {
   if (!cookie) return null
   const match = cookie.match(/tack_session=([^;]+)/)
   return match?.[1] ?? null
-}
-
-/**
- * A path we may send the browser back to after sign-in. Same-origin only:
- * must start with a single slash, no scheme, no `//host`, no control chars.
- */
-export function safeReturnPath(input: unknown): string | null {
-  if (typeof input !== 'string') return null
-  const value = input.trim()
-  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return null
-  if (value.length > 500 || /[\s\u0000-\u001f]/.test(value)) return null
-  if (value === '/login' || value.startsWith('/login?')) return null
-  return value
 }
 
 /** The page path a request was for, so sign-in can return there. */
