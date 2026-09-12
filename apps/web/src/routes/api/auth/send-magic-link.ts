@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { createMagicLinkToken } from '#/lib/auth'
+import { createMagicLinkToken, safeReturnPath } from '#/lib/auth'
 import { sendEmail } from '#/lib/email'
 import { getClientIp, magicLinkRateLimited } from '#/lib/rate-limit'
 import { publicOrigin, PublicUrlError } from '#/lib/public-url'
@@ -45,6 +45,8 @@ export const Route = createFileRoute('/api/auth/send-magic-link')({
             }
             const verifyUrl = new URL('/api/auth/verify', base)
             verifyUrl.searchParams.set('token', token)
+            const next = safeReturnPath(body?.next)
+            if (next) verifyUrl.searchParams.set('next', next)
 
             await sendEmail({
               to: normalizedEmail,

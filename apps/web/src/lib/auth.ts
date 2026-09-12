@@ -170,10 +170,43 @@ export function getSessionTokenFromRequest(request: Request): string | null {
 }
 
 /**
+ * A path we may send the browser back to after sign-in. Same-origin only:
+ * must start with a single slash, no scheme, no `//host`, no control chars.
+ */
+export function safeReturnPath(input: unknown): string | null {
+  if (typeof input !== 'string') return null
+  const value = input.trim()
+  if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return null
+  if (value.length > 500 || /[\s\u0000-\u001f]/.test(value)) return null
+  if (value === '/login' || value.startsWith('/login?')) return null
+  return value
+}
+
+/** The page path a request was for, so sign-in can return there. */
+function returnPathFor(request: Request): string | null {
+  try {
+    const url = new URL(request.url)
+    // A server-function RPC carries the page in its Referer, not its URL.
+    if (url.pathname.startsWith('/_serverFn/') || url.pathname.startsWith('/_server')) {
+      const referer = request.headers.get('referer')
+      if (!referer) return null
+      const ref = new URL(referer)
+      if (ref.origin !== url.origin) return null
+      return safeReturnPath(ref.pathname + ref.search)
+    }
+    return safeReturnPath(url.pathname + url.search)
+  } catch {
+    return null
+  }
+}
+
+/**
  * For dashboard server functions. A signed-out browser hitting a dashboard
  * route used to get a 500 page (a thrown 401 Response is not something a
  * route loader knows how to render); a redirect to the login page is what
- * the person actually needs. API routes keep `requireAuth` and its 401.
+ * the person actually needs, and after signing in they come back to the
+ * page they asked for (the CLI authorize page depends on this). API routes
+ * keep `requireAuth` and its 401.
  */
 export async function requireDashboardAuth(
   request: Request,
@@ -182,7 +215,8 @@ export async function requireDashboardAuth(
     return await requireAuth(request)
   } catch (err) {
     if (err instanceof Response && err.status === 401) {
-      throw redirect({ to: '/login' })
+      const next = returnPathFor(request)
+      throw redirect({ to: '/login', search: next ? { next } : {} })
     }
     throw err
   }

@@ -3,8 +3,10 @@
 Installs the [Tack](https://github.com/clementpeleman/tack) feedback widget into your project.
 
 ```bash
-npx @usetack/cli init --host https://tack.example.com
+npx @usetack/cli init
 ```
+
+That talks to the hosted service at tack.peleman.io. Self-hosting? Add `--host https://tack.example.com` or set `TACK_HOST`.
 
 It signs you in through the browser, finds your framework's entry file, shows you the exact diff, and writes it only after you confirm.
 
@@ -66,7 +68,7 @@ Override with `--gate dev` (development only) or `--gate none` (always on — th
 ## Options
 
 ```
---host <url>         Tack instance (default: $TACK_HOST)
+--host <url>         Your instance, for self-hosting (default: $TACK_HOST, else the hosted service)
 --project <id|pk_>   Project to install, skips the prompt
 --origin <url>       Dev origin to allow (default: detected dev port)
 --gate <env|dev|none>
@@ -81,7 +83,7 @@ Override with `--gate dev` (development only) or `--gate none` (always on — th
 
 | Variable | Purpose |
 |---|---|
-| `TACK_HOST` | Default instance URL |
+| `TACK_HOST` | Instance URL for self-hosting; overrides the hosted default |
 | `TACK_TOKEN` | Token for CI and other non-interactive use |
 | `TACK_CONFIG_DIR` | Override where credentials are stored |
 | `NO_COLOR` | Disable colour |

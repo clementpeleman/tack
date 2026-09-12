@@ -244,3 +244,14 @@ describe('launch checklist: resolve/reopen filters', () => {
     expect(pins.filter((p) => p.status === 'resolved')).toHaveLength(1)
   })
 })
+
+describe('sign-in return path', () => {
+  it('accepts only same-origin paths', async () => {
+    const { safeReturnPath } = await import('#/lib/auth')
+    expect(safeReturnPath('/cli/authorize?request=abc')).toBe('/cli/authorize?request=abc')
+    expect(safeReturnPath('/projects/x/inbox')).toBe('/projects/x/inbox')
+    for (const bad of ['https://evil.com', '//evil.com', '/\\evil.com', 'projects', '/login', '/login?x', '/a b', '', null, 42]) {
+      expect(safeReturnPath(bad), String(bad)).toBeNull()
+    }
+  })
+})

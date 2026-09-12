@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { verifyMagicLinkToken, getSessionCookie } from '#/lib/auth'
+import { verifyMagicLinkToken, getSessionCookie, safeReturnPath } from '#/lib/auth'
 
 function escapeHtml(value: string): string {
   return value
@@ -64,7 +64,9 @@ export const Route = createFileRoute('/api/auth/verify')({
       // email security scanners (Outlook SafeLinks, Mimecast, Proofpoint) that
       // prefetch links can't burn a one-time link before the human clicks.
       GET: async ({ request }) => {
-        const token = new URL(request.url).searchParams.get('token')
+        const params = new URL(request.url).searchParams
+        const token = params.get('token')
+        const next = safeReturnPath(params.get('next'))
         if (!token) {
           return htmlPage(
             '<h1>Link incomplete</h1><p>This sign-in link is missing its token. Request a new one.</p><a class="link" href="/login">Back to sign in</a>',
@@ -75,6 +77,7 @@ export const Route = createFileRoute('/api/auth/verify')({
           `<h1>Sign in to Tack</h1><p>Click below to finish signing in on this device.</p>
            <form method="POST" action="/api/auth/verify">
              <input type="hidden" name="token" value="${escapeHtml(token)}" />
+             ${next ? `<input type="hidden" name="next" value="${escapeHtml(next)}" />` : ''}
              <button type="submit">Sign in</button>
            </form>`,
         )
@@ -84,6 +87,7 @@ export const Route = createFileRoute('/api/auth/verify')({
       POST: async ({ request }) => {
         const form = await request.formData()
         const token = form.get('token')
+        const next = safeReturnPath(form.get('next'))
 
         if (typeof token !== 'string' || !token) {
           return htmlPage(
@@ -104,7 +108,7 @@ export const Route = createFileRoute('/api/auth/verify')({
         return new Response(null, {
           status: 302,
           headers: {
-            Location: '/projects',
+            Location: next ?? '/projects',
             'Set-Cookie': getSessionCookie(result.sessionId, request),
           },
         })

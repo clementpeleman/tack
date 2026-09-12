@@ -16,6 +16,9 @@ import { error, log, warn } from './ui.js'
 
 const VERSION: string = createRequire(import.meta.url)('../package.json').version
 
+/** The hosted service. Self-hosters pass --host or set TACK_HOST. */
+const DEFAULT_HOST = 'https://tack.peleman.io'
+
 const HELP = `
   tack — install the Tack feedback widget
 
@@ -36,7 +39,8 @@ const HELP = `
     share revoke <id>    Close a review link
 
   Options
-    --host <url>         Tack instance (default: $TACK_HOST)
+    --host <url>         Your Tack instance, for self-hosting.
+                         Default: $TACK_HOST, else https://tack.peleman.io
     --project <id|pk_>   Project to install, skips the prompt
     --origin <url>       Dev origin to allow (default: detected dev port)
     --gate <env|dev|none>
@@ -54,15 +58,14 @@ const HELP = `
     --help, --version
 
   Environment
-    TACK_HOST            Default instance URL
+    TACK_HOST            Instance URL (self-host); overrides the hosted default
     TACK_TOKEN           Token for CI and other non-interactive use
     TACK_CONFIG_DIR      Override where credentials are stored
     NO_COLOR             Disable colour
 `
 
 function resolveHost(flag?: string): string | null {
-  const raw = flag ?? process.env.TACK_HOST
-  if (!raw) return null
+  const raw = flag ?? process.env.TACK_HOST ?? DEFAULT_HOST
   try {
     const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
     const url = new URL(withScheme)
@@ -130,7 +133,7 @@ async function main(): Promise<number> {
 
   const host = resolveHost(values.host as string | undefined)
   if (!host) {
-    error('No Tack host. Pass --host https://tack.example.com or set TACK_HOST.')
+    error('Invalid host. Pass --host https://tack.example.com or set TACK_HOST.')
     return 1
   }
 

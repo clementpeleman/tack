@@ -6,7 +6,12 @@ import { ThemeToggle } from '#/components/ThemeToggle'
 import { Field } from '#/components/ui/Field'
 import { Button } from '#/components/ui/Button'
 import { isEmailConfigured } from '#/lib/email'
-import { claimFirstOwner, getSessionCookie, hasAnyUser } from '#/lib/auth'
+import {
+  claimFirstOwner,
+  getSessionCookie,
+  hasAnyUser,
+  safeReturnPath,
+} from '#/lib/auth'
 
 const getLoginConfig = createServerFn({ method: 'GET' }).handler(async () => ({
   emailConfigured: isEmailConfigured(),
@@ -34,10 +39,15 @@ const claimInstance = createServerFn({ method: 'POST' })
 export const Route = createFileRoute('/login')({
   loader: () => getLoginConfig(),
   component: LoginPage,
+  validateSearch: (search: Record<string, unknown>): { next?: string } => {
+    const next = safeReturnPath(search.next)
+    return next ? { next } : {}
+  },
 })
 
 function LoginPage() {
   const { emailConfigured, needsClaim } = Route.useLoaderData()
+  const { next } = Route.useSearch()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -53,7 +63,7 @@ function LoginPage() {
         setError(result.error)
         return
       }
-      window.location.href = '/projects'
+      window.location.href = next ?? '/projects'
     } catch {
       setError('Could not reach server')
     } finally {
@@ -70,7 +80,7 @@ function LoginPage() {
       const res = await fetch('/api/auth/send-magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, next }),
       })
 
       if (!res.ok) {
