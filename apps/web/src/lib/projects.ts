@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { db } from '#/db/index'
-import { projects } from '#/db/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { pins, projects } from '#/db/schema'
+import { eq, and, isNull, desc, inArray } from 'drizzle-orm'
 import { requireDashboardAuth } from '#/lib/auth'
 import { generateProjectKey } from '#/lib/project-key'
 import { validateAllowedOrigins } from '#/lib/widget-connection'
@@ -327,3 +327,46 @@ export const revokeShareLink = createServerFn({ method: 'POST' })
     await revokeShare(project.id, data.shareId)
     return { ok: true }
   })
+
+/**
+ * The projects overview: what an owner wants to know at a glance — how much
+ * is open, when the last pin came in, whether the widget has ever phoned home.
+ * One query per table, aggregated in memory; project counts are small.
+ */
+export const getProjectsOverview = createServerFn({ method: 'GET' }).handler(async () => {
+  const { userId } = await requireDashboardAuth(getRequest())
+
+  const rows = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.userId, userId), isNull(projects.archivedAt)))
+    .orderBy(desc(projects.createdAt))
+
+  const ids = rows.map((p) => p.id)
+  const pinRows =
+    ids.length > 0
+      ? await db
+          .select({ projectId: pins.projectId, status: pins.status, createdAt: pins.createdAt })
+          .from(pins)
+          .where(inArray(pins.projectId, ids))
+      : []
+
+  const stats = new Map<string, { open: number; total: number; last: string | null }>()
+  for (const pin of pinRows) {
+    const s = stats.get(pin.projectId) ?? { open: 0, total: 0, last: null }
+    s.total += 1
+    if (pin.status === 'open') s.open += 1
+    if (!s.last || pin.createdAt > s.last) s.last = pin.createdAt
+    stats.set(pin.projectId, s)
+  }
+
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    previewUrl: p.previewUrl,
+    connected: Boolean(p.firstWidgetSeenAt),
+    open: stats.get(p.id)?.open ?? 0,
+    total: stats.get(p.id)?.total ?? 0,
+    lastPinAt: stats.get(p.id)?.last ?? null,
+  }))
+})

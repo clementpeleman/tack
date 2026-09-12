@@ -8,7 +8,6 @@ import {
   archiveProject,
   getProject,
   getProjects,
-  updateAllowedOrigins,
   updateProjectDetails,
   updateProjectSettings,
 } from '#/lib/projects'
@@ -50,11 +49,6 @@ function SettingsPage() {
   const [pinQueryParams, setPinQueryParams] = useState(
     settings.pinQueryParams?.join(', ') ?? '',
   )
-  const [origins, setOrigins] = useState(
-    (project.allowedOrigins ?? []).join('\n'),
-  )
-  const [originsMsg, setOriginsMsg] = useState('')
-  const [savingOrigins, setSavingOrigins] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [generalMsg, setGeneralMsg] = useState('')
   const [savingGeneral, setSavingGeneral] = useState(false)
@@ -113,29 +107,6 @@ function SettingsPage() {
       setSavingGeneral(false)
     }
   }
-
-  const saveOrigins = async (list: string[]) => {
-    setSavingOrigins(true)
-    setOriginsMsg('')
-    try {
-      const result = await updateAllowedOrigins({
-        data: { projectId: project.id, origins: list },
-      })
-      setOrigins(result.origins.join('\n'))
-      setOriginsMsg('Saved')
-      await router.invalidate()
-    } catch (err) {
-      setOriginsMsg(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSavingOrigins(false)
-    }
-  }
-
-  const originList = () =>
-    origins
-      .split(/[\n,]/)
-      .map((o) => o.trim())
-      .filter(Boolean)
 
   const saveNotifications = async () => {
     setSavingNotify(true)
@@ -256,63 +227,6 @@ function SettingsPage() {
               </Link>
               .
             </p>
-            <div className="border-t border-[var(--line)] pt-4">
-              <label
-                htmlFor="allowed-origins"
-                className="block text-[11px] text-[var(--ink-mute)] uppercase font-mono mb-1.5"
-              >
-                Allowed origins
-              </label>
-              <textarea
-                id="allowed-origins"
-                value={origins}
-                onChange={(e) => setOrigins(e.target.value)}
-                rows={3}
-                spellCheck={false}
-                placeholder={'http://localhost:3000\nhttps://staging.acme.com'}
-                className="w-full text-xs font-mono bg-[var(--page)] text-[var(--ink)] border border-[var(--line)] rounded-md px-3 py-2 focus:outline-none focus:border-[var(--accent)]"
-              />
-              <p className="text-xs text-[var(--ink-mute)] mt-1.5">
-                One per line. The widget only loads from the preview URL and
-                these origins; everything else is refused, because the project
-                key is public.
-              </p>
-              {project.lastRejectedOrigin &&
-                !originList().includes(project.lastRejectedOrigin) && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-md bg-[var(--surface-2)] px-3 py-2">
-                    <p className="text-xs text-[var(--ink)]">
-                      The widget tried to load from{' '}
-                      <span className="font-mono">{project.lastRejectedOrigin}</span>{' '}
-                      and was refused.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={savingOrigins}
-                      onClick={() =>
-                        saveOrigins([...originList(), project.lastRejectedOrigin!])
-                      }
-                    >
-                      Allow it
-                    </Button>
-                  </div>
-                )}
-              <div className="flex items-center gap-3 pt-3">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => saveOrigins(originList())}
-                  disabled={savingOrigins}
-                >
-                  {savingOrigins ? 'Saving...' : 'Save origins'}
-                </Button>
-                {originsMsg && (
-                  <span className="text-xs text-[var(--ink-mute)]" role="status">
-                    {originsMsg}
-                  </span>
-                )}
-              </div>
-            </div>
             <button
               type="button"
               onClick={() => setShowAdvanced((v) => !v)}

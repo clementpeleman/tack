@@ -25,11 +25,14 @@ export function SharePanel({
   previewUrl,
   configured,
   initialShares,
+  flat = false,
 }: {
   projectId: string
   previewUrl: string
   configured: boolean
   initialShares: ShareSummary[]
+  /** Render without its own border and title (inside a page section). */
+  flat?: boolean
 }) {
   const [shares, setShares] = useState(initialShares)
   const [targetUrl, setTargetUrl] = useState(previewUrl)
@@ -82,8 +85,8 @@ export function SharePanel({
 
   if (!configured) {
     return (
-      <section className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-        <p className="text-sm font-medium text-[var(--ink)]">Share a review link</p>
+      <section className={flat ? '' : 'rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4'}>
+        {!flat && <p className="text-sm font-medium text-[var(--ink)]">Share a review link</p>}
         <p className="mt-1 text-xs leading-relaxed text-[var(--ink-mute)]">
           Not available on this instance. Set{' '}
           <span className="font-mono">TACK_SHARE_DOMAIN</span> (for example{' '}
@@ -96,12 +99,16 @@ export function SharePanel({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4">
-      <p className="text-sm font-medium text-[var(--ink)]">Share a review link</p>
-      <p className="mt-1 mb-3 text-xs leading-relaxed text-[var(--ink-mute)]">
-        Tack serves the site through its own link with the widget already on it.
-        Nothing to install on the site; send the link to your client.
-      </p>
+    <section className={flat ? '' : 'rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4'}>
+      {!flat && (
+        <>
+          <p className="text-sm font-medium text-[var(--ink)]">Share a review link</p>
+          <p className="mt-1 mb-3 text-xs leading-relaxed text-[var(--ink-mute)]">
+            Tack serves the site through its own link with the widget already on it.
+            Nothing to install on the site; send the link to your client.
+          </p>
+        </>
+      )}
 
       <div className="space-y-3">
         <Field
