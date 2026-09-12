@@ -46,6 +46,21 @@ export async function detectPackageManager(root: string): Promise<PackageManager
   return 'npm'
 }
 
+/**
+ * Is there a website in this folder at all? A framework we recognise, a
+ * package.json with a `dev` script, or a plain index.html. Checked before
+ * sign-in so nobody logs in and picks a project only to learn the CLI was
+ * run from the wrong directory.
+ */
+export async function describeSite(root: string): Promise<string | null> {
+  const { detectFramework } = await import('./detect.js')
+  const detection = await detectFramework(root)
+  if (detection) return detection.label
+  if (await hasDevScript(root)) return 'a project with a `dev` script'
+  if (await exists(join(root, 'index.html'))) return 'a static site (index.html)'
+  return null
+}
+
 export async function hasDevScript(root: string): Promise<boolean> {
   try {
     const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))

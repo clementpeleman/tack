@@ -10,7 +10,12 @@ import {
   startTunnel,
   waitForTunnel,
 } from '../tunnel.js'
-import { detectPackageManager, hasDevScript, startDevServer } from '../devserver.js'
+import {
+  describeSite,
+  detectPackageManager,
+  hasDevScript,
+  startDevServer,
+} from '../devserver.js'
 import { bold, dim, error, info, log, step, warn } from '../ui.js'
 
 export interface ShareOptions {
@@ -38,6 +43,22 @@ export interface ShareOptions {
  * script tag.
  */
 export async function shareCommand(options: ShareOptions): Promise<number> {
+  // Tunnel mode needs a site in this folder (or an explicit --port with
+  // something already running). Check before sign-in and project prompts.
+  if (!options.url && !options.sub) {
+    const site = await describeSite(options.cwd)
+    const portGiven = options.port != null && (await isPortListening(options.port))
+    if (!site && !portGiven) {
+      error(`No website found in ${options.cwd}.`)
+      info('Looked for a framework, a package.json with a `dev` script, or an index.html.')
+      info('Run this from your project folder, pass --port for a server that is already running,')
+      info('or share a deployed preview instead:')
+      info(dim('  tack share https://preview.acme.com'))
+      return 1
+    }
+    if (site) info(dim(`Sharing ${site} in ${options.cwd}`))
+  }
+
   const signedIn = await signedInClient(options)
   if (!signedIn) return 1
   const { client } = signedIn
