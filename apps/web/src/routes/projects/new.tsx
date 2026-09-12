@@ -68,11 +68,11 @@ function NewProjectPage() {
           Back to projects
         </Link>
 
-        <h1 className="text-xl font-semibold text-[var(--ink)] mb-1">
+        <h1 className="text-page-title mb-1">
           {onboarding ? 'Create your first project' : 'New project'}
         </h1>
         <p className="text-sm text-[var(--ink-mute)] mb-6">
-          Create a project to start collecting visual feedback.
+          One website under review. You can share a review link right after.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

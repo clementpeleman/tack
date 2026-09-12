@@ -1,39 +1,45 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { getProjects } from '#/lib/projects'
+import { getProjectsOverview } from '#/lib/projects'
 import { getCurrentUser } from '#/lib/user'
 import { AccountMenu } from '#/components/AccountMenu'
 import { Logo } from '#/components/brand/Logo'
 import { buttonClasses } from '#/components/ui/Button'
+import { getTimeAgo } from '#/lib/pin-display'
 
 export const Route = createFileRoute('/projects/')({
   beforeLoad: async () => {
-    const [user, projects] = await Promise.all([
-      getCurrentUser(),
-      getProjects(),
-    ])
-
+    const [user, projects] = await Promise.all([getCurrentUser(), getProjectsOverview()])
     if (!user.onboardingCompletedAt && projects.length === 0) {
-      throw redirect({
-        to: '/projects/new',
-        search: { onboarding: true },
-      })
+      throw redirect({ to: '/projects/new', search: { onboarding: true } })
     }
   },
   component: ProjectsPage,
   loader: async () => {
-    const [projects, user] = await Promise.all([getProjects(), getCurrentUser()])
+    const [projects, user] = await Promise.all([getProjectsOverview(), getCurrentUser()])
     return { projects, userEmail: user.email }
   },
 })
 
+function host(url: string): string {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
+
+/**
+ * All projects, as a list rather than cards: what is open and when the
+ * last pin came in are the two things that decide where an owner goes next.
+ */
 function ProjectsPage() {
   const { projects, userEmail } = Route.useLoaderData()
 
   return (
     <main className="min-h-screen bg-[var(--page)]">
-      <div className="max-w-3xl mx-auto p-8">
-        <div className="flex items-center justify-between mb-8 gap-4">
-          <div className="flex items-center gap-2">
+      <div className="mx-auto max-w-3xl p-6 md:p-8">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
             <Logo size={18} wordmark={false} />
             <h1 className="text-page-title">Projects</h1>
           </div>
@@ -41,103 +47,55 @@ function ProjectsPage() {
             <div className="hidden w-52 sm:block">
               <AccountMenu email={userEmail} align="end" side="bottom" />
             </div>
-            <Link
-              to="/projects/new"
-              search={{ onboarding: false }}
-              className={buttonClasses('primary', 'md')}
-            >
+            <Link to="/projects/new" search={{ onboarding: false }} className={buttonClasses('primary', 'md')}>
               New project
             </Link>
           </div>
         </div>
-
         <div className="mb-6 sm:hidden">
           <AccountMenu email={userEmail} side="bottom" />
         </div>
 
         {projects.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface)] p-12 text-center">
-            <div className="w-10 h-10 bg-[color-mix(in_oklab,var(--accent)_12%,transparent)] rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="text-[var(--accent)]"
-              >
-                <rect
-                  x="3"
-                  y="3"
-                  width="14"
-                  height="14"
-                  rx="3"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-                <path
-                  d="M10 7v6M7 10h6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-[var(--ink)] font-medium mb-1">
-              No projects yet
+          <div className="max-w-md py-10">
+            <h2 className="font-display text-[20px] font-bold text-[var(--ink)]">No projects yet</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--ink-mute)]">
+              A project is one website under review. Create one, share a review link with your client, and their pins land in its inbox.
             </p>
-            <p className="text-xs text-[var(--ink-mute)] max-w-xs mx-auto mb-4">
-              Create a project and embed the Tack widget on your preview site to
-              start collecting feedback.
-            </p>
-            <Link
-              to="/projects/new"
-              search={{ onboarding: false }}
-              className={buttonClasses('primary', 'md')}
-            >
+            <Link to="/projects/new" search={{ onboarding: false }} className={`${buttonClasses('primary', 'md')} mt-5`}>
               Create your first project
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
+          <ol className="m-0 list-none border-t border-[var(--line)] p-0">
             {projects.map((project) => (
-              <Link
-                key={project.id}
-                to="/projects/$id/inbox"
-                params={{ id: project.id }}
-                className="group block rounded-lg border border-[var(--line)] bg-[var(--surface)] p-4 hover:border-[var(--accent)] no-underline transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-[var(--pin)] shrink-0" />
-                    <div>
-                      <h2 className="text-sm font-medium text-[var(--ink)]">
-                        {project.name}
-                      </h2>
-                      <p className="text-xs text-[var(--ink-soft)] font-mono mt-0.5">
-                        {project.previewUrl}
-                      </p>
-                    </div>
-                  </div>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    className="text-[var(--ink-soft)] opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <path
-                      d="M6 4l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              </Link>
+              <li key={project.id} className="border-b border-[var(--line)]">
+                <Link
+                  to="/projects/$id/inbox"
+                  params={{ id: project.id }}
+                  className="group flex items-center gap-4 py-4 no-underline outline-none transition-colors hover:bg-[var(--surface)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)] -mx-3 px-3 rounded-lg"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-display text-[17px] font-bold text-[var(--ink)]">
+                      {project.name}
+                    </span>
+                    <span className="mt-0.5 block truncate text-meta">
+                      {project.previewUrl ? host(project.previewUrl) : 'no preview URL'}
+                      {!project.connected && ' · not connected yet'}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className={`block text-sm ${project.open > 0 ? 'font-medium text-[var(--ink)]' : 'text-[var(--ink-mute)]'}`}>
+                      {project.open > 0 ? `${project.open} open` : project.total > 0 ? 'all resolved' : 'no pins'}
+                    </span>
+                    {project.lastPinAt && (
+                      <span className="block text-meta">last pin {getTimeAgo(project.lastPinAt)}</span>
+                    )}
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ol>
         )}
       </div>
     </main>

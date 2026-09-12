@@ -7,6 +7,8 @@ import { requireDashboardAuth } from '#/lib/auth'
 import { generateProjectKey } from '#/lib/project-key'
 import { validateAllowedOrigins } from '#/lib/widget-connection'
 import { configuredPublicOrigin } from '#/lib/public-url'
+import { getAiEntitlement } from '#/lib/ai/entitlement'
+import { getAiBudgetConfig } from '#/lib/ai/cost'
 import {
   createShare,
   isShareConfigured,
@@ -369,4 +371,18 @@ export const getProjectsOverview = createServerFn({ method: 'GET' }).handler(asy
     total: stats.get(p.id)?.total ?? 0,
     lastPinAt: stats.get(p.id)?.last ?? null,
   }))
+})
+
+/** AI availability for the settings page; the only place env names may appear in the UI. */
+export const getAiStatus = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireDashboardAuth(getRequest())
+  const entitlement = getAiEntitlement()
+  const budget = getAiBudgetConfig()
+  return {
+    hosted: process.env.TACK_DEPLOYMENT === 'hosted',
+    entitled: entitlement.entitled,
+    reason: entitlement.reason,
+    monthlyCapCents: budget.monthlyCapCents,
+    jobCapCents: budget.jobCapCents,
+  }
 })
