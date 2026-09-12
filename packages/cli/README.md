@@ -43,7 +43,7 @@ Requires the instance to have `TACK_SHARE_DOMAIN` configured.
 npx @usetack/cli share
 ```
 
-With no URL, `share` tunnels the dev server on the detected port (or `--port`) through [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) and puts a review link in front of it. Hot reload keeps working through the link. The link lives while the command runs and is revoked on Ctrl-C; the share expires after a day regardless. cloudflared must be installed (`brew install cloudflared` on macOS); Cloudflare sees the traffic, so use a deployed preview for anything you would not send through a third party.
+With no URL, `share` starts your `dev` script if nothing is listening yet (using the port the server actually reports), then tunnels it (or `--port`) through [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/) and puts a review link in front of it. Hot reload keeps working through the link. The link lives while the command runs and is revoked on Ctrl-C; the share expires after a day regardless. cloudflared must be installed (`brew install cloudflared` on macOS); Cloudflare sees the traffic, so use a deployed preview for anything you would not send through a third party.
 
 ## Supported frameworks
 

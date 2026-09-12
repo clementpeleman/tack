@@ -4,7 +4,7 @@
 // without a build step. Reads the shares table directly with better-sqlite3.
 import Database from 'better-sqlite3'
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { lookup } from 'node:dns/promises'
+import { lookup, Resolver } from 'node:dns/promises'
 import { connect as netConnect, isIP } from 'node:net'
 import { Readable } from 'node:stream'
 import { connect as tlsConnect } from 'node:tls'
@@ -46,6 +46,25 @@ function isPublicIp(ip) {
     return true
   }
   return false
+}
+
+// Public resolvers first (a fresh tunnel hostname reaches them in seconds,
+// while the OS resolver may cache an early miss for minutes); OS as fallback
+// when public DNS is unreachable.
+async function resolvePublic(hostname) {
+  let resolverError = false
+  for (const server of ['1.1.1.1', '8.8.8.8']) {
+    const r = new Resolver({ timeout: 2000, tries: 1 })
+    r.setServers([server])
+    const v4 = await r.resolve4(hostname).catch((e) => { if (e?.code !== 'ENOTFOUND' && e?.code !== 'ENODATA') resolverError = true; return [] })
+    const v6 = await r.resolve6(hostname).catch(() => [])
+    if (v4.length + v6.length > 0) return [...v4, ...v6]
+  }
+  if (resolverError) {
+    const addrs = await lookup(hostname, { all: true }).catch(() => [])
+    return addrs.map((a) => a.address)
+  }
+  return []
 }
 
 function page(res, status, title, body) {
@@ -118,8 +137,8 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
     let ok = false
     try {
       const bare = hostname.replace(/^\[|\]$/g, '')
-      const addrs = isIP(bare) ? [{ address: bare }] : await lookup(bare, { all: true })
-      ok = addrs.length > 0 && addrs.every((a) => isPublicIp(a.address))
+      const addrs = isIP(bare) ? [bare] : await resolvePublic(bare)
+      ok = addrs.length > 0 && addrs.every((a) => isPublicIp(a))
     } catch {
       ok = false
     }

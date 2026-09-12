@@ -1,4 +1,5 @@
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
+import { Resolver } from 'node:dns/promises'
 import { connect } from 'node:net'
 import { promisify } from 'node:util'
 
@@ -53,6 +54,36 @@ function tryConnect(host: string, port: number): Promise<boolean> {
  */
 export async function isPortListening(port: number): Promise<boolean> {
   return (await tryConnect('127.0.0.1', port)) || (await tryConnect('::1', port))
+}
+
+/**
+ * A quick tunnel's hostname is minted when cloudflared connects, and the DNS
+ * record follows a few seconds later. Asking the system resolver before it
+ * exists is worse than useless: the "no such name" answer is cached for
+ * minutes, on this machine and, if the share were created now, on the Tack
+ * server. So the name is checked against public resolvers directly, and the
+ * share is only created once both of them answer.
+ */
+export async function waitForTunnel(url: string, timeoutMs = 60_000): Promise<void> {
+  const hostname = new URL(url).hostname
+  const deadline = Date.now() + timeoutMs
+  const resolvers = ['1.1.1.1', '8.8.8.8'].map((server) => {
+    const r = new Resolver({ timeout: 2000, tries: 1 })
+    r.setServers([server])
+    return r
+  })
+  while (Date.now() < deadline) {
+    const answers = await Promise.all(
+      resolvers.map((r) => r.resolve4(hostname).then((a) => a.length > 0, () => false)),
+    )
+    if (answers.every(Boolean)) {
+      // One more beat so resolvers in between have it too.
+      await new Promise((r) => setTimeout(r, 2000))
+      return
+    }
+    await new Promise((r) => setTimeout(r, 1500))
+  }
+  throw new Error('The tunnel hostname did not appear in DNS within 60 seconds. Try again.')
 }
 
 export interface Tunnel {

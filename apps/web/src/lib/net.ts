@@ -1,5 +1,9 @@
-import { lookup } from 'node:dns/promises'
+import { lookup, Resolver } from 'node:dns/promises'
 import { isIP } from 'node:net'
+import { setTimeout as sleep } from 'node:timers/promises'
+
+const LOOKUP_ATTEMPTS = 6
+const LOOKUP_RETRY_MS = 1500
 
 /**
  * Anything the proxy fetches on a user's behalf must sit on the public
@@ -39,6 +43,34 @@ function isPublicIpv6(ip: string): boolean {
   return true
 }
 
+const PUBLIC_RESOLVERS = ['1.1.1.1', '8.8.8.8']
+
+async function resolvePublic(hostname: string): Promise<{ address: string }[]> {
+  let sawResolverError = false
+  for (const server of PUBLIC_RESOLVERS) {
+    const resolver = new Resolver({ timeout: 2000, tries: 1 })
+    resolver.setServers([server])
+    try {
+      const [v4, v6] = await Promise.all([
+        resolver.resolve4(hostname).catch((e: NodeJS.ErrnoException) => {
+          if (e.code !== 'ENOTFOUND' && e.code !== 'ENODATA') sawResolverError = true
+          return [] as string[]
+        }),
+        resolver.resolve6(hostname).catch(() => [] as string[]),
+      ])
+      const all = [...v4, ...v6]
+      if (all.length > 0) return all.map((address) => ({ address }))
+    } catch {
+      sawResolverError = true
+    }
+  }
+  // Public DNS blocked (some corporate networks): use whatever the OS says.
+  if (sawResolverError) {
+    return lookup(hostname, { all: true }).catch(() => [])
+  }
+  return []
+}
+
 /**
  * Resolve a hostname and require every address to be public. Returns the
  * addresses so a caller that wants to pin the connection can. Set
@@ -51,11 +83,18 @@ export async function assertPublicHost(hostname: string): Promise<string[]> {
   if (bare === 'localhost' || bare.endsWith('.localhost')) {
     throw new Error('Target must be a public site, not localhost.')
   }
-  const addresses = isIP(bare)
-    ? [{ address: bare }]
-    : await lookup(bare, { all: true }).catch(() => [])
+  // Resolve against public resolvers rather than the OS one: a hostname
+  // minted seconds ago (a fresh tunnel) is not in every cache yet, and the
+  // OS resolver would cache the miss for minutes. Retry a few times to give
+  // propagation a chance; fall back to the system resolver if public DNS is
+  // unreachable from this network.
+  let addresses: { address: string }[] = isIP(bare) ? [{ address: bare }] : []
+  for (let attempt = 0; addresses.length === 0 && attempt < LOOKUP_ATTEMPTS; attempt++) {
+    if (attempt > 0) await sleep(LOOKUP_RETRY_MS)
+    addresses = await resolvePublic(bare)
+  }
   if (addresses.length === 0) {
-    throw new Error(`Could not resolve ${hostname}.`)
+    throw new Error(`Could not resolve ${hostname}. If it was just created, wait a moment and try again.`)
   }
   for (const { address } of addresses) {
     if (!isPublicIp(address)) {
