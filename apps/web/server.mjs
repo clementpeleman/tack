@@ -7,6 +7,17 @@ import serverEntry from './dist/server/server.js'
 import { createShareProxy } from './share-proxy.mjs'
 
 const port = Number(process.env.PORT ?? 3000)
+
+// Last line of defence for a proxy that talks to sites it does not control:
+// log and keep serving rather than drop every open connection (Coolify would
+// restart the container, but each restart cuts all SSE streams and in-flight
+// requests). Anything that lands here is a bug worth fixing; the log says so.
+process.on('uncaughtException', (err) => {
+  console.error('[tack] uncaught exception (kept running):', err)
+})
+process.on('unhandledRejection', (reason) => {
+  console.error('[tack] unhandled rejection (kept running):', reason)
+})
 const rootDir = dirname(fileURLToPath(import.meta.url))
 const staticRoot = join(rootDir, 'dist/client')
 process.chdir(rootDir)
@@ -127,7 +138,12 @@ const server = createServer(async (req, res) => {
     res.writeHead(response.status, Object.fromEntries(response.headers.entries()))
 
     if (response.body) {
-      Readable.fromWeb(response.body).pipe(res)
+      // Same hazard as in the share proxy: an aborted request errors the
+      // body stream, and an unhandled stream error kills the process.
+      const body = Readable.fromWeb(response.body)
+      body.on('error', () => res.destroy())
+      res.on('error', () => body.destroy())
+      body.pipe(res)
     } else {
       res.end()
     }

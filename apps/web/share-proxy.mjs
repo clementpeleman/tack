@@ -323,6 +323,7 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
 
     const abort = new AbortController()
     req.on('close', () => abort.abort())
+    res.on('close', () => abort.abort())
     const init = { method: req.method, headers, redirect: 'manual', signal: abort.signal }
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       init.body = await readBody(req)
@@ -380,7 +381,14 @@ export function createShareProxy({ dbPath, shareDomain, tackOrigin, allowLocal =
 
     res.writeHead(response.status, outHeaders)
     if (response.body && req.method !== 'HEAD') {
-      Readable.fromWeb(response.body).pipe(res)
+      // A client that goes away mid-stream aborts the upstream fetch, which
+      // surfaces as an 'error' on this Readable. Unhandled, that took the
+      // whole process down (three restarts on 12 Sep). Swallow it: the
+      // client is gone, there is nobody to tell.
+      const body = Readable.fromWeb(response.body)
+      body.on('error', () => res.destroy())
+      res.on('error', () => body.destroy())
+      body.pipe(res)
     } else {
       res.end()
     }
