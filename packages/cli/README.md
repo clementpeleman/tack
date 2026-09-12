@@ -16,7 +16,20 @@ tack login                Sign in to a Tack instance
 tack logout               Revoke this machine's token and forget it
 tack status               Show host, sign-in state and detected framework
 tack origin add <url>     Allow an extra local dev origin
+tack share <url>          Create a review link that serves the site with the widget injected
+tack share list           Show active review links
+tack share revoke <id>    Close a review link
 ```
+
+## Share a preview without touching it
+
+```bash
+npx @usetack/cli share https://preview.acme.com --passcode monday
+```
+
+Prints a link on the instance's share domain. Tack serves the site through that link with the widget already on it, so there is nothing to install on the site and a strict Content-Security-Policy on the preview does not get in the way. Links expire after 7 days by default (`--days`), can require a passcode, and can be closed with `tack share revoke <id>`.
+
+Requires the instance to have `TACK_SHARE_DOMAIN` configured. Sharing a local dev server directly is planned; today the site has to be reachable on the public internet.
 
 ## Supported frameworks
 
@@ -72,7 +85,7 @@ Prefer `TACK_TOKEN` over `--token`: arguments are visible in `ps` and land in sh
 
 - Re-running `init` is a no-op — the inserted block is marked, so it is never double-inserted.
 - The widget only renders at viewports 768px and wider.
-- A token issued to the CLI can list projects, create one, and register **loopback** dev origins. It cannot read pins or reviewer feedback, and it cannot allowlist a remote domain — that requires the dashboard.
+- A token issued to the CLI can list projects, create one, create and revoke share links, and register **loopback** dev origins. It cannot read pins or reviewer feedback, and it cannot allowlist a remote domain — that requires the dashboard.
 
 ## License
 

@@ -7,7 +7,7 @@ import { corsHeaders } from '#/lib/cors'
 import { enrichPinsWithComments } from '#/lib/pins'
 import type { ProjectNotifySettings } from '#/lib/notifications'
 import {
-  originAllowed,
+  isOriginAllowed,
   recordRejectedOrigin,
   recordWidgetConnection,
   resolveRequestOrigin,
@@ -49,7 +49,7 @@ export const Route = createFileRoute('/api/widget/init')({
         const pinQueryParams = settings.pinQueryParams
         // No resolvable origin means this is not a browser running the
         // widget; treat it exactly like a disallowed one.
-        const allowed = origin ? originAllowed(project, origin) : false
+        const allowed = origin ? await isOriginAllowed(project, origin) : false
 
         if (!allowed) {
           if (origin) await recordRejectedOrigin(project.id, origin)

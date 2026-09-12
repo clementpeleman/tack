@@ -2,6 +2,7 @@ import { db } from '#/db/index'
 import { projects } from '#/db/schema'
 import { eq } from 'drizzle-orm'
 import { corsHeaders } from '#/lib/cors'
+import { projectHasLiveShare, slugFromOrigin } from '#/lib/shares'
 
 /** The fields the origin gate needs. Any full project row satisfies this. */
 export interface OriginScope {
@@ -77,7 +78,7 @@ export function isLoopbackOrigin(origin: string): boolean {
   }
 }
 
-/** True when `origin` may load the widget for this project. */
+/** Sync check: preview URL and the explicit allowlist. Share origins need a lookup; see `isOriginAllowed`. */
 export function originAllowed(project: OriginScope, origin: string): boolean {
   if (previewOriginMatches(project.previewUrl, origin)) return true
 
@@ -87,6 +88,21 @@ export function originAllowed(project: OriginScope, origin: string): boolean {
   return (project.allowedOrigins ?? []).some(
     (allowed) => normalizeOrigin(allowed) === requestOrigin,
   )
+}
+
+/**
+ * Full check including share links: a live share on this project makes its
+ * `<slug>.<share domain>` origin an allowed origin for as long as it lives,
+ * without touching the stored allowlist.
+ */
+export async function isOriginAllowed(
+  project: OriginScope & { id?: string },
+  origin: string,
+): Promise<boolean> {
+  if (originAllowed(project, origin)) return true
+  const slug = slugFromOrigin(origin)
+  if (!slug || !project.id) return false
+  return projectHasLiveShare(project.id, slug)
 }
 
 /**
@@ -158,11 +174,11 @@ export function resolveRequestOrigin(request: Request): string | null {
  * is public, so "no origin" must not be a way around the only real check.
  * Returns a 403 Response with no ACAO, so a disallowed origin cannot read it.
  */
-export function enforceWidgetOrigin(
-  project: OriginScope,
+export async function enforceWidgetOrigin(
+  project: OriginScope & { id?: string },
   origin: string | null,
-): Response | null {
-  if (!origin || !originAllowed(project, origin)) {
+): Promise<Response | null> {
+  if (!origin || !(await isOriginAllowed(project, origin))) {
     return Response.json(
       { error: 'This origin is not allowed for this project.' },
       { status: 403, headers: corsHeaders(null) },
@@ -203,7 +219,7 @@ export async function recordWidgetConnection(
   origin: string | null,
 ): Promise<boolean> {
   if (!origin || project.firstWidgetSeenAt) return false
-  if (!originAllowed(project, origin)) return false
+  if (!(await isOriginAllowed(project, origin))) return false
 
   const now = new Date().toISOString()
   await db

@@ -51,6 +51,8 @@ On hosted deployments, set `TACK_DEMO_PROJECT_KEY` to enable the live `/demo` ro
 | `SMTP_HOST` / `SMTP_FROM` | — | Email via SMTP |
 | `TACK_AI_ENABLED` | off | Enable AI Inbox (needs `OPENAI_API_KEY`) |
 | `TACK_DEMO_PROJECT_KEY` | — | Hosted demo project key |
+| `TACK_SHARE_DOMAIN` | — | Enables review links (`tack share`, install page). Tack serves `<slug>.<domain>` by proxying the shared site with the widget injected. Needs wildcard DNS (`*.share.example.com` → this server) and a wildcard certificate. Must be a different host than the dashboard so proxied sites never share its cookies. |
+| `TACK_SHARE_ALLOW_LOCAL` | off | Development only: let a share target a private/loopback address. Never set this on a public instance. |
 
 ### Local email with Mailpit
 
@@ -72,6 +74,14 @@ Magic links appear in Mailpit at [http://localhost:8025](http://localhost:8025).
 6. **Deploy.** Open the domain and claim the instance with your email — the first owner account is created on the spot, no email provider required.
 
 `DATABASE_URL`, `SCREENSHOTS_DIR`, and `PORT` already default to the right values in the image; you only need the volume and `TACK_PUBLIC_URL`.
+
+## Review links without touching the site
+
+With `TACK_SHARE_DOMAIN` set, an owner can create a link from the install page or with `npx @usetack/cli share https://preview.acme.com`. Tack proxies the preview on `https://<slug>.share.example.com`, strips the site's framing and CSP headers, and injects the widget before `</body>`. Reviewers open that link; pins land in the project inbox. Links expire (7 days by default), can require a passcode, and can be revoked.
+
+The target must be reachable on the public internet; private addresses are refused. A share origin is treated as an allowed origin for its project only while the share is live.
+
+On Coolify: add `*.share.yourdomain.com` as an extra domain on the Tack resource and enable a DNS-01 wildcard certificate for it with your DNS provider, then set `TACK_SHARE_DOMAIN=share.yourdomain.com`.
 
 ## Widget embed
 

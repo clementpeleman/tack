@@ -57,7 +57,7 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
-        const originError = enforceWidgetOrigin(project, origin)
+        const originError = await enforceWidgetOrigin(project, origin)
         if (originError) return originError
 
         const conditions = [eq(pins.projectId, project.id)]
@@ -120,7 +120,7 @@ export const Route = createFileRoute('/api/widget/pins')({
           )
         }
 
-        const originError = enforceWidgetOrigin(project, origin)
+        const originError = await enforceWidgetOrigin(project, origin)
         if (originError) return originError
 
         const settings = (project.settings ?? {}) as ProjectNotifySettings

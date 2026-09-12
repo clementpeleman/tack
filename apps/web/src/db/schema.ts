@@ -51,6 +51,30 @@ export const projects = sqliteTable('projects', {
   archivedAt: text('archived_at'),
 })
 
+/**
+ * A share is a reviewer-facing link on the share domain
+ * (`<slug>.<TACK_SHARE_DOMAIN>`) that proxies a preview site and injects the
+ * widget on the way through, so nothing in the site itself has to change.
+ * The slug is the secret: the project key is public, so the slug carries at
+ * least 64 bits of randomness and is never listed anywhere a reviewer can
+ * read. A passcode is an optional second gate on top.
+ */
+export const shares = sqliteTable('shares', {
+  id: id(),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => projects.id),
+  slug: text('slug').notNull().unique(),
+  targetUrl: text('target_url').notNull(),
+  passcodeHash: text('passcode_hash'),
+  label: text('label'),
+  expiresAt: text('expires_at').notNull(),
+  revokedAt: text('revoked_at'),
+  lastAccessAt: text('last_access_at'),
+  createdBy: text('created_by').references(() => users.id),
+  createdAt: createdAt(),
+})
+
 export const pins = sqliteTable('pins', {
   id: id(),
   projectId: text('project_id')

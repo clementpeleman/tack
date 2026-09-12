@@ -4,6 +4,7 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { ApiError } from './api.js'
 import { initCommand } from './commands/init.js'
+import { shareCommand } from './commands/share.js'
 import {
   loginCommand,
   logoutCommand,
@@ -27,6 +28,10 @@ const HELP = `
     logout               Revoke this machine's token and forget it
     status               Show host, sign-in state and detected framework
     origin add <url>     Allow an extra local dev origin
+    share <url>          Create a review link that serves the site with the
+                         widget injected — nothing to install on the site
+    share list           Show active review links
+    share revoke <id>    Close a review link
 
   Options
     --host <url>         Tack instance (default: $TACK_HOST)
@@ -41,6 +46,8 @@ const HELP = `
     --dry-run            Show the diff and exit without writing
     --no-browser         Print the URL instead of opening a browser
     --token <token>      Discouraged; prefer TACK_TOKEN (argv is visible in ps)
+    --passcode <code>    share: require a passcode to open the link
+    --days <n>           share: expiry in days (default 7, max 90)
     --help, --version
 
   Environment
@@ -95,6 +102,8 @@ async function main(): Promise<number> {
       gate: { type: 'string' },
       cwd: { type: 'string' },
       token: { type: 'string' },
+      passcode: { type: 'string' },
+      days: { type: 'string' },
       yes: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
       'no-browser': { type: 'boolean', default: false },
@@ -152,6 +161,26 @@ async function main(): Promise<number> {
 
     case 'status':
       return statusCommand({ host, cwd, token })
+
+    case 'share': {
+      const sub = positionals[1]
+      const days = values.days == null ? undefined : Number(values.days)
+      if (days !== undefined && !Number.isInteger(days)) {
+        error('--days must be a whole number')
+        return 1
+      }
+      return shareCommand({
+        host,
+        token,
+        project: values.project as string | undefined,
+        url: sub === 'list' || sub === 'revoke' ? undefined : sub,
+        passcode: values.passcode as string | undefined,
+        days,
+        noBrowser: Boolean(values['no-browser']),
+        sub: sub === 'list' || sub === 'revoke' ? sub : undefined,
+        shareId: sub === 'revoke' ? positionals[2] : undefined,
+      })
+    }
 
     case 'origin': {
       const sub = positionals[1]

@@ -27,7 +27,7 @@ async function authorizePin(
 
   // Origin before the pin lookup: a caller outside an allowed origin must
   // not learn whether a pin id exists.
-  const originError = enforceWidgetOrigin(project, origin)
+  const originError = await enforceWidgetOrigin(project, origin)
   if (originError) return { response: originError }
 
   const [pin] = await db

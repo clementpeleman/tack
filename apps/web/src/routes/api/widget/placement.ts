@@ -57,7 +57,7 @@ export const Route = createFileRoute('/api/widget/placement')({
           )
         }
 
-        const originError = enforceWidgetOrigin(project, origin)
+        const originError = await enforceWidgetOrigin(project, origin)
         if (originError) return originError
 
         const checkedAt = new Date().toISOString()

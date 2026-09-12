@@ -4,8 +4,10 @@ import {
   getAppOrigin,
   getProject,
   getProjects,
+  getShares,
   updateAllowedOrigins,
 } from '#/lib/projects'
+import { SharePanel } from '#/components/SharePanel'
 import { getProjectConnectionStatus } from '#/lib/project-pin-actions'
 import { completeOnboarding } from '#/lib/user'
 import { Layout } from '#/components/Layout'
@@ -14,14 +16,16 @@ import { Button } from '#/components/ui/Button'
 export const Route = createFileRoute('/projects/$id/install')({
   component: InstallPage,
   loader: async ({ params }) => {
-    const [project, sidebarProjects, appOrigin] = await Promise.all([
+    const [project, sidebarProjects, appOrigin, shareState] = await Promise.all([
       getProject({ data: { id: params.id } }),
       getProjects(),
       getAppOrigin(),
+      getShares({ data: { projectId: params.id } }),
     ])
     return {
       project,
       appOrigin,
+      shareState,
       sidebarProjects: sidebarProjects.map((p) => ({
         id: p.id,
         name: p.name,
@@ -34,7 +38,7 @@ export const Route = createFileRoute('/projects/$id/install')({
 })
 
 function InstallPage() {
-  const { project, sidebarProjects, appOrigin } = Route.useLoaderData()
+  const { project, sidebarProjects, appOrigin, shareState } = Route.useLoaderData()
   const { onboarding } = Route.useSearch()
   const router = useRouter()
   const [connected, setConnected] = useState(Boolean(project.firstWidgetSeenAt))
@@ -274,6 +278,15 @@ function InstallPage() {
               </a>
             </div>
           )}
+        </div>
+
+        <div className="mb-6">
+          <SharePanel
+            projectId={project.id}
+            previewUrl={project.previewUrl}
+            configured={shareState.configured}
+            initialShares={shareState.shares}
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

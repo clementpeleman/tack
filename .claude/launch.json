@@ -4,7 +4,25 @@
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@tack/web", "dev"],
+      "runtimeArgs": [
+        "--filter",
+        "@tack/web",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "web-share",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "TACK_SHARE_DOMAIN=share.localhost",
+        "TACK_SHARE_PORT=3000",
+        "TACK_SHARE_ALLOW_LOCAL=true",
+        "pnpm",
+        "--filter",
+        "@tack/web",
+        "dev"
+      ],
       "port": 3000
     }
   ]

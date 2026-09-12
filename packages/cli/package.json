@@ -1,14 +1,23 @@
 {
   "name": "@usetack/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Install the Tack feedback widget into your project.",
-  "keywords": ["tack", "feedback", "widget", "cli"],
+  "keywords": [
+    "tack",
+    "feedback",
+    "widget",
+    "cli"
+  ],
   "license": "MIT",
   "type": "module",
   "bin": {
     "tack": "./dist/index.js"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     "./package.json": "./package.json"
   },

@@ -4,6 +4,7 @@ import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 import { dirname, extname, join } from 'node:path'
 import serverEntry from './dist/server/server.js'
+import { createShareProxy } from './share-proxy.mjs'
 
 const port = Number(process.env.PORT ?? 3000)
 const rootDir = dirname(fileURLToPath(import.meta.url))
@@ -63,8 +64,29 @@ function resolveBaseUrl(req) {
   return `${proto}://${host}`
 }
 
+// Share links (`<slug>.<TACK_SHARE_DOMAIN>`) are served by the proxy, never
+// by the app: the two must stay on different origins so a proxied site can
+// never read dashboard cookies.
+const shareDomain = process.env.TACK_SHARE_DOMAIN?.trim()
+const shareProxy = shareDomain
+  ? createShareProxy({
+      dbPath: process.env.DATABASE_URL ?? join(rootDir, 'tack.db'),
+      shareDomain,
+      tackOrigin: () => {
+        if (process.env.TACK_PUBLIC_URL) return new URL(process.env.TACK_PUBLIC_URL).origin
+        console.warn('[tack] TACK_SHARE_DOMAIN is set but TACK_PUBLIC_URL is not; the injected widget needs the instance URL')
+        return `http://localhost:${port}`
+      },
+      allowLocal: process.env.TACK_SHARE_ALLOW_LOCAL === 'true',
+      log: (m) => console.warn(`[tack share] ${m}`),
+    })
+  : null
+if (shareDomain) console.log(`Share links served on *.${shareDomain}`)
+
 createServer(async (req, res) => {
   try {
+    if (shareProxy && (await shareProxy(req, res))) return
+
     const requestUrl = new URL(req.url ?? '/', resolveBaseUrl(req))
 
     if (

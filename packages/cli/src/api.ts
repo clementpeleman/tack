@@ -8,6 +8,19 @@ export class ApiError extends Error {
   }
 }
 
+export interface TackShare {
+  id: string
+  slug: string
+  url: string
+  targetUrl: string
+  label: string | null
+  hasPasscode: boolean
+  expiresAt: string
+  revokedAt: string | null
+  lastAccessAt: string | null
+  live: boolean
+}
+
 export interface TackProject {
   id: string
   name: string
@@ -114,6 +127,32 @@ export function api(host: string, token?: string) {
       request<{ ok: true }>(host, '/api/cli/auth/revoke', {
         token,
         method: 'POST',
+      }),
+
+    listShares: (projectId: string) =>
+      request<{ shares: TackShare[] }>(
+        host,
+        `/api/cli/shares?projectId=${encodeURIComponent(projectId)}`,
+        { token },
+      ),
+
+    createShare: (input: {
+      projectId: string
+      targetUrl: string
+      passcode?: string
+      days?: number
+      label?: string
+    }) =>
+      request<{ share: TackShare; url: string }>(host, '/api/cli/shares', {
+        token,
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+
+    revokeShare: (shareId: string) =>
+      request<{ ok: true }>(host, `/api/cli/shares/${encodeURIComponent(shareId)}`, {
+        token,
+        method: 'DELETE',
       }),
   }
 }

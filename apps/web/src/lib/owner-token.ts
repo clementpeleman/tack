@@ -27,6 +27,7 @@ export const CLI_SCOPES = [
   'projects:read',
   'projects:create',
   'origins:write',
+  'shares:write',
 ] as const
 
 export type OwnerScope = (typeof CLI_SCOPES)[number]

@@ -23,6 +23,7 @@ import { Route as ApiWidgetPinsRouteImport } from './routes/api/widget/pins'
 import { Route as ApiWidgetInitRouteImport } from './routes/api/widget/init'
 import { Route as ApiWidgetEventsRouteImport } from './routes/api/widget/events'
 import { Route as ApiCliWhoamiRouteImport } from './routes/api/cli/whoami'
+import { Route as ApiCliSharesRouteImport } from './routes/api/cli/shares'
 import { Route as ApiCliProjectsRouteImport } from './routes/api/cli/projects'
 import { Route as ApiAuthVerifyRouteImport } from './routes/api/auth/verify'
 import { Route as ApiAuthSendMagicLinkRouteImport } from './routes/api/auth/send-magic-link'
@@ -31,6 +32,7 @@ import { Route as ProjectsIdPinsPinIdRouteImport } from './routes/projects/$id/p
 import { Route as ApiWidgetPinsPinIdRouteImport } from './routes/api/widget/pins/$pinId'
 import { Route as ApiScreenshotsProjectKeyPinIdRouteImport } from './routes/api/screenshots/$projectKey/$pinId'
 import { Route as ApiProjectsIdEventsRouteImport } from './routes/api/projects/$id/events'
+import { Route as ApiCliSharesIdRouteImport } from './routes/api/cli/shares/$id'
 import { Route as ApiCliAuthTokenRouteImport } from './routes/api/cli/auth/token'
 import { Route as ApiCliAuthStartRouteImport } from './routes/api/cli/auth/start'
 import { Route as ApiCliAuthRevokeRouteImport } from './routes/api/cli/auth/revoke'
@@ -107,6 +109,11 @@ const ApiCliWhoamiRoute = ApiCliWhoamiRouteImport.update({
   path: '/api/cli/whoami',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCliSharesRoute = ApiCliSharesRouteImport.update({
+  id: '/api/cli/shares',
+  path: '/api/cli/shares',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCliProjectsRoute = ApiCliProjectsRouteImport.update({
   id: '/api/cli/projects',
   path: '/api/cli/projects',
@@ -148,6 +155,11 @@ const ApiProjectsIdEventsRoute = ApiProjectsIdEventsRouteImport.update({
   path: '/api/projects/$id/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCliSharesIdRoute = ApiCliSharesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiCliSharesRoute,
+} as any)
 const ApiCliAuthTokenRoute = ApiCliAuthTokenRouteImport.update({
   id: '/api/cli/auth/token',
   path: '/api/cli/auth/token',
@@ -186,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
   '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/shares': typeof ApiCliSharesRouteWithChildren
   '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
@@ -197,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
   '/api/cli/auth/start': typeof ApiCliAuthStartRoute
   '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
+  '/api/cli/shares/$id': typeof ApiCliSharesIdRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
@@ -215,6 +229,7 @@ export interface FileRoutesByTo {
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
   '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/shares': typeof ApiCliSharesRouteWithChildren
   '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
@@ -226,6 +241,7 @@ export interface FileRoutesByTo {
   '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
   '/api/cli/auth/start': typeof ApiCliAuthStartRoute
   '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
+  '/api/cli/shares/$id': typeof ApiCliSharesIdRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
@@ -245,6 +261,7 @@ export interface FileRoutesById {
   '/api/auth/send-magic-link': typeof ApiAuthSendMagicLinkRoute
   '/api/auth/verify': typeof ApiAuthVerifyRoute
   '/api/cli/projects': typeof ApiCliProjectsRouteWithChildren
+  '/api/cli/shares': typeof ApiCliSharesRouteWithChildren
   '/api/cli/whoami': typeof ApiCliWhoamiRoute
   '/api/widget/events': typeof ApiWidgetEventsRoute
   '/api/widget/init': typeof ApiWidgetInitRoute
@@ -256,6 +273,7 @@ export interface FileRoutesById {
   '/api/cli/auth/revoke': typeof ApiCliAuthRevokeRoute
   '/api/cli/auth/start': typeof ApiCliAuthStartRoute
   '/api/cli/auth/token': typeof ApiCliAuthTokenRoute
+  '/api/cli/shares/$id': typeof ApiCliSharesIdRoute
   '/api/projects/$id/events': typeof ApiProjectsIdEventsRoute
   '/api/screenshots/$projectKey/$pinId': typeof ApiScreenshotsProjectKeyPinIdRoute
   '/api/widget/pins/$pinId': typeof ApiWidgetPinsPinIdRouteWithChildren
@@ -276,6 +294,7 @@ export interface FileRouteTypes {
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
     | '/api/cli/projects'
+    | '/api/cli/shares'
     | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
@@ -287,6 +306,7 @@ export interface FileRouteTypes {
     | '/api/cli/auth/revoke'
     | '/api/cli/auth/start'
     | '/api/cli/auth/token'
+    | '/api/cli/shares/$id'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
@@ -305,6 +325,7 @@ export interface FileRouteTypes {
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
     | '/api/cli/projects'
+    | '/api/cli/shares'
     | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
@@ -316,6 +337,7 @@ export interface FileRouteTypes {
     | '/api/cli/auth/revoke'
     | '/api/cli/auth/start'
     | '/api/cli/auth/token'
+    | '/api/cli/shares/$id'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
@@ -334,6 +356,7 @@ export interface FileRouteTypes {
     | '/api/auth/send-magic-link'
     | '/api/auth/verify'
     | '/api/cli/projects'
+    | '/api/cli/shares'
     | '/api/cli/whoami'
     | '/api/widget/events'
     | '/api/widget/init'
@@ -345,6 +368,7 @@ export interface FileRouteTypes {
     | '/api/cli/auth/revoke'
     | '/api/cli/auth/start'
     | '/api/cli/auth/token'
+    | '/api/cli/shares/$id'
     | '/api/projects/$id/events'
     | '/api/screenshots/$projectKey/$pinId'
     | '/api/widget/pins/$pinId'
@@ -364,6 +388,7 @@ export interface RootRouteChildren {
   ApiAuthSendMagicLinkRoute: typeof ApiAuthSendMagicLinkRoute
   ApiAuthVerifyRoute: typeof ApiAuthVerifyRoute
   ApiCliProjectsRoute: typeof ApiCliProjectsRouteWithChildren
+  ApiCliSharesRoute: typeof ApiCliSharesRouteWithChildren
   ApiCliWhoamiRoute: typeof ApiCliWhoamiRoute
   ApiWidgetEventsRoute: typeof ApiWidgetEventsRoute
   ApiWidgetInitRoute: typeof ApiWidgetInitRoute
@@ -480,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCliWhoamiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cli/shares': {
+      id: '/api/cli/shares'
+      path: '/api/cli/shares'
+      fullPath: '/api/cli/shares'
+      preLoaderRoute: typeof ApiCliSharesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cli/projects': {
       id: '/api/cli/projects'
       path: '/api/cli/projects'
@@ -536,6 +568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProjectsIdEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cli/shares/$id': {
+      id: '/api/cli/shares/$id'
+      path: '/$id'
+      fullPath: '/api/cli/shares/$id'
+      preLoaderRoute: typeof ApiCliSharesIdRouteImport
+      parentRoute: typeof ApiCliSharesRoute
+    }
     '/api/cli/auth/token': {
       id: '/api/cli/auth/token'
       path: '/api/cli/auth/token'
@@ -586,6 +625,18 @@ const ApiCliProjectsRouteWithChildren = ApiCliProjectsRoute._addFileChildren(
   ApiCliProjectsRouteChildren,
 )
 
+interface ApiCliSharesRouteChildren {
+  ApiCliSharesIdRoute: typeof ApiCliSharesIdRoute
+}
+
+const ApiCliSharesRouteChildren: ApiCliSharesRouteChildren = {
+  ApiCliSharesIdRoute: ApiCliSharesIdRoute,
+}
+
+const ApiCliSharesRouteWithChildren = ApiCliSharesRoute._addFileChildren(
+  ApiCliSharesRouteChildren,
+)
+
 interface ApiWidgetPinsPinIdRouteChildren {
   ApiWidgetPinsPinIdRepliesRoute: typeof ApiWidgetPinsPinIdRepliesRoute
 }
@@ -620,6 +671,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSendMagicLinkRoute: ApiAuthSendMagicLinkRoute,
   ApiAuthVerifyRoute: ApiAuthVerifyRoute,
   ApiCliProjectsRoute: ApiCliProjectsRouteWithChildren,
+  ApiCliSharesRoute: ApiCliSharesRouteWithChildren,
   ApiCliWhoamiRoute: ApiCliWhoamiRoute,
   ApiWidgetEventsRoute: ApiWidgetEventsRoute,
   ApiWidgetInitRoute: ApiWidgetInitRoute,

@@ -179,7 +179,7 @@ function AuthorizePage() {
             </dl>
 
             <p className="text-xs text-[var(--ink-mute)] mb-5">
-              The CLI can list your projects, create one, and register local dev
+              The CLI can list your projects, create one, create share links, and register local dev
               origins. It cannot read pins or reviewer feedback.
             </p>
 

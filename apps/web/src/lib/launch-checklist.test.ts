@@ -79,20 +79,20 @@ describe('launch checklist: widget origin enforcement', () => {
     allowedOrigins: null,
   }
 
-  it('blocks a mismatched cross-origin request with 403', () => {
-    const res = enforceWidgetOrigin(project, 'https://evil.com')
+  it('blocks a mismatched cross-origin request with 403', async () => {
+    const res = await enforceWidgetOrigin(project, 'https://evil.com')
     expect(res?.status).toBe(403)
     // disallowed origin must not be able to read the response
     expect(res?.headers.get('Access-Control-Allow-Origin')).toBeNull()
   })
 
-  it('allows a matching origin', () => {
-    expect(enforceWidgetOrigin(project, 'https://preview.example.com')).toBeNull()
+  it('allows a matching origin', async () => {
+    expect(await enforceWidgetOrigin(project, 'https://preview.example.com')).toBeNull()
   })
 
-  it('rejects a request with no resolvable origin (curl, scripts)', () => {
+  it('rejects a request with no resolvable origin (curl, scripts)', async () => {
     // The project key is public; "no Origin header" must not bypass the gate.
-    const res = enforceWidgetOrigin(project, null)
+    const res = await enforceWidgetOrigin(project, null)
     expect(res?.status).toBe(403)
   })
 
@@ -124,13 +124,13 @@ describe('launch checklist: widget origin enforcement', () => {
     expect(getClientIp(req)).toBe('203.0.113.9')
   })
 
-  it('allows an origin from the project allowlist', () => {
+  it('allows an origin from the project allowlist', async () => {
     const withLocalhost = {
       previewUrl: 'https://preview.example.com',
       allowedOrigins: ['http://localhost:5173'],
     }
     expect(originAllowed(withLocalhost, 'http://localhost:5173')).toBe(true)
-    expect(enforceWidgetOrigin(withLocalhost, 'http://localhost:5173')).toBeNull()
+    expect(await enforceWidgetOrigin(withLocalhost, 'http://localhost:5173')).toBeNull()
     // a different port is a different origin
     expect(originAllowed(withLocalhost, 'http://localhost:3000')).toBe(false)
     // the allowlist must not widen anything else

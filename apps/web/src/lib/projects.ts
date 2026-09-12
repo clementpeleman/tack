@@ -7,6 +7,13 @@ import { requireDashboardAuth } from '#/lib/auth'
 import { generateProjectKey } from '#/lib/project-key'
 import { validateAllowedOrigins } from '#/lib/widget-connection'
 import { configuredPublicOrigin } from '#/lib/public-url'
+import {
+  createShare,
+  isShareConfigured,
+  listShares,
+  publicShare,
+  revokeShare,
+} from '#/lib/shares'
 import type { ProjectNotifySettings } from '#/lib/notifications'
 
 const MAX_NAME = 120
@@ -263,5 +270,60 @@ export const archiveProject = createServerFn({ method: 'POST' })
       .set({ archivedAt: new Date().toISOString() })
       .where(eq(projects.id, project.id))
 
+    return { ok: true }
+  })
+
+// ---------------------------------------------------------------------------
+// Share links (dashboard side). Same rules as the CLI routes; the session is
+// the credential here.
+
+async function requireOwnedProject(projectId: string, userId: string) {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+  if (!project) throw new Response('Not found', { status: 404 })
+  return project
+}
+
+export const getShares = createServerFn({ method: 'GET' })
+  .inputValidator((data: { projectId: string }) => data)
+  .handler(async ({ data }) => {
+    const { userId } = await requireDashboardAuth(getRequest())
+    const project = await requireOwnedProject(data.projectId, userId)
+    const rows = await listShares(project.id)
+    return { configured: isShareConfigured(), shares: rows.map(publicShare) }
+  })
+
+export const createShareLink = createServerFn({ method: 'POST' })
+  .inputValidator(
+    (data: {
+      projectId: string
+      targetUrl: string
+      passcode?: string
+      days?: number
+      label?: string
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const { userId } = await requireDashboardAuth(getRequest())
+    const project = await requireOwnedProject(data.projectId, userId)
+    const { share, url } = await createShare({
+      projectId: project.id,
+      userId,
+      targetUrl: data.targetUrl,
+      passcode: data.passcode,
+      days: data.days,
+      label: data.label,
+    })
+    return { share: publicShare(share), url }
+  })
+
+export const revokeShareLink = createServerFn({ method: 'POST' })
+  .inputValidator((data: { projectId: string; shareId: string }) => data)
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { userId } = await requireDashboardAuth(getRequest())
+    const project = await requireOwnedProject(data.projectId, userId)
+    await revokeShare(project.id, data.shareId)
     return { ok: true }
   })

@@ -44,7 +44,7 @@ export const Route = createFileRoute('/api/widget/events')({
           )
         }
 
-        const originError = enforceWidgetOrigin(project, origin)
+        const originError = await enforceWidgetOrigin(project, origin)
         if (originError) return originError
 
         const stream = createProjectEventStream(project.id, request.signal)
