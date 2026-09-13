@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { Layout } from '#/components/Layout'
-import { Field } from '#/components/ui/Field'
-import { Button } from '#/components/ui/Button'
-import { Tabs } from '#/components/ui/Tabs'
-import { ConfirmDialog } from '#/components/ui/Dialog'
+import { Field } from '#/components/ui/field'
+import { Button } from '#/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import { ConfirmDialog } from '#/components/ui/confirm-dialog'
 import type { ProjectNotifySettings } from '#/lib/notifications'
 import {
   archiveProject,
@@ -162,20 +162,25 @@ function SettingsPage() {
         <h1 className="text-page-title mb-5">Settings</h1>
 
         <div className="mb-6">
-          <Tabs<SettingsTab>
-            ariaLabel="Settings sections"
-            variant="line"
+          <Tabs
             value={tab}
-            onChange={(next) =>
+            onValueChange={(next) =>
               void navigate({
                 to: '/projects/$id/settings',
                 params: { id: project.id },
-                search: next === 'general' ? {} : { tab: next },
+                search: next === 'general' ? {} : { tab: next as SettingsTab },
                 replace: true,
               })
             }
-            items={tabs}
-          />
+          >
+            <TabsList variant="line" aria-label="Settings sections" className="w-full justify-start border-b border-border">
+              {tabs.map((t) => (
+                <TabsTrigger key={t.value} value={t.value} className="flex-none px-3 font-mono text-[11px] uppercase tracking-wide">
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
 
         {tab === 'general' && (
@@ -206,7 +211,7 @@ function SettingsPage() {
                 <code className="flex-1 overflow-x-auto rounded-[10px] bg-[var(--surface-2)] px-3 py-2 font-mono text-xs text-[var(--ink-mute)]">
                   {project.projectKey}
                 </code>
-                <Button size="sm" variant="secondary" onClick={copyKey}>
+                <Button size="sm" variant="outline" onClick={copyKey}>
                   {keyCopied ? 'Copied' : 'Copy'}
                 </Button>
               </div>
@@ -257,9 +262,8 @@ function SettingsPage() {
                 value={notifyEmail}
                 onChange={(e) => setNotifyEmail(e.target.value)}
                 placeholder={userEmail ?? 'owner@example.com'}
-                aria-invalid={notifyError?.field === 'email' || undefined}
+                error={notifyError?.field === 'email' ? notifyError.text : null}
               />
-              {notifyError?.field === 'email' && <Msg tone="error">{notifyError.text}</Msg>}
             </div>
             <div>
               <Field
@@ -270,9 +274,8 @@ function SettingsPage() {
                 onChange={(e) => setDiscordWebhook(e.target.value)}
                 placeholder="https://discord.com/api/webhooks/…"
                 className="font-mono"
-                aria-invalid={notifyError?.field === 'discord' || undefined}
+                error={notifyError?.field === 'discord' ? notifyError.text : null}
               />
-              {notifyError?.field === 'discord' && <Msg tone="error">{notifyError.text}</Msg>}
             </div>
             <div>
               <Field
@@ -283,9 +286,8 @@ function SettingsPage() {
                 onChange={(e) => setSlackWebhook(e.target.value)}
                 placeholder="https://hooks.slack.com/services/…"
                 className="font-mono"
-                aria-invalid={notifyError?.field === 'slack' || undefined}
+                error={notifyError?.field === 'slack' ? notifyError.text : null}
               />
-              {notifyError?.field === 'slack' && <Msg tone="error">{notifyError.text}</Msg>}
             </div>
             <Actions>
               <Button size="sm" onClick={saveNotifications} disabled={savingNotify}>
@@ -340,7 +342,7 @@ function SettingsPage() {
               </p>
             </div>
             <Actions>
-              <Button size="sm" variant="danger" onClick={() => setConfirmArchive(true)}>
+              <Button size="sm" variant="destructive" onClick={() => setConfirmArchive(true)}>
                 Archive project
               </Button>
             </Actions>

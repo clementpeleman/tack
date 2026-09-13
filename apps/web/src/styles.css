@@ -1,5 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=PT+Serif:wght@700&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Code+Pro:wght@500&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tack switches theme with data-theme on <html>; shadcn's `dark:` variant follows it. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
   --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -267,5 +271,98 @@ select:focus {
     font-size: 12px;
     line-height: 1.4;
     color: var(--ink-soft);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   shadcn/ui semantic colours, mapped onto Tack's tokens. Components use
+   `bg-background`, `text-muted-foreground`, `bg-primary`… and those resolve
+   here. Tack's own `--accent` (the blue) stays the raw token; shadcn's
+   "accent" (a subtle hover fill) maps to --surface-2 on purpose.
+   Light and dark both come from the token blocks above, so nothing here
+   needs a dark variant. */
+:root {
+  --radius: 10px;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-mute);
+  --accent-fill: var(--surface-2);
+  --accent-fill-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--on-accent);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--accent);
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--accent);
+  --sidebar-primary-foreground: var(--on-accent);
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--accent);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-fill);
+  --color-accent-foreground: var(--accent-fill-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Tack's own tokens as Tailwind colours too, so `text-ink-mute` etc. work
+     alongside the shadcn names. */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-mute: var(--ink-mute);
+  --color-ink-soft: var(--ink-soft);
+  --color-brand: var(--accent);
+  --color-on-brand: var(--on-accent);
+  --color-signal: var(--signal);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-pin: var(--pin);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
 }

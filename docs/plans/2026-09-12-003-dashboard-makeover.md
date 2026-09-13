@@ -13,9 +13,10 @@ and what is left.
 
 ## Shipped
 
-- **Shell** (`components/Layout.tsx`): project switcher, Inbox / Connect /
-  Settings, account menu with theme and sign out. Radix wrappers in
-  `components/ui/{Menu,Dialog,Tabs,Select}.tsx`.
+- **Shell** (`components/Layout.tsx`): shadcn Sidebar with a project
+  switcher (DropdownMenu), Inbox / Connect / Settings, account menu with
+  theme and sign out. All primitives are shadcn/ui (`components.json`,
+  `components/ui/*`), themed via the token mapping in `styles.css`.
 - **Inbox** (`routes/projects/$id/inbox.tsx`, `components/inbox/*`,
   `components/PinPanel.tsx`): master-detail with `?pin=`, typographic
   status, page/reviewer/sort filters, multi-select with bulk resolve,

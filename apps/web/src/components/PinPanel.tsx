@@ -3,9 +3,15 @@ import { resolvePlacementForDisplay } from '@tack/shared'
 import { ExternalLink, MoreHorizontal, X } from 'lucide-react'
 import { buildPreviewLink, getTimeAgo, parseBrowser } from '#/lib/pin-display'
 import type { EnrichedReply } from '#/lib/pins'
-import { Button, buttonClasses } from '#/components/ui/Button'
-import { ConfirmDialog } from '#/components/ui/Dialog'
-import { Menu, MenuItem } from '#/components/ui/Menu'
+import { Button, buttonVariants } from '#/components/ui/button'
+import { Textarea } from '#/components/ui/textarea'
+import { ConfirmDialog } from '#/components/ui/confirm-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
 
 /** What the panel needs from a pin; both the inbox loader and pin detail supply it. */
 export interface PinPanelData {
@@ -166,14 +172,9 @@ export function PinPanel({
           </p>
         </div>
         {onClose && (
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-            aria-label="Close pin"
-          >
-            <X size={16} strokeWidth={1.8} aria-hidden="true" />
-          </button>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close pin">
+            <X aria-hidden="true" />
+          </Button>
         )}
       </header>
 
@@ -284,7 +285,7 @@ export function PinPanel({
       {/* Composer + actions, pinned to the bottom of the pane */}
       <footer className="mt-4 border-t border-[var(--line)] pt-3">
         <label htmlFor={replyId} className="sr-only">Reply to {pin.reviewerName ?? 'the reviewer'}</label>
-        <textarea
+        <Textarea
           id={replyId}
           ref={composer}
           value={reply}
@@ -300,7 +301,7 @@ export function PinPanel({
           }}
           rows={2}
           placeholder={`Reply to ${pin.reviewerName ?? 'the reviewer'}…`}
-          className="w-full resize-y rounded-[10px] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--accent)] focus:outline-none"
+          className="resize-y rounded-[10px] bg-surface text-sm"
         />
         {error && <p className="mt-1.5 text-xs text-[var(--danger)]" role="alert">{error}</p>}
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -321,30 +322,33 @@ export function PinPanel({
             href={previewLink}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonClasses('secondary', 'sm')}
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
             <ExternalLink size={13} strokeWidth={1.8} aria-hidden="true" />
             Open in preview
           </a>
           <span className="flex-1" />
-          <Menu
-            align="end"
-            ariaLabel="More actions"
-            triggerClassName="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--ink-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-            trigger={<MoreHorizontal size={16} strokeWidth={1.8} aria-hidden="true" />}
-          >
-            {reply.trim() && (
-              <MenuItem onSelect={() => void run('status', () => onUpdateStatus(resolved ? 'open' : 'resolved'), resolved ? 'Pin reopened' : 'Pin resolved')}>
-                {resolved ? 'Reopen' : 'Resolve'}
-              </MenuItem>
-            )}
-            <MenuItem onSelect={() => { void navigator.clipboard?.writeText(previewLink); setLive('Link copied') }}>
-              Copy preview link
-            </MenuItem>
-            <MenuItem tone="danger" onSelect={() => setConfirmDelete(true)}>
-              Delete pin
-            </MenuItem>
-          </Menu>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger
+              aria-label="More actions"
+              className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+            >
+              <MoreHorizontal aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={6}>
+              {reply.trim() && (
+                <DropdownMenuItem onSelect={() => void run('status', () => onUpdateStatus(resolved ? 'open' : 'resolved'), resolved ? 'Pin reopened' : 'Pin resolved')}>
+                  {resolved ? 'Reopen' : 'Resolve'}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={() => { void navigator.clipboard?.writeText(previewLink); setLive('Link copied') }}>
+                Copy preview link
+              </DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
+                Delete pin
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <p className="mt-2 hidden text-[11px] font-mono text-[var(--ink-soft)] lg:block">
           ⌘↩ send · r resolve · a reply

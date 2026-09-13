@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { createProject } from '#/lib/projects'
 import { ThemeToggle } from '#/components/ThemeToggle'
-import { Field } from '#/components/ui/Field'
-import { Button } from '#/components/ui/Button'
+import { Field } from '#/components/ui/field'
+import { Button } from '#/components/ui/button'
 
 export const Route = createFileRoute('/projects/new')({
   component: NewProjectPage,

@@ -1,9 +1,30 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useState, type ReactNode } from 'react'
-import { ChevronsUpDown, Inbox, Link2, Settings } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { ChevronsUpDown, Inbox, Link2, Plus, Settings } from 'lucide-react'
 import { Logo } from '#/components/brand/Logo'
 import { AccountMenu } from '#/components/AccountMenu'
-import { Menu, MenuItem, MenuLabel, MenuSeparator } from '#/components/ui/Menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '#/components/ui/sidebar'
 
 export type ShellSection = 'inbox' | 'connect' | 'settings'
 
@@ -23,10 +44,9 @@ const NAV: { section: ShellSection; label: string; to: string; icon: typeof Inbo
 ]
 
 /**
- * The app shell: one project at a time. A switcher at the top of the
- * sidebar, three sections underneath, the account at the bottom. Replaces
- * the two stacked lists (all projects + this project's subnav) and the
- * standalone theme toggle.
+ * The app shell on shadcn's Sidebar: one project at a time, a switcher at
+ * the top, three sections, the account at the bottom. On small screens the
+ * sidebar becomes a sheet behind the trigger in the top bar.
  */
 export function Layout({
   projectId,
@@ -36,94 +56,58 @@ export function Layout({
   userEmail = null,
   children,
 }: LayoutProps) {
-  const [open, setOpen] = useState(false)
-  const close = () => setOpen(false)
+  const projects = sidebarProjects ?? [{ id: projectId, name: projectName }]
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--page)] md:flex-row">
-      {/* Mobile top bar */}
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-3 md:hidden">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)]"
-          aria-label="Open navigation"
-          aria-expanded={open}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M3 4.5h12M3 9h12M3 13.5h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-        <span className="truncate text-sm font-semibold text-[var(--ink)]">{projectName}</span>
-      </div>
-
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-[color-mix(in_oklab,var(--ink)_35%,transparent)] md:hidden"
-          aria-label="Close navigation"
-          onClick={close}
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-60 transform flex-col border-r border-[var(--line)] bg-[var(--surface)] p-3 transition-transform duration-200 ease-out md:static md:translate-x-0 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        aria-label="Project navigation"
-      >
-        <div className="mb-4 flex items-center justify-between px-2 pt-1">
-          <Link to="/projects" className="no-underline" onClick={close} aria-label="All projects">
+    <SidebarProvider>
+      <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
+        <SidebarHeader className="gap-3 p-3">
+          <Link to="/projects" className="flex items-center px-2 pt-1 no-underline" aria-label="All projects">
             <Logo size={18} fontSize={14} />
           </Link>
-          <button
-            type="button"
-            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg text-[var(--ink-mute)] hover:text-[var(--ink)] md:hidden"
-            aria-label="Close navigation"
-            onClick={close}
-          >
-            ×
-          </button>
-        </div>
+          <ProjectSwitcher projectId={projectId} projectName={projectName} projects={projects} />
+        </SidebarHeader>
 
-        <ProjectSwitcher
-          projectId={projectId}
-          projectName={projectName}
-          projects={sidebarProjects ?? [{ id: projectId, name: projectName }]}
-          onNavigate={close}
-        />
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV.map(({ section, label, to, icon: Icon }) => {
+                  const active = section === activeSection
+                  return (
+                    <SidebarMenuItem key={section}>
+                      <SidebarMenuButton asChild isActive={active} className="min-h-10 data-[active=true]:bg-primary/10 data-[active=true]:font-medium">
+                        <Link
+                          to={to}
+                          params={{ id: projectId }}
+                          search={section === 'connect' ? { onboarding: false } : undefined}
+                          aria-current={active ? 'page' : undefined}
+                        >
+                          <Icon className={active ? 'text-primary' : 'text-ink-soft'} aria-hidden="true" />
+                          <span>{label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-        <nav className="mt-4 flex-1 space-y-0.5" aria-label="Project sections">
-          {NAV.map(({ section, label, to, icon: Icon }) => {
-            const active = section === activeSection
-            return (
-              <Link
-                key={section}
-                to={to}
-                params={{ id: projectId }}
-                search={section === 'connect' ? { onboarding: false } : undefined}
-                onClick={close}
-                aria-current={active ? 'page' : undefined}
-                className={`flex min-h-10 items-center gap-2.5 rounded-lg px-3 text-sm no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
-                  active
-                    ? 'bg-[color-mix(in_oklab,var(--accent)_12%,transparent)] font-medium text-[var(--ink)]'
-                    : 'text-[var(--ink-mute)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]'
-                }`}
-              >
-                <Icon size={15} strokeWidth={1.8} aria-hidden="true" className={active ? 'text-[var(--accent)]' : 'text-[var(--ink-soft)]'} />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="border-t border-[var(--line)] pt-3">
+        <SidebarFooter className="border-t border-sidebar-border p-2">
           <AccountMenu email={userEmail} />
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
-      <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
-    </div>
+      <SidebarInset className="bg-background">
+        <div className="flex items-center gap-3 border-b border-border px-4 py-2.5 md:hidden">
+          <SidebarTrigger aria-label="Open navigation" />
+          <span className="truncate text-sm font-semibold">{projectName}</span>
+        </div>
+        <main className="min-w-0 flex-1 p-4 md:p-8">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 
@@ -131,52 +115,41 @@ function ProjectSwitcher({
   projectId,
   projectName,
   projects,
-  onNavigate,
 }: {
   projectId: string
   projectName: string
   projects: { id: string; name: string }[]
-  onNavigate: () => void
 }) {
   const navigate = useNavigate()
   return (
-    <Menu
-      ariaLabel="Switch project"
-      triggerClassName="flex w-full min-h-10 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--page)] px-3 text-left outline-none transition-colors hover:border-[var(--ink-soft)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] data-[state=open]:border-[var(--accent)]"
-      trigger={
-        <>
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--ink)]">{projectName}</span>
-          <ChevronsUpDown size={14} strokeWidth={1.8} className="shrink-0 text-[var(--ink-soft)]" aria-hidden="true" />
-        </>
-      }
-    >
-      <MenuLabel>Projects</MenuLabel>
-      {projects.map((p) => (
-        <MenuItem
-          key={p.id}
-          hint={p.id === projectId ? 'current' : undefined}
-          onSelect={() => {
-            onNavigate()
-            if (p.id !== projectId) {
-              void navigate({ to: '/projects/$id/inbox', params: { id: p.id } })
-            }
-          }}
-        >
-          {p.name}
-        </MenuItem>
-      ))}
-      <MenuSeparator />
-      <MenuItem
-        onSelect={() => {
-          onNavigate()
-          void navigate({ to: '/projects/new', search: { onboarding: false } })
-        }}
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        aria-label="Switch project"
+        className="flex w-full min-h-10 items-center gap-2 rounded-lg border border-border bg-background px-3 text-left outline-none transition-colors hover:border-ink-soft focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:border-primary"
       >
-        New project
-      </MenuItem>
-      <MenuItem onSelect={() => { onNavigate(); void navigate({ to: '/projects' }) }}>
-        All projects
-      </MenuItem>
-    </Menu>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{projectName}</span>
+        <ChevronsUpDown className="size-3.5 shrink-0 text-ink-soft" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={6} className="w-[--radix-dropdown-menu-trigger-width] min-w-56">
+        <DropdownMenuLabel className="font-mono text-[11px] uppercase text-muted-foreground">Projects</DropdownMenuLabel>
+        {projects.map((p) => (
+          <DropdownMenuItem
+            key={p.id}
+            onSelect={() => {
+              if (p.id !== projectId) void navigate({ to: '/projects/$id/inbox', params: { id: p.id } })
+            }}
+          >
+            <span className="min-w-0 flex-1 truncate">{p.name}</span>
+            {p.id === projectId && <span className="font-mono text-[11px] text-ink-soft">current</span>}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => void navigate({ to: '/projects/new', search: { onboarding: false } })}>
+          <Plus aria-hidden="true" />
+          New project
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void navigate({ to: '/projects' })}>All projects</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

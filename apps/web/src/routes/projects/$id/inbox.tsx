@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ExternalLink, ListChecks } from 'lucide-react'
 import { Layout } from '#/components/Layout'
-import { Button } from '#/components/ui/Button'
-import { Select } from '#/components/ui/Select'
-import { Tabs } from '#/components/ui/Tabs'
+import { Button } from '#/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '#/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '#/components/ui/tabs'
+import { Kbd } from '#/components/ui/kbd'
 import { PinPanel } from '#/components/PinPanel'
 import { AiGroups } from '#/components/inbox/AiGroups'
 import { InboxEmpty } from '#/components/inbox/InboxEmpty'
@@ -293,14 +294,16 @@ function InboxPage() {
         {hasPins && (
           <div className="flex flex-wrap items-center gap-2">
             {project.previewUrl && (
-              <Button href={project.previewUrl} variant="secondary" size="sm" target="_blank" rel="noopener noreferrer">
-                <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
-                Open preview
+              <Button asChild variant="outline" size="sm">
+                <a href={project.previewUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink aria-hidden="true" />
+                  Open preview
+                </a>
               </Button>
             )}
             {aiEntitlement.entitled && (
               <Button size="sm" onClick={analyze} disabled={analyzing || openCount === 0}>
-                <ListChecks size={14} strokeWidth={1.8} aria-hidden="true" />
+                <ListChecks aria-hidden="true" />
                 {analyzing ? 'Analyzing…' : 'Analyze'}
               </Button>
             )}
@@ -324,42 +327,40 @@ function InboxPage() {
             />
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--line)] pb-2">
-              <Tabs<StatusFilter>
-                ariaLabel="Filter by status"
-                value={status}
-                onChange={setStatus}
-                items={[
-                  { value: 'open', label: 'Open', count: openCount },
-                  { value: 'resolved', label: 'Resolved', count: resolvedCount },
-                  { value: 'all', label: 'All' },
-                ]}
-              />
+              <Tabs value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
+                <TabsList aria-label="Filter by status" className="rounded-full bg-surface-2 p-0.5">
+                  {(
+                    [
+                      ['open', 'Open', openCount],
+                      ['resolved', 'Resolved', resolvedCount],
+                      ['all', 'All', null],
+                    ] as const
+                  ).map(([value, label, count]) => (
+                    <TabsTrigger
+                      key={value}
+                      value={value}
+                      className="rounded-full px-3 font-mono text-[11px] uppercase tracking-wide data-[state=active]:bg-surface"
+                    >
+                      {label}
+                      {count != null && <span className="text-ink-soft">{count}</span>}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
               {pages.length > 1 && (
-                <Select
-                  ariaLabel="Filter by page"
-                  label="Page"
-                  value={page}
-                  onChange={setPage}
-                  options={[{ value: 'all', label: 'all' }, ...pages.map((p) => ({ value: p, label: p }))]}
-                />
+                <FilterSelect label="Page" ariaLabel="Filter by page" value={page} onChange={setPage} options={['all', ...pages]} />
               )}
               {reviewers.length > 1 && (
-                <Select
-                  ariaLabel="Filter by reviewer"
-                  label="From"
-                  value={reviewer}
-                  onChange={setReviewer}
-                  options={[{ value: 'all', label: 'all' }, ...reviewers.map((r) => ({ value: r, label: r }))]}
-                />
+                <FilterSelect label="From" ariaLabel="Filter by reviewer" value={reviewer} onChange={setReviewer} options={['all', ...reviewers]} />
               )}
-              <Select<SortOrder>
+              <FilterSelect
                 ariaLabel="Sort order"
                 value={sort}
-                onChange={setSort}
+                onChange={(v) => setSort(v as SortOrder)}
                 options={[
-                  { value: 'newest', label: 'newest first' },
-                  { value: 'oldest', label: 'oldest first' },
-                  { value: 'page', label: 'by page' },
+                  ['newest', 'newest first'],
+                  ['oldest', 'oldest first'],
+                  ['page', 'by page'],
                 ]}
               />
             </div>
@@ -368,7 +369,7 @@ function InboxPage() {
               <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] bg-[color-mix(in_oklab,var(--accent)_8%,transparent)] px-2 py-1.5 text-xs">
                 <span className="font-mono text-[var(--ink)]">{checked.size} selected</span>
                 <Button size="sm" onClick={() => void bulk('resolved')}>Resolve</Button>
-                <Button size="sm" variant="secondary" onClick={() => void bulk('open')}>Reopen</Button>
+                <Button size="sm" variant="outline" onClick={() => void bulk('open')}>Reopen</Button>
                 <button
                   type="button"
                   onClick={() => setChecked(new Set())}
@@ -440,7 +441,7 @@ function InboxPage() {
             ) : (
               <div className="flex h-full items-center justify-center rounded-[14px] border border-dashed border-[var(--line)] p-8 text-center">
                 <p className="max-w-xs text-sm text-[var(--ink-mute)]">
-                  Pick a pin on the left, or press <kbd className="rounded border border-[var(--line)] px-1 font-mono text-[11px]">j</kbd> to start at the top.
+                  Pick a pin on the left, or press <Kbd>j</Kbd> to start at the top.
                 </p>
               </div>
             )}
@@ -448,5 +449,43 @@ function InboxPage() {
         </div>
       )}
     </Layout>
+  )
+}
+
+/** A quiet toolbar select: mono label and value, no field chrome. */
+function FilterSelect({
+  label,
+  ariaLabel,
+  value,
+  onChange,
+  options,
+}: {
+  label?: string
+  ariaLabel: string
+  value: string
+  onChange: (value: string) => void
+  options: (string | readonly [string, string])[]
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        size="sm"
+        aria-label={ariaLabel}
+        className="h-8 rounded-full border-none bg-transparent px-2.5 font-mono text-[11px] uppercase tracking-wide text-muted-foreground shadow-none hover:text-foreground data-[state=open]:text-foreground"
+      >
+        {label && <span className="text-ink-soft">{label}:</span>}
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent position="popper" align="start">
+        {options.map((o) => {
+          const [v, l] = typeof o === 'string' ? [o, o] : o
+          return (
+            <SelectItem key={v} value={v}>
+              {l}
+            </SelectItem>
+          )
+        })}
+      </SelectContent>
+    </Select>
   )
 }

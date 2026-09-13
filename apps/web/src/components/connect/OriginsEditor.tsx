@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from '#/components/ui/Button'
+import { Button } from '#/components/ui/button'
 import { updateAllowedOrigins } from '#/lib/projects'
 
 /**
@@ -78,7 +78,7 @@ export function OriginsEditor({
         automatically while they are live.
       </p>
       <div className="mt-2 flex items-center gap-3">
-        <Button size="sm" variant="secondary" disabled={saving} onClick={() => void save(parse())}>
+        <Button size="sm" variant="outline" disabled={saving} onClick={() => void save(parse())}>
           {saving ? 'Saving…' : 'Save origins'}
         </Button>
         {message && (

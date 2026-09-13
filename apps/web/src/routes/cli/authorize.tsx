@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { useState } from 'react'
-import { Button } from '#/components/ui/Button'
+import { Button } from '#/components/ui/button'
 import { Logo } from '#/components/brand/Logo'
 import { requireDashboardAuth } from '#/lib/auth'
 import {
@@ -196,8 +196,8 @@ function AuthorizePage() {
               >
                 {state.status === 'working' ? 'Authorizing…' : 'Authorize'}
               </Button>
-              <Button variant="secondary" href="/projects">
-                Cancel
+              <Button asChild variant="outline">
+                <a href="/projects">Cancel</a>
               </Button>
             </div>
           </div>

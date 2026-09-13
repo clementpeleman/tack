@@ -250,8 +250,21 @@ reopen · `a` focus reply · `⌘↩` send · `x` check · `⌘A` check all visi
 `Esc` clear checks, then close the pane. Hints sit under the list in
 `.text-meta` and are hidden below `lg`.
 
-### Primitives
+### Primitives: shadcn/ui
 
-Menu, ConfirmDialog, Tabs and Select wrap Radix Primitives and carry the
-tokens; everything that makes Tack recognisable (rows, thumbnails, the pin
-panel, the connect page) is hand-built. No component catalogues.
+The dashboard is built on shadcn/ui (`apps/web/components.json`, components
+in `src/components/ui/*.tsx`, owned in the repo). Tack's tokens are mapped
+onto shadcn's semantic variables at the bottom of `src/styles.css`
+(`--background` → `--page`, `--primary` → `--accent`, `--muted-foreground`
+→ `--ink-mute`, …). Two deliberate choices:
+
+- shadcn's `accent` (a hover fill) maps to `--surface-2`; Tack's own
+  `--accent` (the blue) is exposed to Tailwind as `brand` (`text-brand`,
+  `bg-brand`) so the two never collide.
+- `button.tsx` carries Tack's voice: pill radius, `default` is the accent
+  fill, `outline` the hairline secondary, `destructive` an outline in
+  `--danger`, never a red fill. Add components with `npx shadcn add`; do not
+  pull blocks from component catalogues.
+
+`Field` (label + input/textarea + inline error) and `ConfirmDialog` are the
+only two local wrappers, both thin.

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button } from '#/components/ui/Button'
-import { Field } from '#/components/ui/Field'
+import { Button } from '#/components/ui/button'
+import { Field } from '#/components/ui/field'
 import { createShareLink, revokeShareLink } from '#/lib/projects'
 
 export interface ShareSummary {

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Check } from 'lucide-react'
-import { Checkbox } from 'radix-ui'
+import { Checkbox } from '#/components/ui/checkbox'
 import type { PlacementDisplay } from '@tack/shared'
 import { getTimeAgo } from '#/lib/pin-display'
 
@@ -69,16 +69,11 @@ export function PinListRow({
           checked || selecting ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
         }`}
       >
-        <Checkbox.Root
+        <Checkbox
           checked={checked}
           onCheckedChange={(v) => onToggleChecked(pin.id, v === true)}
           aria-label={`Select pin ${number}`}
-          className="flex h-4 w-4 items-center justify-center rounded border border-[var(--ink-soft)] bg-[var(--page)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-        >
-          <Checkbox.Indicator>
-            <Check size={11} strokeWidth={3} className="text-[var(--on-accent)]" aria-hidden="true" />
-          </Checkbox.Indicator>
-        </Checkbox.Root>
+        />
       </div>
 
       <Link

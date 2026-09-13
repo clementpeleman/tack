@@ -3,7 +3,7 @@ import { getProjectsOverview } from '#/lib/projects'
 import { getCurrentUser } from '#/lib/user'
 import { AccountMenu } from '#/components/AccountMenu'
 import { Logo } from '#/components/brand/Logo'
-import { buttonClasses } from '#/components/ui/Button'
+import { buttonVariants } from '#/components/ui/button'
 import { getTimeAgo } from '#/lib/pin-display'
 
 export const Route = createFileRoute('/projects/')({
@@ -47,7 +47,7 @@ function ProjectsPage() {
             <div className="hidden w-52 sm:block">
               <AccountMenu email={userEmail} align="end" side="bottom" />
             </div>
-            <Link to="/projects/new" search={{ onboarding: false }} className={buttonClasses('primary', 'md')}>
+            <Link to="/projects/new" search={{ onboarding: false }} className={buttonVariants()}>
               New project
             </Link>
           </div>
@@ -62,7 +62,7 @@ function ProjectsPage() {
             <p className="mt-2 text-sm leading-relaxed text-[var(--ink-mute)]">
               A project is one website under review. Create one, share a review link with your client, and their pins land in its inbox.
             </p>
-            <Link to="/projects/new" search={{ onboarding: false }} className={`${buttonClasses('primary', 'md')} mt-5`}>
+            <Link to="/projects/new" search={{ onboarding: false }} className={`${buttonVariants()} mt-5`}>
               Create your first project
             </Link>
           </div>

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { buttonClasses } from '#/components/ui/Button'
+import { buttonVariants } from '#/components/ui/button'
 
 /**
  * Zero pins: one sentence, one primary action. The review link is the
@@ -21,7 +21,7 @@ export function InboxEmpty({ projectId, connected }: { projectId: string; connec
           to="/projects/$id/connect"
           params={{ id: projectId }}
           search={{ onboarding: false }}
-          className={buttonClasses('primary', 'md')}
+          className={buttonVariants()}
         >
           {connected ? 'Open connect page' : 'Create a review link'}
         </Link>

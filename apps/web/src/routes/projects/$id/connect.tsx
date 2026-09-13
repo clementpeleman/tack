@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Check, Copy } from 'lucide-react'
 import { Layout } from '#/components/Layout'
-import { Button, buttonClasses } from '#/components/ui/Button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import { SharePanel } from '#/components/SharePanel'
 import { OriginsEditor } from '#/components/connect/OriginsEditor'
 import { getAppOrigin, getProject, getProjects, getShares } from '#/lib/projects'
@@ -189,7 +189,7 @@ function ConnectPage() {
         </Section>
 
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-[var(--line)] pt-5">
-          <Button onClick={goToInbox} disabled={finishing} variant={connected ? 'primary' : 'secondary'}>
+          <Button onClick={goToInbox} disabled={finishing} variant={connected ? 'default' : 'outline'}>
             {finishing ? 'Opening inbox…' : connected ? 'Go to inbox' : 'Skip to inbox'}
           </Button>
           {connected && project.previewUrl && (
@@ -197,7 +197,7 @@ function ConnectPage() {
               href={project.previewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={buttonClasses('secondary', 'md')}
+              className={buttonVariants({ variant: 'outline' })}
             >
               Open preview
             </a>
@@ -253,7 +253,7 @@ function BookmarkletLink({ href, label }: { href: string; label: string }) {
       ref={ref}
       draggable="true"
       onClick={(e) => e.preventDefault()}
-      className={`${buttonClasses('secondary', 'sm')} cursor-grab active:cursor-grabbing`}
+      className={`${buttonVariants({ variant: 'outline', size: 'sm' })} cursor-grab active:cursor-grabbing`}
       title="Drag me to your bookmarks bar"
     >
       {label}

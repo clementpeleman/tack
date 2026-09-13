@@ -4,7 +4,8 @@ import { ThemeToggle } from '#/components/ThemeToggle'
 import { Logo } from '#/components/brand/Logo'
 import { PinDrop } from '#/components/brand/PinDrop'
 import { Pointer } from '#/components/brand/Pointer'
-import { Button } from '#/components/ui/Button'
+import { Button } from '#/components/ui/button'
+import { ArrowRight } from 'lucide-react'
 import { Bar } from '#/components/ui/Bar'
 import { ContextRow } from '#/components/ui/ContextRow'
 
@@ -178,7 +179,7 @@ export function Landing() {
           </nav>
           <div className="flex items-center gap-3">
             <a href={SIGNIN_URL} className="hidden text-sm text-[var(--ink-mute)] no-underline transition-colors hover:text-[var(--ink)] sm:inline">Sign in</a>
-            <Button href={DEMO_URL} arrow>Try the demo</Button>
+            <CtaButton href={DEMO_URL} arrow>Try the demo</CtaButton>
           </div>
         </div>
       </header>
@@ -201,16 +202,16 @@ export function Landing() {
               the exact element, a screenshot, the viewport, and the browser.
             </p>
             <div className="tk-rise mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '0.16s' }}>
-              <Button href={DEMO_URL} arrow>Try the demo</Button>
-              <Button
+              <CtaButton href={DEMO_URL} arrow>Try the demo</CtaButton>
+              <CtaButton
                 href={GITHUB_URL}
-                variant="secondary"
+                variant="outline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <GitHubGlyph />
                 View on GitHub
-              </Button>
+              </CtaButton>
             </div>
             <p className="tk-rise mt-6 text-sm text-[var(--ink-mute)]" style={{ animationDelay: '0.24s' }}>
               Open source (AGPL) · Self-hosted with Docker
@@ -355,7 +356,7 @@ export function Landing() {
               in one inbox you control.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <Button href={DEMO_URL} arrow>Try the demo</Button>
+              <CtaButton href={DEMO_URL} arrow>Try the demo</CtaButton>
             </div>
           </div>
         </section>
@@ -376,14 +377,14 @@ export function Landing() {
                 you. The AI Inbox is optional and uses your own API key.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Button
+                <CtaButton
                   href={`${GITHUB_URL}#self-host`}
-                  variant="secondary"
+                  variant="outline"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Read the self-host guide
-                </Button>
+                </CtaButton>
                 <a
                   href={GITHUB_URL}
                   target="_blank"
@@ -434,16 +435,16 @@ export function Landing() {
               Open the demo and drop a pin.
             </h2>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Button href={DEMO_URL} arrow>Try the demo</Button>
-              <Button
+              <CtaButton href={DEMO_URL} arrow>Try the demo</CtaButton>
+              <CtaButton
                 href={GITHUB_URL}
-                variant="secondary"
+                variant="outline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <GitHubGlyph />
                 View on GitHub
-              </Button>
+              </CtaButton>
             </div>
           </div>
         </section>
@@ -465,5 +466,28 @@ export function Landing() {
         </div>
       </footer>
     </div>
+  )
+}
+
+/** Landing CTAs are links; the old Button took href+arrow directly. */
+function CtaButton({
+  href,
+  arrow = false,
+  variant = 'default',
+  children,
+  ...rest
+}: {
+  href: string
+  arrow?: boolean
+  variant?: 'default' | 'outline'
+  children: React.ReactNode
+} & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>) {
+  return (
+    <Button asChild variant={variant}>
+      <a href={href} {...rest}>
+        {children}
+        {arrow && <ArrowRight className="transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />}
+      </a>
+    </Button>
   )
 }
